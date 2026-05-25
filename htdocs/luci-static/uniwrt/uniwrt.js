@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
-/* UniWRT LuCI Theme Enhancer - safe, dependency-free progressive enhancement. */
+/* UniWRT LuCI Theme Enhancer. */
 (function () {
   'use strict';
 
-  var VERSION = '0.1.0';
+  var VERSION = '0.1.1';
   var STORAGE_KEY = 'uniwrt.theme.mode';
 
   function qs(sel, root) { return (root || document).querySelector(sel); }

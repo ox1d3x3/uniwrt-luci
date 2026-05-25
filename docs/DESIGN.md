@@ -8,12 +8,11 @@ UniWRT aims for a premium router/controller interface:
 - Strong spacing, rounded corners, subtle shadows
 - Dark, light, and system modes
 - Mobile responsive views
-- No copied proprietary assets
 
 ## Visual language
 
 - Brand: UniWRT
-- Logo: original UniWRT SVG mark in `htdocs/luci-static/uniwrt/logo.svg`; blue controller tile, U-shaped monoline, and network-node motif. It is custom artwork, not a copied Ubiquiti/UniFi asset.
+- Logo: UniWRT SVG mark in `htdocs/luci-static/uniwrt/logo.svg`; blue controller tile, U-shaped monoline, and network-node motif.
 - Accent: sky blue to deep blue gradient
 - States:
   - Green: online / healthy

@@ -1,10 +1,10 @@
 # UniWRT LuCI Theme
 
-UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses original UniWRT branding and a network-controller style layout inspired by modern UniFi OS-style dashboards, without using Ubiquiti logos, icons, fonts, names, or proprietary assets.
+UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses UniWRT branding with a premium network-controller layout, smooth motion, glass cards, and responsive dark/light modes.
 
 > Project package name: `luci-theme-uniwrt`  
 > Static theme path: `/luci-static/uniwrt`  
-> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.0`
+> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.1`
 
 ## What it includes
 
@@ -14,7 +14,7 @@ UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses 
 - Automatic moving GitHub **pre-release** named `pre-release`
 - Build logs attached to every pre-release
 - Modern glass-card UI, fixed left controller rail on desktop, rounded dashboard panels, smooth transitions, dark/light/auto mode toggle, mobile responsiveness
-- Safe compatibility approach: UniWRT depends on and inherits LuCI Bootstrap ucode templates, then applies its own original CSS/JS skin
+- Compatibility-first structure: UniWRT inherits LuCI Bootstrap ucode templates, then applies its own CSS/JS skin
 
 ## Why this structure
 
@@ -126,8 +126,6 @@ wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci-theme/main/script
 ```
 
 ## Design notes
-
-UniWRT is **not affiliated with Ubiquiti/UniFi**. It deliberately avoids Ubiquiti logos, icons, fonts, names, screenshots, and proprietary assets. The goal is to deliver a similar clean network-appliance dashboard feel using original UniWRT styling, original SVG logo, and original CSS/JS.
 
 See [`docs/DESIGN.md`](docs/DESIGN.md) for the UI direction.
 

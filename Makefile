@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-theme-uniwrt
-PKG_VERSION:=0.1.0
+PKG_VERSION:=0.1.1
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
@@ -16,14 +16,14 @@ define Package/luci-theme-uniwrt
   SECTION:=luci
   CATEGORY:=LuCI
   SUBMENU:=4. Themes
-  TITLE:=UniWRT Theme - modern UniFi-inspired LuCI skin
+  TITLE:=UniWRT Theme - modern LuCI controller skin
   DEPENDS:=+luci-base +luci-theme-bootstrap
 endef
 
 define Package/luci-theme-uniwrt/description
   UniWRT is a clean, modern, responsive LuCI theme for OpenWrt 24.x and 25.x.
-  It uses original UniWRT branding and a network-controller style layout inspired
-  by modern appliance dashboards, without bundling proprietary assets.
+  It uses UniWRT branding, a network-controller style layout, smooth motion,
+  responsive spacing, and dark/light mode support.
 endef
 
 define Build/Prepare
