@@ -1,0 +1,29 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Register UniWRT in LuCI without forcing it during package upgrades.
+
+changed=0
+
+set_opt() {
+	local key="$1"
+	local val="$2"
+	if ! uci -q get "luci.$key" >/dev/null 2>&1; then
+		uci set "luci.$key=$val"
+		changed=1
+	fi
+}
+
+set_opt themes.UniWRT /luci-static/uniwrt
+set_opt themes.UniWRTDark /luci-static/uniwrt
+set_opt themes.UniWRTLight /luci-static/uniwrt
+
+# On first install only, make UniWRT the active theme. Do not override user choice on upgrades.
+if [ "${PKG_UPGRADE}" != 1 ] && [ "$changed" = 1 ]; then
+	set_opt main.mediaurlbase /luci-static/uniwrt
+fi
+
+if [ "$changed" = 1 ]; then
+	uci commit luci
+fi
+
+exit 0

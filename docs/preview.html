@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en" data-uniwrt-mode="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UniWRT Preview</title>
+  <link rel="stylesheet" href="../htdocs/luci-static/uniwrt/cascade.css">
+  <script defer src="../htdocs/luci-static/uniwrt/uniwrt.js"></script>
+</head>
+<body>
+  <header style="display:flex;align-items:center;gap:16px;padding:12px 18px;margin:18px;border-radius:24px">
+    <a class="brand" href="#">OpenWrt</a>
+    <nav class="uniwrt-sidebar" style="display:flex;gap:8px;margin-left:20px"><a>Status</a><a>System</a><a>Network</a><a>Services</a></nav>
+  </header>
+  <main id="maincontent" style="max-width:1100px;margin:20px auto;padding:18px">
+    <div class="cbi-map"><h2 class="cbi-map-title">System Status</h2><p class="cbi-map-descr">Preview only. Real LuCI pages are styled dynamically.</p></div>
+    <section class="cbi-section"><h3 class="cbi-section-title">Network</h3><table><thead><tr><th>Interface</th><th>Status</th><th>Address</th></tr></thead><tbody><tr><td>LAN</td><td>Online</td><td>192.168.1.1</td></tr><tr><td>WAN</td><td>Online</td><td>DHCP</td></tr></tbody></table></section>
+    <section class="cbi-section"><button class="cbi-button cbi-button-positive">Save</button> <button class="cbi-button">Cancel</button></section>
+  </main>
+</body>
+</html>

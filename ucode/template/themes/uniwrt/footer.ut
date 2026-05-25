@@ -1,0 +1,5 @@
+{# UniWRT Theme - ucode footer shim - Apache-2.0 -#}
+<div class="uniwrt-footer-note">
+  <a href="https://github.com/ox1d3x3/uniwrt-luci-theme" target="_blank" rel="noreferrer">Author: @Ox1d3x3 × UniWRT Theme v0.1.0</a>
+</div>
+{% include("../bootstrap/footer.ut"); %}

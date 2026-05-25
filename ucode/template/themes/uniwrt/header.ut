@@ -1,0 +1,8 @@
+{#
+UniWRT Theme - ucode header shim
+This deliberately inherits LuCI's Bootstrap structure, then skins it with UniWRT CSS/JS.
+That keeps OpenWrt 24.x/25.x compatibility while avoiding fragile duplicated LuCI markup.
+Licensed under Apache-2.0.
+-#}
+{% include("../bootstrap/header.ut"); %}
+<script defer src="{{ media }}/uniwrt.js?v=0.1.0"></script>
