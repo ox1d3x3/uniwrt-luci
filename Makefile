@@ -3,19 +3,48 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-theme-uniwrt
-PKG_VERSION:=0.1.7
+PKG_VERSION:=0.1.8
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
-LUCI_NAME:=luci-theme-uniwrt
-LUCI_TITLE:=UniWRT Theme
-LUCI_DEPENDS:=+luci-base +luci-theme-bootstrap
-LUCI_DESCRIPTION:=UniWRT is a clean, modern, responsive LuCI theme for OpenWrt 24.x and 25.x.
-LUCI_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
-LUCI_PKGARCH:=all
-LUCI_MINIFY_JS:=0
-LUCI_MINIFY_CSS:=0
+include $(INCLUDE_DIR)/package.mk
+
+define Package/luci-theme-uniwrt
+	SECTION:=luci
+	CATEGORY:=LuCI
+	SUBMENU:=4. Themes
+	TITLE:=UniWRT Theme
+	DEPENDS:=+luci-base +luci-theme-bootstrap
+	PKGARCH:=all
+endef
+
+define Package/luci-theme-uniwrt/description
+	UniWRT is a clean, modern, responsive LuCI theme for OpenWrt 24.x and 25.x.
+endef
+
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	$(CP) ./htdocs $(PKG_BUILD_DIR)/
+	$(CP) ./ucode $(PKG_BUILD_DIR)/
+	$(CP) ./root $(PKG_BUILD_DIR)/
+endef
+
+define Build/Configure
+endef
+
+define Build/Compile
+endef
+
+define Package/luci-theme-uniwrt/install
+	$(INSTALL_DIR) $(1)/www/luci-static/uniwrt
+	$(CP) $(PKG_BUILD_DIR)/htdocs/luci-static/uniwrt/* $(1)/www/luci-static/uniwrt/
+	$(INSTALL_DIR) $(1)/usr/share/ucode/luci/template/themes/uniwrt
+	$(CP) $(PKG_BUILD_DIR)/ucode/template/themes/uniwrt/* $(1)/usr/share/ucode/luci/template/themes/uniwrt/
+	$(INSTALL_DIR) $(1)/etc/uci-defaults
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/etc/uci-defaults/30_luci-theme-uniwrt $(1)/etc/uci-defaults/30_luci-theme-uniwrt
+endef
 
 define Package/luci-theme-uniwrt/postrm
 #!/bin/sh
@@ -27,11 +56,4 @@ define Package/luci-theme-uniwrt/postrm
 }
 endef
 
-LUCI_MK:=$(firstword $(wildcard ../../luci.mk $(TOPDIR)/feeds/luci/luci.mk))
-ifeq ($(LUCI_MK),)
-  $(error Unable to locate luci.mk. Run scripts/build-sdk.sh or place this package inside the LuCI feed themes directory.)
-endif
-
-include $(LUCI_MK)
-
-# call BuildPackage - OpenWrt buildroot signature
+$(eval $(call BuildPackage,luci-theme-uniwrt))

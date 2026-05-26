@@ -4,7 +4,7 @@ UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses 
 
 > Project package name: `luci-theme-uniwrt`  
 > Static theme path: `/luci-static/uniwrt`  
-> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.7`
+> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.8`
 
 ## What it includes
 

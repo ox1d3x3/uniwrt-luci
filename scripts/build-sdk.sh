@@ -49,30 +49,38 @@ fi
 
 cd sdk
 
-echo "==> Updating feeds"
-./scripts/feeds update -a
+PACKAGE_DIR="package/$PKG_NAME"
+OLD_FEED_DIR="feeds/luci/themes/$PKG_NAME"
+OLD_FEED_LINK="package/feeds/luci/$PKG_NAME"
 
-THEME_DIR="feeds/luci/themes/$PKG_NAME"
-echo "==> Copying UniWRT into LuCI feed: $THEME_DIR"
-rm -rf "$THEME_DIR"
-mkdir -p "$THEME_DIR"
+echo "==> Copying UniWRT package into SDK package tree: $PACKAGE_DIR"
+rm -rf "$PACKAGE_DIR" "$OLD_FEED_DIR" "$OLD_FEED_LINK"
+mkdir -p "$PACKAGE_DIR"
 rsync -a --delete \
 	--exclude '.git' \
 	--exclude '.github' \
 	--exclude '.sdk-*' \
 	--exclude 'dist' \
 	--exclude '*.zip' \
-	"$ROOT_DIR/" "$THEME_DIR/"
+	"$ROOT_DIR/" "$PACKAGE_DIR/"
 
-echo "==> Installing feed packages"
-./scripts/feeds install -a
-./scripts/feeds install -p luci "$PKG_NAME"
+if [ ! -e package/feeds/luci/luci-base ] || [ ! -e package/feeds/luci/luci-theme-bootstrap ]; then
+	echo "==> Installing minimum LuCI feed dependencies"
+	./scripts/feeds update luci
+	./scripts/feeds install luci-base luci-theme-bootstrap
+else
+	echo "==> LuCI feed dependencies already available"
+fi
 
+sed -i "/^CONFIG_PACKAGE_${PKG_NAME}=/d" .config 2>/dev/null || true
+echo "CONFIG_PACKAGE_${PKG_NAME}=m" >> .config
 make defconfig
 
+[ -f "$PACKAGE_DIR/Makefile" ] || fail "Package Makefile missing at $PACKAGE_DIR/Makefile"
+
 echo "==> Building $PKG_NAME for OpenWrt $OPENWRT_VERSION target $TARGET/$SUBTARGET"
-make "package/feeds/luci/$PKG_NAME/clean" V=s || true
-make "package/feeds/luci/$PKG_NAME/compile" V=s
+make "package/$PKG_NAME/clean" V=s || true
+make "package/$PKG_NAME/compile" V=s
 
 echo "==> Collecting packages"
 find bin -type f \( -name "$PKG_NAME*.ipk" -o -name "$PKG_NAME*.apk" \) -print -exec cp -f {} "$DIST_DIR/" \;
