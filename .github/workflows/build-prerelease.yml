@@ -101,7 +101,7 @@ jobs:
       - name: Generate pre-release notes
         run: |
           short_sha="${GITHUB_SHA::7}"
-          version="$(cat VERSION 2>/dev/null || echo 0.1.3)"
+          version="$(cat VERSION 2>/dev/null || echo 0.1.4)"
           cat > PRE_RELEASE_NOTES.md <<EOF_NOTES
           # UniWRT Theme pre-release
 

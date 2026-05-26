@@ -4,7 +4,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-theme-uniwrt
-PKG_VERSION:=0.1.3
+PKG_VERSION:=0.1.4
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
@@ -28,9 +28,9 @@ endef
 
 define Build/Prepare
 	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./htdocs $(PKG_BUILD_DIR)/
-	$(CP) ./root $(PKG_BUILD_DIR)/
-	$(CP) ./ucode $(PKG_BUILD_DIR)/
+	$(CP) $(TOPDIR)/package/luci-theme-uniwrt/htdocs $(PKG_BUILD_DIR)/
+	$(CP) $(TOPDIR)/package/luci-theme-uniwrt/root $(PKG_BUILD_DIR)/
+	$(CP) $(TOPDIR)/package/luci-theme-uniwrt/ucode $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure
