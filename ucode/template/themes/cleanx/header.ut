@@ -15,6 +15,6 @@
 				<img class="cleanx-logo" src="/luci-static/cleanx/assets/logo.svg" alt="CleanX">
 				<span>CleanX</span>
 			</div>
-			<div class="cleanx-version">v0.2.3</div>
+			<div class="cleanx-version">v0.2.4</div>
 		</header>
 		<main class="cleanx-main" id="maincontent">

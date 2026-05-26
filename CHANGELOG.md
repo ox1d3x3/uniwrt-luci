@@ -1,19 +1,34 @@
 # Changelog
 
+## v0.2.4
+
+### Fixed
+
+- Replaced the broken custom package-only workflow with the proven CleanX pre-release workflow style.
+- Removed the bad validation logic that rejected `luci.mk`.
+- Changed the package Makefile to use the correct LuCI helper from the SDK feeds:
+
+  ```make
+  include $(TOPDIR)/feeds/luci/luci.mk
+  ```
+
+- Added feed preparation before package build:
+
+  ```sh
+  ./scripts/feeds update -a
+  ./scripts/feeds install -a
+  ```
+
+- Builds:
+  - OpenWrt 24.10.6 `.ipk`
+  - OpenWrt 25.12.4 `.apk`
+  - OpenWrt snapshot `.apk`
+
+- Publishes package assets and build logs to a GitHub pre-release.
+
 ## v0.2.3
 
 ### Fixed
 
-- Provides a proper full project ZIP, not only a patch bundle.
-- Uses `luci-theme-cleanx` as the package name.
-- Builds the package from `package/custom/luci-theme-cleanx`.
-- Removes all LuCI runtime dependencies from the theme package.
-- Avoids `luci.mk`, `LUCI_DEPENDS`, and `DEPENDS:=+luci-base`.
-- Avoids `scripts/feeds update -a` and `scripts/feeds install -a` in the GitHub build.
-- Builds OpenWrt 24.10.6 `.ipk`.
-- Builds OpenWrt 25.12.4 `.apk`.
-- Adds defensive CSS/JS wrappers for wide tables, graphs, routing, processes, software, startup, and interface pages.
-
-### Notes
-
-For OpenWrt 25.x, install only the `.apk` package.
+- Initial full project scaffold.
+- This version had a broken workflow validator and should not be used.

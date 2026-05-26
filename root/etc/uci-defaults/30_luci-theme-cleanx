@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Register CleanX in LuCI.
-# Safe for OpenWrt 24.10/opkg and OpenWrt 25.12+/apk.
+# Safe for OpenWrt 24.x/opkg and OpenWrt 25.x/apk.
 
 uci -q batch <<'EOF'
 set luci.themes.CleanX=/luci-static/cleanx
@@ -20,6 +20,7 @@ case "$CURRENT_MEDIA" in
 	;;
 esac
 
-rm -rf /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null || true
+rm -f /tmp/luci-indexcache.*
+rm -rf /tmp/luci-modulecache/
 
 exit 0

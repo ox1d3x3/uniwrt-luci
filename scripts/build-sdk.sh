@@ -2,20 +2,19 @@
 set -euo pipefail
 
 PACKAGE_NAME="${PACKAGE_NAME:-luci-theme-cleanx}"
-PACKAGE_PATH="package/custom/${PACKAGE_NAME}"
-
-OPENWRT_VERSION="${OPENWRT_VERSION:-25.12.4}"
 TARGET="${TARGET:-mediatek}"
 SUBTARGET="${SUBTARGET:-mt7622}"
+OPENWRT_VERSION="${OPENWRT_VERSION:-25.12.4}"
 
 SDK_BASE_URL="${SDK_BASE_URL:-https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/}"
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="${ROOT_DIR}/.sdk-work"
 OUT_DIR="${ROOT_DIR}/package-artifacts"
+LOG_DIR="${ROOT_DIR}/build-logs"
 
 rm -rf "${WORK_DIR}"
-mkdir -p "${WORK_DIR}" "${OUT_DIR}"
+mkdir -p "${WORK_DIR}" "${OUT_DIR}" "${LOG_DIR}"
 
 cd "${WORK_DIR}"
 
@@ -23,7 +22,7 @@ echo "==> Detecting SDK from ${SDK_BASE_URL}"
 SDK_FILE="$(curl -fsSL "${SDK_BASE_URL}" | grep -oE 'openwrt-sdk-[^"<>]+Linux-x86_64\.tar\.(xz|zst)' | head -n 1)"
 
 if [ -z "${SDK_FILE}" ]; then
-	echo "ERROR: could not detect SDK archive"
+	echo "ERROR: could not detect OpenWrt SDK archive"
 	exit 1
 fi
 
@@ -42,22 +41,27 @@ if [ -z "${SDK_DIR}" ]; then
 	exit 1
 fi
 
-echo "==> Copying package to SDK"
-rm -rf "${SDK_DIR}/${PACKAGE_PATH}"
-mkdir -p "${SDK_DIR}/${PACKAGE_PATH}"
+echo "==> Preparing feeds"
+cd "${SDK_DIR}"
+./scripts/feeds update -a
+./scripts/feeds install -a
+
+echo "==> Copying CleanX into SDK"
+rm -rf "${SDK_DIR}/package/custom/${PACKAGE_NAME}"
+mkdir -p "${SDK_DIR}/package/custom/${PACKAGE_NAME}"
 
 rsync -a --delete \
 	--exclude ".git" \
 	--exclude ".github" \
 	--exclude ".sdk-work" \
 	--exclude "package-artifacts" \
-	"${ROOT_DIR}/" "${SDK_DIR}/${PACKAGE_PATH}/"
+	--exclude "build-logs" \
+	"${ROOT_DIR}/" "${SDK_DIR}/package/custom/${PACKAGE_NAME}/"
 
 echo "==> Building ${PACKAGE_NAME}"
-cd "${SDK_DIR}"
 make defconfig
-make "${PACKAGE_PATH}/clean" V=s || true
-make "${PACKAGE_PATH}/compile" V=s -j1
+make "package/${PACKAGE_NAME}/clean" V=s || true
+make "package/${PACKAGE_NAME}/compile" V=s -j"$(nproc)"
 
 echo "==> Collecting outputs"
 find "${SDK_DIR}/bin" -type f \

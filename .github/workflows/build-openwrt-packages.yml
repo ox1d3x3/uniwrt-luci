@@ -1,4 +1,4 @@
-name: Manual UniWRT OpenWrt package build
+name: Manual CleanX OpenWrt package build
 
 on:
   workflow_dispatch:
@@ -13,5 +13,5 @@ jobs:
     steps:
       - name: Notice
         run: |
-          echo "Router package builds are handled by .github/workflows/build-prerelease.yml"
-          echo "Run 'Build UniWRT router packages' for mt7622 APK/IPK builds and pre-release assets."
+          echo "Automatic package builds are handled by .github/workflows/build-prerelease.yml"
+          echo "Run 'Build CleanX pre-release packages' for APK/IPK builds and pre-release assets."
