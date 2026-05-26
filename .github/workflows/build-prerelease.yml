@@ -52,6 +52,11 @@ jobs:
             libncurses-dev libssl-dev python3 python3-setuptools rsync unzip \
             zlib1g-dev file wget curl tar xz-utils zstd
 
+      - name: Run project self-test
+        run: |
+          chmod +x scripts/self-test.sh
+          ./scripts/self-test.sh
+
       - name: Build package with OpenWrt SDK
         env:
           OPENWRT_VERSION: ${{ matrix.openwrt_version }}
@@ -77,9 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: uniwrt-${{ matrix.package_type }}-openwrt-${{ matrix.openwrt_version }}
-          path: |
-            upload/*
-            dist/build-${{ matrix.openwrt_version }}.log
+          path: upload/*
           if-no-files-found: ignore
 
   prerelease:
@@ -101,7 +104,7 @@ jobs:
       - name: Generate pre-release notes
         run: |
           short_sha="${GITHUB_SHA::7}"
-          version="$(cat VERSION 2>/dev/null || echo 0.1.4)"
+          version="$(cat VERSION 2>/dev/null || echo 0.1.5)"
           cat > PRE_RELEASE_NOTES.md <<EOF_NOTES
           # UniWRT Theme pre-release
 
@@ -139,15 +142,45 @@ jobs:
           ```
           EOF_NOTES
 
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+          rm -rf release-upload
+          mkdir -p release-upload
+
+          find release-assets -type f \
+            \( -name '*.ipk' -o -name '*.apk' -o -name '*.log' \) \
+            -exec cp -f {} release-upload/ \;
+
+          echo 'Release assets prepared:'
+          find release-upload -maxdepth 1 -type f -printf '- %f\n' | sort
+
+          test -f release-upload/luci-theme-uniwrt.ipk
+          test -f release-upload/luci-theme-uniwrt.apk
+
       - name: Replace moving pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release delete pre-release --yes --cleanup-tag || true
+
+          if gh release view pre-release >/dev/null 2>&1; then
+            gh release delete pre-release --yes --cleanup-tag
+          else
+            echo 'No previous pre-release found.'
+            git push origin :refs/tags/pre-release 2>/dev/null || true
+          fi
+
           git tag -f pre-release "$GITHUB_SHA"
-          git push origin -f pre-release
-          gh release create pre-release release-assets/* \
+          git push origin -f refs/tags/pre-release
+
+          mapfile -t assets < <(find release-upload -maxdepth 1 -type f | sort)
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo 'ERROR: No release asset files were prepared.' >&2
+            exit 1
+          fi
+
+          gh release create pre-release "${assets[@]}" \
             --title "UniWRT pre-release #${GITHUB_RUN_NUMBER}" \
             --notes-file PRE_RELEASE_NOTES.md \
             --prerelease
