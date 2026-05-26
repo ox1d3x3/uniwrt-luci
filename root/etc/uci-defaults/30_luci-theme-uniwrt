@@ -15,7 +15,7 @@ set_opt themes.UniWRT /luci-static/uniwrt
 set_opt themes.UniWRTDark /luci-static/uniwrt
 set_opt themes.UniWRTLight /luci-static/uniwrt
 
-if [ "${PKG_UPGRADE}" != 1 ] && [ "$changed" = 1 ]; then
+if [ "${PKG_UPGRADE:-0}" != 1 ] && [ "$changed" = 1 ]; then
 	set_opt main.mediaurlbase /luci-static/uniwrt
 fi
 

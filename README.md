@@ -4,7 +4,7 @@ UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses 
 
 > Project package name: `luci-theme-uniwrt`  
 > Static theme path: `/luci-static/uniwrt`  
-> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.9`
+> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.2.0`
 
 ## What it includes
 
@@ -35,7 +35,6 @@ luci-theme-uniwrt/
 ├── root/etc/uci-defaults/30_luci-theme-uniwrt
 ├── scripts/
 │   ├── build-sdk.sh
-│   ├── package.sh
 │   ├── install.sh
 │   ├── self-test.sh
 │   └── uninstall.sh
@@ -81,14 +80,19 @@ uci commit luci
 
 Then hard refresh LuCI with `Ctrl + F5`.
 
-## Build locally
+## Build locally with OpenWrt SDK
 
 ```sh
 sudo apt update
-sudo apt install -y binutils coreutils gzip tar python3 nodejs
+sudo apt install -y binutils build-essential clang flex bison g++ gawk gcc-multilib gettext git \
+  libncurses-dev libssl-dev python3 python3-setuptools rsync unzip zlib1g-dev \
+  file wget curl tar xz-utils zstd
 
-./scripts/self-test.sh
-./scripts/package.sh
+# Build universal IPK for OpenWrt 24.10.6 / opkg
+OPENWRT_VERSION=24.10.6 TARGET=x86 SUBTARGET=64 ./scripts/build-sdk.sh
+
+# Build universal APK for OpenWrt 25.12.4 / apk
+OPENWRT_VERSION=25.12.4 TARGET=mediatek SUBTARGET=mt7622 ./scripts/build-sdk.sh
 ```
 
 Packages will be copied into `dist/`.
@@ -101,7 +105,7 @@ Every push to `main` or `master` builds:
 - `luci-theme-uniwrt.apk`
 - `luci-theme-uniwrt_all.ipk`
 - `luci-theme-uniwrt_all.apk`
-- `package-*.log` files
+- `build-*.log` files
 
 Then it deletes and recreates a moving GitHub pre-release called `pre-release`. This gives you one clean testing release every time. After testing, create your stable release manually from the package files you trust.
 

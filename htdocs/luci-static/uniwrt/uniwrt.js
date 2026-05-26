@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '0.1.9';
+  var VERSION = '0.1.8';
   var STORAGE_KEY = 'uniwrt.theme.mode';
 
   function qs(sel, root) { return (root || document).querySelector(sel); }

@@ -9,8 +9,10 @@ PKG_NAME="luci-theme-uniwrt"
 TMP_DIR="/tmp/uniwrt-install"
 mkdir -p "$TMP_DIR"
 
-log() { printf '%s\n' "==> $*"; }
-fail() { printf '%s\n' "ERROR: $*" >&2; exit 1; }
+log() { printf '%s
+' "==> $*"; }
+fail() { printf '%s
+' "ERROR: $*" >&2; exit 1; }
 
 if command -v apk >/dev/null 2>&1; then
 	PM="apk"
@@ -29,6 +31,7 @@ TARGET_SAFE="$(printf '%s' "${DISTRIB_TARGET:-}" | tr '/' '-')"
 
 log "Detected package manager: ${PM}"
 log "Kernel: $(uname -m 2>/dev/null || echo unknown)"
+[ -n "${DISTRIB_RELEASE:-}" ] && log "OpenWrt release: ${DISTRIB_RELEASE}"
 [ -n "${DISTRIB_TARGET:-}" ] && log "OpenWrt target: ${DISTRIB_TARGET}"
 
 fetch_one() {
@@ -70,20 +73,12 @@ try_download_and_install() {
 	return 1
 }
 
-if [ "$PM" = "apk" ]; then
-	try_download_and_install "${PKG_NAME}.${EXT}" || \
-	try_download_and_install "${PKG_NAME}_all.${EXT}" || \
-	{ [ -n "${DISTRIB_RELEASE:-}" ] && [ -n "$TARGET_SAFE" ] && try_download_and_install "${PKG_NAME}-${DISTRIB_RELEASE}-${TARGET_SAFE}.${EXT}"; } || \
-	fail "Could not install UniWRT ${EXT} package from ${REPO} ${TAG}."
-else
-	try_download_and_install "${PKG_NAME}.${EXT}" || \
-	try_download_and_install "${PKG_NAME}_all.${EXT}" || \
-	fail "Could not install UniWRT ${EXT} package from ${REPO} ${TAG}."
-fi
+try_download_and_install "${PKG_NAME}.${EXT}" || { [ -n "${DISTRIB_RELEASE:-}" ] && [ -n "$TARGET_SAFE" ] && try_download_and_install "${PKG_NAME}-${DISTRIB_RELEASE}-${TARGET_SAFE}.${EXT}"; } || fail "Could not install UniWRT ${EXT} package from ${REPO} ${TAG}."
 
 log "Activating UniWRT"
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 /etc/init.d/uhttpd restart >/dev/null 2>&1 || true
 
 log "Done. Refresh LuCI with Ctrl+F5 / hard refresh."

@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
+UNIWRT_PKG_DIR:=$(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-theme-uniwrt
-PKG_VERSION:=0.1.9
+PKG_VERSION:=0.2.0
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
@@ -16,19 +18,19 @@ define Package/luci-theme-uniwrt
 	CATEGORY:=LuCI
 	SUBMENU:=4. Themes
 	TITLE:=UniWRT Theme
-	DEPENDS:=+luci-base +luci-theme-bootstrap
-	PKGARCH:=all
+	DEPENDS:=+luci-base
 endef
 
 define Package/luci-theme-uniwrt/description
-	UniWRT is a clean, modern, responsive LuCI theme for OpenWrt 24.x and 25.x.
+	UniWRT is a clean, modern, responsive LuCI theme for OpenWrt.
 endef
 
 define Build/Prepare
+	rm -rf $(PKG_BUILD_DIR)
 	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) ./htdocs $(PKG_BUILD_DIR)/
-	$(CP) ./ucode $(PKG_BUILD_DIR)/
-	$(CP) ./root $(PKG_BUILD_DIR)/
+	$(CP) $(UNIWRT_PKG_DIR)/htdocs $(PKG_BUILD_DIR)/
+	$(CP) $(UNIWRT_PKG_DIR)/ucode $(PKG_BUILD_DIR)/
+	$(CP) $(UNIWRT_PKG_DIR)/root $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure
@@ -46,6 +48,15 @@ define Package/luci-theme-uniwrt/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/etc/uci-defaults/30_luci-theme-uniwrt $(1)/etc/uci-defaults/30_luci-theme-uniwrt
 endef
 
+define Package/luci-theme-uniwrt/postinst
+#!/bin/sh
+[ -n "$${IPKG_INSTROOT}" ] || {
+	[ -x /etc/uci-defaults/30_luci-theme-uniwrt ] && /etc/uci-defaults/30_luci-theme-uniwrt || true
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+}
+exit 0
+endef
+
 define Package/luci-theme-uniwrt/postrm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
@@ -53,7 +64,9 @@ define Package/luci-theme-uniwrt/postrm
 	uci -q delete luci.themes.UniWRTDark
 	uci -q delete luci.themes.UniWRTLight
 	uci commit luci
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 }
+exit 0
 endef
 
 $(eval $(call BuildPackage,luci-theme-uniwrt))

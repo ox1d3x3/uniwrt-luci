@@ -1,0 +1,17 @@
+name: Manual UniWRT OpenWrt package build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notice:
+    name: Use pre-release workflow
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Notice
+        run: |
+          echo "Router package builds are handled by .github/workflows/build-prerelease.yml"
+          echo "Run 'Build UniWRT router packages' for mt7622 APK/IPK builds and pre-release assets."
