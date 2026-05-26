@@ -1,98 +1,97 @@
 # UniWRT LuCI Theme
 
-UniWRT is a clean, modern, responsive LuCI theme for OpenWrt.
+UniWRT is a clean, animated, controller-style LuCI theme for OpenWrt 24.x and 25.x. It is designed to feel like a polished network controller UI while using original OpenWrt/UniWRT branding and assets.
 
-## Package names
+## What this is
 
-- Project/theme name: `UniWRT`
 - Package name: `luci-theme-uniwrt`
-- Static assets: `/www/luci-static/uniwrt`
-- LuCI templates: `/usr/share/ucode/luci/template/themes/uniwrt`
+- Theme name in LuCI: `UniWRT`
+- OpenWrt 24.10 and older: builds `.ipk`
+- OpenWrt 25.12 and newer: builds `.apk`
+- Template base: LuCI Bootstrap wrapper for safer compatibility
+- Styling: modern glass cards, rounded tables, responsive layout, dark/light/auto theme toggle, subtle live animations
 
-## Rolling update v0.2.8
+## What this is not
 
-This update fixes the package/release workflow mess:
+This is not a UniFi OS redistribution and does not include UniFi logos, names, icons, screenshots, fonts, or proprietary UI assets. The design direction is inspired by modern network-controller dashboards, but the implementation and branding are original.
 
-- Removed all old legacy naming.
-- Removed duplicated package workflow file.
-- Builds both required package formats:
-  - `luci-theme-uniwrt.ipk` for OpenWrt 24.10.6 / OPKG.
-  - `luci-theme-uniwrt.apk` for OpenWrt 25.12.4 / APK.
-- Publishes a moving GitHub pre-release named `pre-release`.
-- Uses GitHub's built-in `${{ github.token }}` with `contents: write`.
-- Does not use a custom PAT or custom secret.
-- Uses `package.mk` only. This package must not use `luci.mk`.
-- Does not build `luci-base`, `ucode`, `rpcd`, `lucihttp`, `libnl`, or Lua dependencies in the SDK path.
+## Repository layout
 
-## Important before pushing
-
-Delete old duplicate workflow files from the repo first. If they remain in GitHub, GitHub will still show/run them.
-
-```sh
-rm -f .github/workflows/build-openwrt-packages.yml
-rm -f .github/workflows/build-packages.yml
-rm -f .github/workflows/openwrt-25-apk.yml
-rm -f .github/workflows/apk-build.yml
-rm -f .github/workflows/ipk-build.yml
+```text
+.
+├── Makefile
+├── htdocs/luci-static/uniwrt/
+│   ├── cascade.css
+│   ├── favicon.svg
+│   ├── assets/
+│   │   ├── logo.svg
+│   │   └── noise.svg
+│   └── js/uniwrt.js
+├── root/etc/uci-defaults/30_luci-theme-uniwrt
+├── ucode/template/themes/uniwrt/
+│   ├── header.ut
+│   ├── footer.ut
+│   └── sysauth.ut
+├── scripts/build-with-sdk.sh
+└── .github/workflows/build-openwrt-packages.yml
 ```
 
-Then push this project:
+## Build with GitHub Actions
 
-```sh
-chmod +x scripts/*.sh
-./scripts/clean-repo-before-push.sh
-git add -A
-git commit -m "Roll UniWRT v0.2.8 package workflow fix"
-git push
-```
+Push this project to GitHub, then run **Actions → Build OpenWrt packages → Run workflow**.
 
-## GitHub release permissions
+The workflow builds both:
 
-No custom GitHub token is required.
+- `luci-theme-uniwrt_..._all.ipk` for OpenWrt 24.10.x
+- `luci-theme-uniwrt-...apk` for OpenWrt 25.12.x
 
-The workflow uses:
+When you push a tag such as `v0.1.0`, the workflow also publishes the packages to a GitHub Release.
 
-```yaml
-permissions:
-  contents: write
-  actions: read
-```
-
-and:
-
-```yaml
-env:
-  GH_TOKEN: ${{ github.token }}
-```
-
-If GitHub still throws `HTTP 403: Resource not accessible by integration`, fix the repo setting:
-
-`Settings > Actions > General > Workflow permissions > Read and write permissions`
-
-## Install from the moving pre-release
-
-OpenWrt 25.12.4 / APK:
+## Install on OpenWrt 24.x
 
 ```sh
 cd /tmp
-apk del luci-theme-uniwrt 2>/dev/null || true
-sed -i '/^luci-theme-uniwrt/d' /etc/apk/world 2>/dev/null || true
-wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.apk
-apk add --allow-untrusted ./luci-theme-uniwrt.apk
-uci set luci.main.mediaurlbase='/luci-static/uniwrt'
-uci commit luci
-rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+opkg install ./luci-theme-uniwrt_0.1.0-r1_all.ipk
 /etc/init.d/uhttpd restart
 ```
 
-OpenWrt 24.10.6 / OPKG:
+## Install on OpenWrt 25.x
 
 ```sh
 cd /tmp
-wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.ipk
-opkg install ./luci-theme-uniwrt.ipk
-uci set luci.main.mediaurlbase='/luci-static/uniwrt'
-uci commit luci
-rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+apk add --allow-untrusted ./luci-theme-uniwrt-0.1.0-r1.apk
 /etc/init.d/uhttpd restart
 ```
+
+## Manually select the theme
+
+```sh
+uci set luci.main.mediaurlbase='/luci-static/uniwrt'
+uci commit luci
+/etc/init.d/uhttpd restart
+```
+
+Or in LuCI: **System → System → Language and Style → Design → UniWRT**.
+
+## Recovery if a theme breaks LuCI
+
+SSH into the router and switch back to Bootstrap:
+
+```sh
+uci set luci.main.mediaurlbase='/luci-static/bootstrap'
+uci commit luci
+/etc/init.d/uhttpd restart
+```
+
+## Local SDK build
+
+```sh
+./scripts/build-with-sdk.sh 24.10.2 x86/64
+./scripts/build-with-sdk.sh 25.12.1 x86/64
+```
+
+The output packages are copied into `dist/`.
+
+## Licence
+
+Apache-2.0.

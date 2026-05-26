@@ -1,6 +1,14 @@
 {#
-UniWRT Theme - ucode header shim
-Licensed under Apache-2.0.
+ UniWRT theme template wrapper.
+ It intentionally reuses LuCI Bootstrap's maintained ucode structure and only
+ swaps the media base to UniWRT assets via the luci.themes.UniWRT UCI entry.
+ This keeps compatibility with OpenWrt 24.x/25.x while avoiding a fragile full
+ template fork.
+ Licensed under Apache-2.0.
 -#}
-{% include("../bootstrap/header.ut"); %}
-<script defer src="{{ media }}/uniwrt.js?v=0.1.8"></script>
+{% include('themes/bootstrap/header') %}
+{% if (!blank_page): %}
+<script defer src="{{ media }}/js/uniwrt.js"></script>
+{% else %}
+<script defer src="{{ media }}/js/uniwrt.js"></script>
+{% endif %}

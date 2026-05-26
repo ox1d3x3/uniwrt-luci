@@ -1,4 +1,4 @@
-dist/
-.sdk-*/
+/dist/
+/.sdk/
 *.zip
 .DS_Store

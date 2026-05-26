@@ -1,2 +1,2 @@
-{# UniWRT Theme - login page shim - Apache-2.0 -#}
-{% include("../bootstrap/sysauth.ut"); %}
+{# UniWRT authentication wrapper. Licensed under Apache-2.0. -#}
+{% include('themes/bootstrap/sysauth') %}
