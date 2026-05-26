@@ -22,9 +22,14 @@ else
 	fail "Neither apk nor opkg was found. This does not look like a supported OpenWrt system."
 fi
 
+DISTRIB_RELEASE=""
+DISTRIB_TARGET=""
+[ -r /etc/openwrt_release ] && . /etc/openwrt_release || true
+TARGET_SAFE="$(printf '%s' "${DISTRIB_TARGET:-}" | tr '/' '-')"
+
 log "Detected package manager: ${PM}"
 log "Kernel: $(uname -m 2>/dev/null || echo unknown)"
-[ -r /etc/openwrt_release ] && . /etc/openwrt_release && log "OpenWrt target: ${DISTRIB_TARGET:-unknown}"
+[ -n "${DISTRIB_TARGET:-}" ] && log "OpenWrt target: ${DISTRIB_TARGET}"
 
 fetch_one() {
 	name="$1"
@@ -44,17 +49,36 @@ fetch_one() {
 	return 0
 }
 
-PKG_PATH=""
-fetch_one "${PKG_NAME}.${EXT}" || fetch_one "${PKG_NAME}_all.${EXT}" || fail "Could not download UniWRT ${EXT} package from ${REPO} ${TAG}."
+install_pkg() {
+	pkg="$1"
+	if [ "$PM" = "apk" ]; then
+		apk del "$PKG_NAME" >/dev/null 2>&1 || true
+		[ -f /etc/apk/world ] && sed -i "/^${PKG_NAME}/d" /etc/apk/world || true
+		apk add --allow-untrusted "$pkg"
+	else
+		opkg install "$pkg"
+	fi
+}
 
-log "Installing ${PKG_PATH}"
+try_download_and_install() {
+	name="$1"
+	if fetch_one "$name"; then
+		log "Installing ${PKG_PATH}"
+		install_pkg "$PKG_PATH" && return 0
+		log "Install failed for ${name}; trying next package if available."
+	fi
+	return 1
+}
+
 if [ "$PM" = "apk" ]; then
-	# Clean up a previously failed architecture-specific install request from /etc/apk/world.
-	apk del "$PKG_NAME" >/dev/null 2>&1 || true
-	[ -f /etc/apk/world ] && sed -i "/^${PKG_NAME}/d" /etc/apk/world || true
-	apk add --allow-untrusted "$PKG_PATH"
+	try_download_and_install "${PKG_NAME}.${EXT}" || \
+	try_download_and_install "${PKG_NAME}_all.${EXT}" || \
+	{ [ -n "${DISTRIB_RELEASE:-}" ] && [ -n "$TARGET_SAFE" ] && try_download_and_install "${PKG_NAME}-${DISTRIB_RELEASE}-${TARGET_SAFE}.${EXT}"; } || \
+	fail "Could not install UniWRT ${EXT} package from ${REPO} ${TAG}."
 else
-	opkg install "$PKG_PATH"
+	try_download_and_install "${PKG_NAME}.${EXT}" || \
+	try_download_and_install "${PKG_NAME}_all.${EXT}" || \
+	fail "Could not install UniWRT ${EXT} package from ${REPO} ${TAG}."
 fi
 
 log "Activating UniWRT"

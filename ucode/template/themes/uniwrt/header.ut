@@ -3,4 +3,4 @@ UniWRT Theme - ucode header shim
 Licensed under Apache-2.0.
 -#}
 {% include("../bootstrap/header.ut"); %}
-<script defer src="{{ media }}/uniwrt.js?v=0.1.6"></script>
+<script defer src="{{ media }}/uniwrt.js?v=0.1.7"></script>

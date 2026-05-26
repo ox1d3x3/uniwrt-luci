@@ -7,11 +7,6 @@ on:
       - '**.md'
       - 'docs/**'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Theme version override for release notes only'
-        required: false
-        default: ''
 
 concurrency:
   group: uniwrt-prerelease-${{ github.ref }}
@@ -25,20 +20,20 @@ env:
 
 jobs:
   build:
-    name: Build universal ${{ matrix.package_type }} on OpenWrt ${{ matrix.openwrt_version }}
+    name: Build ${{ matrix.package_type }} on OpenWrt ${{ matrix.openwrt_version }} ${{ matrix.target }}/${{ matrix.subtarget }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - openwrt_version: '24.10.2'
+          - openwrt_version: '24.10.6'
             package_type: ipk
             target: x86
             subtarget: '64'
           - openwrt_version: '25.12.4'
             package_type: apk
-            target: x86
-            subtarget: '64'
+            target: mediatek
+            subtarget: mt7622
 
     steps:
       - name: Checkout
@@ -67,24 +62,30 @@ jobs:
           chmod +x scripts/build-sdk.sh
           ./scripts/build-sdk.sh
 
-      - name: Normalise artifact names
+      - name: Prepare workflow artifacts
+        if: always()
         run: |
           set -euo pipefail
           mkdir -p upload
-          cp -f dist/build-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}.log upload/build-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}-${{ matrix.package_type }}.log
-          if [ "${{ matrix.package_type }}" = "ipk" ]; then
+          cp -f dist/*.log upload/ 2>/dev/null || true
+          cp -f dist/*.ipk upload/ 2>/dev/null || true
+          cp -f dist/*.apk upload/ 2>/dev/null || true
+          if [ "${{ matrix.package_type }}" = "ipk" ] && [ -f dist/luci-theme-uniwrt.ipk ]; then
             cp -f dist/luci-theme-uniwrt.ipk upload/luci-theme-uniwrt.ipk
             cp -f dist/luci-theme-uniwrt_all.ipk upload/luci-theme-uniwrt_all.ipk
-          else
+          fi
+          if [ "${{ matrix.package_type }}" = "apk" ] && [ -f dist/luci-theme-uniwrt.apk ]; then
             cp -f dist/luci-theme-uniwrt.apk upload/luci-theme-uniwrt.apk
             cp -f dist/luci-theme-uniwrt_all.apk upload/luci-theme-uniwrt_all.apk
+            cp -f dist/luci-theme-uniwrt.apk upload/luci-theme-uniwrt-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}.apk
           fi
+          find upload -maxdepth 1 -type f -printf '- %f\n' | sort || true
 
       - name: Upload workflow artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: uniwrt-${{ matrix.package_type }}-openwrt-${{ matrix.openwrt_version }}
+          name: uniwrt-${{ matrix.package_type }}-openwrt-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}
           path: upload/*
           if-no-files-found: ignore
 
@@ -107,7 +108,7 @@ jobs:
       - name: Generate pre-release notes
         run: |
           short_sha="${GITHUB_SHA::7}"
-          version="$(cat VERSION 2>/dev/null || echo 0.1.6)"
+          version="$(cat VERSION 2>/dev/null || echo 0.1.7)"
           cat > PRE_RELEASE_NOTES.md <<EOF_NOTES
           # UniWRT Theme pre-release
 
@@ -119,9 +120,9 @@ jobs:
           $(git log -n 15 --pretty=format:'- %s (%h)' || true)
 
           ## Artifacts
-          - `luci-theme-uniwrt.ipk` universal package for OpenWrt 24.x / opkg systems
-          - `luci-theme-uniwrt.apk` universal package for OpenWrt 25.x / apk systems
-          - `_all` copies are included as explicit universal package aliases
+          - `luci-theme-uniwrt.ipk` for OpenWrt 24.x / opkg systems
+          - `luci-theme-uniwrt.apk` for OpenWrt 25.x / apk systems
+          - `_all` aliases are included for universal package naming
           - Build logs are attached for troubleshooting
 
           ## Install
@@ -141,7 +142,7 @@ jobs:
           wget https://github.com/${GITHUB_REPOSITORY}/releases/download/pre-release/luci-theme-uniwrt.apk
           apk del luci-theme-uniwrt 2>/dev/null || true
           sed -i '/^luci-theme-uniwrt/d' /etc/apk/world 2>/dev/null || true
-          apk add --allow-untrusted luci-theme-uniwrt.apk
+          apk add --allow-untrusted ./luci-theme-uniwrt.apk
           uci set luci.main.mediaurlbase='/luci-static/uniwrt'
           uci commit luci
           /etc/init.d/uhttpd restart
