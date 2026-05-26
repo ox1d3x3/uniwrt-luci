@@ -1,5 +1,16 @@
 # Changelog
 
+
+## v0.2.5
+
+### Fixed
+
+- Removed duplicate workflow files from `.github/workflows`.
+- Kept only `build-prerelease.yml` as the single source of truth for IPK, APK and GitHub pre-release publishing.
+- Removed the old `build-packages.yml` workflow that still contained the stale package-only validator.
+- Removed the manual placeholder workflow to avoid confusion in the GitHub Actions UI.
+- Fixed the README OpenWrt 24.10 install command typo.
+
 ## v0.2.4
 
 ### Fixed

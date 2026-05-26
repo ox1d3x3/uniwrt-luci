@@ -2,7 +2,7 @@
 #
 # CleanX LuCI Theme
 #
-# v0.2.4 build fix:
+# v0.2.5 build fix:
 # - Uses the normal LuCI package helper through $(TOPDIR)/feeds/luci/luci.mk
 # - Requires the workflow to run scripts/feeds update/install first
 # - Works from package/custom/luci-theme-cleanx inside the OpenWrt SDK
@@ -11,7 +11,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-theme-cleanx
-PKG_VERSION:=0.2.4
+PKG_VERSION:=0.2.5
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>

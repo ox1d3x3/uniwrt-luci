@@ -10,7 +10,7 @@ test -d "$ROOT/ucode/template/themes/cleanx"
 test -x "$ROOT/root/etc/uci-defaults/30_luci-theme-cleanx"
 
 grep -q '^PKG_NAME:=luci-theme-cleanx$' "$MF"
-grep -q '^PKG_VERSION:=0.2.4$' "$MF"
+grep -q '^PKG_VERSION:=0.2.5$' "$MF"
 grep -q '^LUCI_TITLE:=' "$MF"
 grep -q '^LUCI_DEPENDS:=+luci-base$' "$MF"
 grep -q 'include $(TOPDIR)/feeds/luci/luci.mk' "$MF"

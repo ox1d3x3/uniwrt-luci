@@ -2,7 +2,7 @@
 
 CleanX is a clean, responsive LuCI theme for OpenWrt.
 
-This project ZIP is rolled as **v0.2.4** and fixes the broken APK/IPK workflow from the previous package.
+This project ZIP is rolled as **v0.2.5** and fixes the broken APK/IPK workflow from the previous package.
 
 ## Direct verdict
 
@@ -20,9 +20,11 @@ ERROR: Do not use luci.mk for this static theme package. Use package.mk only.
 
 That check was wrong for this project. Real LuCI themes normally use the LuCI package helper, and your working workflow already prepares feeds before building.
 
-## What changed in v0.2.4
+## What changed in v0.2.5
 
-- Uses your working pre-release workflow layout.
+- Keeps only one GitHub Actions workflow: `build-prerelease.yml`.
+- Removes the old duplicate `build-packages.yml` workflow that triggered the broken APK build.
+- Removes the manual placeholder `build-openwrt-packages.yml` so the repository is not confusing.
 - Builds OpenWrt 24.10.6 `.ipk`.
 - Builds OpenWrt 25.12.4 `.apk`.
 - Builds OpenWrt snapshot `.apk`.
@@ -46,7 +48,7 @@ Push the full project to GitHub:
 
 ```sh
 git add .
-git commit -m "CleanX v0.2.4 fix APK IPK prerelease workflow"
+git commit -m "CleanX v0.2.5 keep single prerelease workflow"
 git push
 ```
 
@@ -87,7 +89,7 @@ ssh root@192.168.1.1
 opkg install /tmp/luci-theme-cleanx_*.ipk
 rm -f /tmp/luci-indexcache.*
 rm -rf /tmp/luci-modulecache/
-//etc/init.d/uhttpd restart
+/etc/init.d/uhttpd restart
 ```
 
 ## Notes
