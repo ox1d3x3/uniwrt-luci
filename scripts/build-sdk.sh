@@ -1,104 +1,69 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: Apache-2.0
+set -euo pipefail
 
-set -Eeuo pipefail
+PACKAGE_NAME="${PACKAGE_NAME:-luci-theme-cleanx}"
+PACKAGE_PATH="package/custom/${PACKAGE_NAME}"
 
 OPENWRT_VERSION="${OPENWRT_VERSION:-25.12.4}"
 TARGET="${TARGET:-mediatek}"
 SUBTARGET="${SUBTARGET:-mt7622}"
+
+SDK_BASE_URL="${SDK_BASE_URL:-https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/}"
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR="${WORK_DIR:-$ROOT_DIR/.sdk-$OPENWRT_VERSION-$TARGET-$SUBTARGET}"
-DIST_DIR="$ROOT_DIR/dist"
-SDK_BASE="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${TARGET}/${SUBTARGET}/"
-PKG_NAME="luci-theme-uniwrt"
-CUSTOM_PKG_PATH="package/custom/$PKG_NAME"
-LOG_FILE="$DIST_DIR/build-${OPENWRT_VERSION}-${TARGET}-${SUBTARGET}.log"
+WORK_DIR="${ROOT_DIR}/.sdk-work"
+OUT_DIR="${ROOT_DIR}/package-artifacts"
 
-mkdir -p "$WORK_DIR" "$DIST_DIR"
-: > "$LOG_FILE"
-exec > >(tee -a "$LOG_FILE") 2>&1
+rm -rf "${WORK_DIR}"
+mkdir -p "${WORK_DIR}" "${OUT_DIR}"
 
-fail() {
-	echo "ERROR: $*" >&2
-	echo "Build log saved to: $LOG_FILE" >&2
+cd "${WORK_DIR}"
+
+echo "==> Detecting SDK from ${SDK_BASE_URL}"
+SDK_FILE="$(curl -fsSL "${SDK_BASE_URL}" | grep -oE 'openwrt-sdk-[^"<>]+Linux-x86_64\.tar\.(xz|zst)' | head -n 1)"
+
+if [ -z "${SDK_FILE}" ]; then
+	echo "ERROR: could not detect SDK archive"
 	exit 1
-}
-
-cd "$WORK_DIR"
-
-echo "==> Discovering SDK at $SDK_BASE"
-SDK_INDEX="$(curl --fail --silent --show-error --location --retry 5 --retry-delay 3 --retry-all-errors "$SDK_BASE")"
-SDK_FILE="$(printf '%s\n' "$SDK_INDEX" | grep -oE 'openwrt-sdk-[^"<>]+Linux-x86_64\.tar\.(xz|zst)' | sort -V | tail -n1 || true)"
-[ -n "$SDK_FILE" ] || fail "SDK file not found at $SDK_BASE"
-
-if [ ! -d sdk ]; then
-	echo "==> Downloading $SDK_FILE"
-	rm -f "$SDK_FILE"
-	curl --fail --location --retry 5 --retry-delay 3 --retry-all-errors "$SDK_BASE$SDK_FILE" -o "$SDK_FILE"
-
-	echo "==> Extracting SDK"
-	rm -rf openwrt-sdk-* sdk
-	case "$SDK_FILE" in
-		*.tar.zst) tar --zstd -xf "$SDK_FILE" ;;
-		*.tar.xz)  tar -xf "$SDK_FILE" ;;
-		*) fail "Unsupported SDK archive: $SDK_FILE" ;;
-	esac
-	SDK_TOPDIR="$(find . -maxdepth 1 -type d -name 'openwrt-sdk-*' | sort -V | tail -n1)"
-	[ -n "$SDK_TOPDIR" ] || fail "Extracted SDK directory not found"
-	mv "$SDK_TOPDIR" sdk
 fi
 
-cd sdk
+echo "==> Downloading ${SDK_FILE}"
+curl -fL --retry 5 --retry-delay 5 "${SDK_BASE_URL}${SDK_FILE}" -o "${SDK_FILE}"
 
-echo "==> Preparing LuCI feed dependency"
-./scripts/feeds update luci
-./scripts/feeds install luci-base
+case "${SDK_FILE}" in
+	*.tar.zst) tar --zstd -xf "${SDK_FILE}" ;;
+	*.tar.xz) tar -xf "${SDK_FILE}" ;;
+	*) echo "ERROR: unsupported SDK archive: ${SDK_FILE}"; exit 1 ;;
+esac
 
-echo "==> Copying UniWRT package into SDK package tree: $CUSTOM_PKG_PATH"
-rm -rf "$CUSTOM_PKG_PATH"
-mkdir -p "$CUSTOM_PKG_PATH"
-rsync -a --delete 	--exclude '.git' 	--exclude '.github' 	--exclude '.sdk-*' 	--exclude 'dist' 	--exclude '*.zip' 	"$ROOT_DIR/" "$CUSTOM_PKG_PATH/"
+SDK_DIR="$(find "${WORK_DIR}" -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1)"
+if [ -z "${SDK_DIR}" ]; then
+	echo "ERROR: SDK directory not found"
+	exit 1
+fi
 
-[ -f "$CUSTOM_PKG_PATH/Makefile" ] || fail "Package Makefile missing at $CUSTOM_PKG_PATH/Makefile"
-[ -f "$CUSTOM_PKG_PATH/htdocs/luci-static/uniwrt/cascade.css" ] || fail "Theme assets missing after copy"
+echo "==> Copying package to SDK"
+rm -rf "${SDK_DIR}/${PACKAGE_PATH}"
+mkdir -p "${SDK_DIR}/${PACKAGE_PATH}"
 
-grep -nE 'PKG_NAME|PKG_VERSION|TITLE|BuildPackage' "$CUSTOM_PKG_PATH/Makefile" || true
+rsync -a --delete \
+	--exclude ".git" \
+	--exclude ".github" \
+	--exclude ".sdk-work" \
+	--exclude "package-artifacts" \
+	"${ROOT_DIR}/" "${SDK_DIR}/${PACKAGE_PATH}/"
 
-sed -i "/^CONFIG_PACKAGE_${PKG_NAME}=/d" .config 2>/dev/null || true
-echo "CONFIG_PACKAGE_${PKG_NAME}=m" >> .config
+echo "==> Building ${PACKAGE_NAME}"
+cd "${SDK_DIR}"
 make defconfig
-grep -q "^CONFIG_PACKAGE_${PKG_NAME}=m" .config || {
-	echo "ERROR: ${PKG_NAME} was not registered by OpenWrt defconfig" >&2
-	find "package/custom/${PKG_NAME}" -maxdepth 3 -type f | sort >&2
-	exit 1
-}
+make "${PACKAGE_PATH}/clean" V=s || true
+make "${PACKAGE_PATH}/compile" V=s -j1
 
-echo "==> Building $PKG_NAME for OpenWrt $OPENWRT_VERSION target $TARGET/$SUBTARGET"
-make "package/custom/$PKG_NAME/clean" V=s || true
-make "package/custom/$PKG_NAME/compile" V=s -j"$(nproc)"
+echo "==> Collecting outputs"
+find "${SDK_DIR}/bin" -type f \
+	\( -name "${PACKAGE_NAME}_*.ipk" -o -name "${PACKAGE_NAME}-*.apk" -o -name "${PACKAGE_NAME}_*.apk" \) \
+	-print -exec cp -v {} "${OUT_DIR}/" \;
 
-echo "==> Collecting packages"
-find bin -type f \( -name "${PKG_NAME}_*.ipk" -o -name "${PKG_NAME}-*.apk" -o -name "${PKG_NAME}_*.apk" \) -print -exec cp -f {} "$DIST_DIR/" \;
-
-shopt -s nullglob
-ipks=("$DIST_DIR"/${PKG_NAME}_*.ipk)
-apks=("$DIST_DIR"/${PKG_NAME}-*.apk "$DIST_DIR"/${PKG_NAME}_*.apk)
-
-if [ "${#ipks[@]}" -eq 0 ] && [ "${#apks[@]}" -eq 0 ]; then
-	fail "Build completed but no UniWRT package was found in bin/."
-fi
-
-for f in "${ipks[@]}"; do
-	[ -f "$f" ] || continue
-	cp -f "$f" "$DIST_DIR/${PKG_NAME}.ipk"
-	cp -f "$f" "$DIST_DIR/${PKG_NAME}-${OPENWRT_VERSION}-${TARGET}-${SUBTARGET}.ipk"
-done
-
-for f in "${apks[@]}"; do
-	[ -f "$f" ] || continue
-	cp -f "$f" "$DIST_DIR/${PKG_NAME}.apk"
-	cp -f "$f" "$DIST_DIR/${PKG_NAME}-${OPENWRT_VERSION}-${TARGET}-${SUBTARGET}.apk"
-done
-
-ls -lh "$DIST_DIR"/${PKG_NAME}* 2>/dev/null || true
-echo "==> Done. Output is in $DIST_DIR"
+echo
+echo "Done. Packages:"
+find "${OUT_DIR}" -maxdepth 1 -type f -print | sort

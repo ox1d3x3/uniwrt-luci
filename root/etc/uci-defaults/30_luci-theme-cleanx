@@ -1,0 +1,25 @@
+#!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+#
+# Register CleanX in LuCI.
+# Safe for OpenWrt 24.10/opkg and OpenWrt 25.12+/apk.
+
+uci -q batch <<'EOF'
+set luci.themes.CleanX=/luci-static/cleanx
+set luci.themes.UniWRT=/luci-static/cleanx
+set luci.themes.X1Wrt=/luci-static/cleanx
+commit luci
+EOF
+
+CURRENT_MEDIA="$(uci -q get luci.main.mediaurlbase || true)"
+
+case "$CURRENT_MEDIA" in
+	""|"/luci-static/bootstrap"|"/luci-static/uniwrt"|"/luci-static/x1wrt"|"/luci-static/cleanx")
+		uci -q set luci.main.mediaurlbase='/luci-static/cleanx'
+		uci -q commit luci
+	;;
+esac
+
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null || true
+
+exit 0

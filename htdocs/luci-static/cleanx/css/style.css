@@ -1,0 +1,404 @@
+/*
+ * CleanX LuCI Theme v0.2.3
+ * Build/package fix + defensive layout CSS for wide OpenWrt/LuCI pages.
+ */
+
+:root {
+	--cleanx-bg: #0b1020;
+	--cleanx-panel: rgba(17, 24, 39, 0.94);
+	--cleanx-panel-2: rgba(15, 23, 42, 0.96);
+	--cleanx-border: rgba(148, 163, 184, 0.20);
+	--cleanx-text: #e5e7eb;
+	--cleanx-muted: #94a3b8;
+	--cleanx-accent: #38bdf8;
+	--cleanx-accent-2: #22c55e;
+	--cleanx-danger: #f87171;
+	--cleanx-radius: 18px;
+	--cleanx-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+	--cleanx-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+	--cleanx-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	min-height: 100%;
+	background:
+		radial-gradient(circle at top left, rgba(56, 189, 248, 0.20), transparent 32rem),
+		radial-gradient(circle at top right, rgba(34, 197, 94, 0.16), transparent 30rem),
+		var(--cleanx-bg);
+	color: var(--cleanx-text);
+}
+
+body {
+	margin: 0;
+	min-height: 100%;
+	color: var(--cleanx-text);
+	font-family: var(--cleanx-sans);
+	background: transparent;
+	overflow-x: hidden;
+}
+
+a {
+	color: var(--cleanx-accent);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.cleanx-shell {
+	min-height: 100vh;
+	display: grid;
+	grid-template-rows: auto 1fr auto;
+}
+
+.cleanx-topbar {
+	position: sticky;
+	top: 0;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.8rem 1.1rem;
+	background: rgba(2, 6, 23, 0.82);
+	backdrop-filter: blur(18px);
+	border-bottom: 1px solid var(--cleanx-border);
+}
+
+.cleanx-brand {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	font-weight: 800;
+	letter-spacing: 0.02em;
+}
+
+.cleanx-logo {
+	width: 2.1rem;
+	height: 2.1rem;
+	border-radius: 0.75rem;
+	display: grid;
+	place-items: center;
+	background: linear-gradient(135deg, var(--cleanx-accent), var(--cleanx-accent-2));
+	color: #020617;
+	font-weight: 900;
+	box-shadow: 0 12px 30px rgba(56, 189, 248, 0.25);
+}
+
+.cleanx-version {
+	color: var(--cleanx-muted);
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+
+.cleanx-main {
+	width: min(100%, 1480px);
+	margin: 0 auto;
+	padding: 1.1rem;
+}
+
+.cleanx-footer {
+	color: var(--cleanx-muted);
+	border-top: 1px solid var(--cleanx-border);
+	padding: 1rem 1.1rem;
+	text-align: center;
+	background: rgba(2, 6, 23, 0.5);
+}
+
+/* Core LuCI containers */
+#maincontent,
+.main,
+.cbi-map,
+.cbi-section,
+.cbi-section-node,
+.cbi-section-table,
+.cbi-page-actions,
+.tabs,
+.tabs-content,
+.table,
+.table[width],
+.ifacebox,
+.ifacebox-body,
+.ifacebox-head,
+.node-main-login,
+.node-status-overview,
+.node-network-network,
+.node-system-packages {
+	max-width: 100%;
+}
+
+#maincontent,
+.cbi-map,
+.cbi-section,
+.cbi-section-node,
+.modal,
+.panel,
+.alert-message,
+.notice,
+#xhr_poll_status {
+	background: var(--cleanx-panel);
+	border: 1px solid var(--cleanx-border);
+	border-radius: var(--cleanx-radius);
+	box-shadow: var(--cleanx-shadow);
+}
+
+#maincontent,
+.cbi-map,
+.cbi-section,
+.cbi-section-node {
+	padding: 1rem;
+	margin-bottom: 1rem;
+	overflow: hidden;
+}
+
+/* Wide-table protection: Software, Startup, Processes, Routing, Interfaces */
+table,
+.table,
+.cbi-section-table {
+	width: 100% !important;
+	max-width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	table-layout: auto;
+}
+
+.cleanx-table-scroll,
+.table[width],
+.cbi-section-table,
+.table-responsive {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	overflow-x: auto;
+	overflow-y: visible;
+	-webkit-overflow-scrolling: touch;
+	border-radius: calc(var(--cleanx-radius) - 4px);
+}
+
+.cbi-section-table table,
+.cleanx-table-scroll table {
+	min-width: 720px;
+}
+
+th,
+td,
+.table .tr .td,
+.table .tr .th,
+.cbi-section-table-cell,
+.cbi-section-table-row,
+.cbi-value-field,
+.cbi-value-title {
+	vertical-align: top;
+	word-break: break-word;
+	overflow-wrap: anywhere;
+	max-width: 100%;
+}
+
+th,
+.table .tr .th {
+	color: #dbeafe;
+	font-weight: 800;
+	background: rgba(15, 23, 42, 0.86);
+}
+
+td,
+th {
+	border-color: var(--cleanx-border) !important;
+}
+
+/* Package table readability */
+.node-system-packages table td:first-child,
+.node-system-packages .table .tr .td:first-child {
+	min-width: 18rem;
+	font-family: var(--cleanx-mono);
+}
+
+.node-system-packages table td:nth-child(2),
+.node-system-packages .table .tr .td:nth-child(2) {
+	min-width: 8rem;
+	font-family: var(--cleanx-mono);
+}
+
+.node-system-packages table td:nth-child(3),
+.node-system-packages .table .tr .td:nth-child(3) {
+	min-width: 7rem;
+	white-space: nowrap;
+}
+
+/* Buttons and actions */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+.cbi-button {
+	border: 1px solid rgba(148, 163, 184, 0.28) !important;
+	border-radius: 999px !important;
+	background: rgba(30, 41, 59, 0.94) !important;
+	color: var(--cleanx-text) !important;
+	padding: 0.5rem 0.9rem !important;
+	line-height: 1.2 !important;
+	font-weight: 700;
+	box-shadow: none !important;
+	white-space: nowrap;
+}
+
+.cbi-button-positive,
+.btn.primary,
+.btn-primary {
+	background: linear-gradient(135deg, #0284c7, #16a34a) !important;
+	border-color: transparent !important;
+	color: #fff !important;
+}
+
+.cbi-button-negative,
+.btn.danger,
+.btn-danger {
+	background: rgba(127, 29, 29, 0.92) !important;
+	color: #fee2e2 !important;
+}
+
+/* Forms */
+input,
+select,
+textarea {
+	max-width: 100%;
+	border-radius: 0.8rem !important;
+	border: 1px solid var(--cleanx-border) !important;
+	background: rgba(2, 6, 23, 0.70) !important;
+	color: var(--cleanx-text) !important;
+}
+
+.cbi-value {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	align-items: flex-start;
+	max-width: 100%;
+}
+
+.cbi-value-title {
+	flex: 0 0 15rem;
+	max-width: 100%;
+	color: #cbd5e1;
+	font-weight: 700;
+}
+
+.cbi-value-field {
+	flex: 1 1 24rem;
+	min-width: 0;
+}
+
+/* Realtime graphs and channel analysis */
+svg,
+canvas,
+img,
+embed,
+object {
+	max-width: 100%;
+}
+
+#bwsvg,
+#iwsvg,
+#loadsvg,
+#conns,
+#dns,
+[data-page="status/realtime"] svg,
+[data-page="status/realtime"] canvas,
+.node-status-realtime svg,
+.node-status-realtime canvas {
+	display: block;
+	width: 100% !important;
+	max-width: 100% !important;
+	height: auto;
+	overflow: visible;
+}
+
+.node-status-realtime .cbi-section,
+.node-status-realtime .cbi-section-node,
+.node-status-channel_analysis .cbi-section,
+.node-network-wireless .cbi-section {
+	overflow-x: auto;
+}
+
+/* Routing / raw IP / MAC columns */
+.node-status-routes table,
+.node-network-diagnostics table,
+.node-network-network table,
+.node-status-processes table {
+	font-family: var(--cleanx-mono);
+	font-size: 0.88rem;
+}
+
+.node-status-routes td,
+.node-status-routes th,
+.node-network-diagnostics td,
+.node-network-diagnostics th {
+	white-space: normal;
+}
+
+/* Code, logs and long values */
+pre,
+code,
+kbd,
+samp,
+textarea {
+	font-family: var(--cleanx-mono);
+}
+
+pre,
+code {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+pre {
+	max-width: 100%;
+	overflow-x: auto;
+	background: rgba(2, 6, 23, 0.70);
+	border: 1px solid var(--cleanx-border);
+	border-radius: 1rem;
+	padding: 0.85rem;
+}
+
+/* Mobile */
+@media (max-width: 900px) {
+	.cleanx-main {
+		padding: 0.75rem;
+	}
+
+	#maincontent,
+	.cbi-map,
+	.cbi-section,
+	.cbi-section-node {
+		padding: 0.75rem;
+		border-radius: 1rem;
+	}
+
+	.cbi-value {
+		display: block;
+	}
+
+	.cbi-value-title,
+	.cbi-value-field {
+		width: 100%;
+		flex-basis: auto;
+	}
+
+	button,
+	input[type="button"],
+	input[type="submit"],
+	input[type="reset"],
+	.btn,
+	.cbi-button {
+		margin: 0.15rem 0.1rem;
+	}
+}

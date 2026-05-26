@@ -1,132 +1,90 @@
-# UniWRT LuCI Theme
+# CleanX LuCI Theme
 
-UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses UniWRT branding with a premium network-controller layout, smooth motion, glass cards, and responsive dark/light modes.
+CleanX is a clean, responsive LuCI theme for OpenWrt.
 
-> Project package name: `luci-theme-uniwrt`  
-> Static theme path: `/luci-static/uniwrt`  
-> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.2.0`
+This full project ZIP is rolled as **v0.2.3** and fixes the package build problem from the previous attempt.
 
-## What it includes
+## Direct verdict
 
-- Universal OpenWrt 24.x `.ipk` package for `opkg` systems
-- Universal OpenWrt 25.x `.apk` package for `apk` systems
-- Architecture-independent package metadata for ARM, ARM64, MIPS, x86, x86_64, RISC-V, PowerPC and other OpenWrt targets
-- Automatic GitHub Actions build
-- Automatic moving GitHub **pre-release** named `pre-release`
-- Build logs attached to every pre-release
-- Modern glass-card UI, fixed left controller rail on desktop, rounded dashboard panels, smooth transitions, dark/light/auto mode toggle, mobile responsiveness
-- Compatibility-first structure: UniWRT inherits LuCI Bootstrap ucode templates, then applies its own CSS/JS skin
+For your OpenWrt 25.x router, use the generated **`.apk`** package.
 
-## Repository structure
+The `.ipk` output is only for OpenWrt 24.10.x/opkg compatibility.
+
+## What this fixes
+
+The previous build failed because the project/workflow was treating the theme like a LuCI feed package and/or pulling the LuCI runtime build chain into the SDK.
+
+That caused errors like:
+
+- `ucode/module.h: No such file or directory`
+- `lua.h: No such file or directory`
+- `netlink/msg.h: No such file or directory`
+- `No rule to make target package/feeds/luci/luci-theme-.../compile`
+
+CleanX is a static theme package, so it does **not** need to compile `luci-base`, `lucihttp`, `ucode-mod-html`, `rpcd-mod-luci`, or feed packages.
+
+## Correct build outputs
+
+The GitHub workflow builds:
+
+- OpenWrt `24.10.6` mediatek/mt7622 SDK → `.ipk`
+- OpenWrt `25.12.4` mediatek/mt7622 SDK → `.apk`
+
+## How to use this ZIP
+
+Extract this ZIP and push the whole project to your GitHub repo:
+
+```sh
+git add .
+git commit -m "CleanX v0.2.3 full project package build fix"
+git push
+```
+
+Then run:
 
 ```text
-luci-theme-uniwrt/
-├── .github/workflows/build-prerelease.yml
-├── Makefile
-├── VERSION
-├── htdocs/luci-static/uniwrt/
-│   ├── cascade.css
-│   ├── uniwrt.js
-│   ├── dark.css
-│   ├── favicon.svg
-│   ├── light.css
-│   ├── logo.svg
-│   └── mobile.css
-├── root/etc/uci-defaults/30_luci-theme-uniwrt
-├── scripts/
-│   ├── build-sdk.sh
-│   ├── install.sh
-│   ├── self-test.sh
-│   └── uninstall.sh
-└── ucode/template/themes/uniwrt/
-    ├── footer.ut
-    ├── header.ut
-    └── sysauth.ut
+Actions → Build CleanX OpenWrt packages → Run workflow
 ```
 
-## Quick install from pre-release
+Download the APK artifact for OpenWrt 25.x.
+
+## Install on OpenWrt 25.x
 
 ```sh
-wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci/main/scripts/install.sh | sh
-```
+scp luci-theme-cleanx-*.apk root@192.168.1.1:/tmp/
 
-The installer detects `apk` or `opkg`, downloads the correct universal package, cleans up any failed previous APK world entry, installs UniWRT, activates it, and restarts LuCI.
-
-## Manual install from pre-release
-
-### OpenWrt 24.x / opkg
-
-```sh
-cd /tmp
-wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.ipk
-opkg install luci-theme-uniwrt.ipk
-uci set luci.main.mediaurlbase='/luci-static/uniwrt'
-uci commit luci
+ssh root@192.168.1.1
+apk add --allow-untrusted /tmp/luci-theme-cleanx-*.apk
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+/etc/init.d/rpcd restart
 /etc/init.d/uhttpd restart
 ```
 
-### OpenWrt 25.x / apk
+## Install on OpenWrt 24.10.x
 
 ```sh
-cd /tmp
-apk del luci-theme-uniwrt 2>/dev/null || true
-sed -i '/^luci-theme-uniwrt/d' /etc/apk/world 2>/dev/null || true
-wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.apk
-apk add --allow-untrusted ./luci-theme-uniwrt.apk
-uci set luci.main.mediaurlbase='/luci-static/uniwrt'
-uci commit luci
+scp luci-theme-cleanx_*.ipk root@192.168.1.1:/tmp/
+
+ssh root@192.168.1.1
+opkg install /tmp/luci-theme-cleanx_*.ipk
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+/etc/init.d/rpcd restart
 /etc/init.d/uhttpd restart
 ```
 
-Then hard refresh LuCI with `Ctrl + F5`.
+## Package naming
 
-## Build locally with OpenWrt SDK
+This project now uses the proper future name:
 
-```sh
-sudo apt update
-sudo apt install -y binutils build-essential clang flex bison g++ gawk gcc-multilib gettext git \
-  libncurses-dev libssl-dev python3 python3-setuptools rsync unzip zlib1g-dev \
-  file wget curl tar xz-utils zstd
-
-# Build universal IPK for OpenWrt 24.10.6 / opkg
-OPENWRT_VERSION=24.10.6 TARGET=x86 SUBTARGET=64 ./scripts/build-sdk.sh
-
-# Build universal APK for OpenWrt 25.12.4 / apk
-OPENWRT_VERSION=25.12.4 TARGET=mediatek SUBTARGET=mt7622 ./scripts/build-sdk.sh
+```text
+luci-theme-cleanx
 ```
 
-Packages will be copied into `dist/`.
+The install script still registers legacy aliases for:
 
-## GitHub workflow behaviour
-
-Every push to `main` or `master` builds:
-
-- `luci-theme-uniwrt.ipk`
-- `luci-theme-uniwrt.apk`
-- `luci-theme-uniwrt_all.ipk`
-- `luci-theme-uniwrt_all.apk`
-- `build-*.log` files
-
-Then it deletes and recreates a moving GitHub pre-release called `pre-release`. This gives you one clean testing release every time. After testing, create your stable release manually from the package files you trust.
-
-## Revert to default LuCI theme
-
-```sh
-uci set luci.main.mediaurlbase='/luci-static/bootstrap'
-uci commit luci
-/etc/init.d/uhttpd restart
+```text
+UniWRT
+X1Wrt
 ```
 
-Or fully remove:
-
-```sh
-wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci/main/scripts/uninstall.sh | sh
-```
-
-## Design notes
-
-See [`docs/DESIGN.md`](docs/DESIGN.md) for the UI direction.
-
-## Licence
-
-Apache-2.0
+That prevents old selected theme entries from breaking LuCI immediately after upgrade.

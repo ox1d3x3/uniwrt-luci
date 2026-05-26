@@ -1,36 +1,37 @@
 # SPDX-License-Identifier: Apache-2.0
-
-UNIWRT_PKG_DIR:=$(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+#
+# CleanX LuCI Theme
+#
+# v0.2.3 package build fix:
+# - Static theme package only
+# - No luci.mk
+# - No DEPENDS that force LuCI runtime packages to compile inside SDK
+# - Builds as .ipk on OpenWrt 24.10 SDK
+# - Builds as .apk on OpenWrt 25.12+ SDK
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=luci-theme-uniwrt
-PKG_VERSION:=0.2.0
+PKG_NAME:=luci-theme-cleanx
+PKG_VERSION:=0.2.3
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+PKGARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/luci-theme-uniwrt
-	SECTION:=luci
-	CATEGORY:=LuCI
-	SUBMENU:=4. Themes
-	TITLE:=UniWRT Theme
-	DEPENDS:=+luci-base
+define Package/luci-theme-cleanx
+  SECTION:=luci
+  CATEGORY:=LuCI
+  SUBMENU:=4. Themes
+  TITLE:=CleanX LuCI Theme
 endef
 
-define Package/luci-theme-uniwrt/description
-	UniWRT is a clean, modern, responsive LuCI theme for OpenWrt.
+define Package/luci-theme-cleanx/description
+  CleanX is a clean, modern and responsive LuCI theme for OpenWrt.
 endef
 
 define Build/Prepare
-	rm -rf $(PKG_BUILD_DIR)
-	mkdir -p $(PKG_BUILD_DIR)
-	$(CP) $(UNIWRT_PKG_DIR)/htdocs $(PKG_BUILD_DIR)/
-	$(CP) $(UNIWRT_PKG_DIR)/ucode $(PKG_BUILD_DIR)/
-	$(CP) $(UNIWRT_PKG_DIR)/root $(PKG_BUILD_DIR)/
 endef
 
 define Build/Configure
@@ -39,34 +40,36 @@ endef
 define Build/Compile
 endef
 
-define Package/luci-theme-uniwrt/install
-	$(INSTALL_DIR) $(1)/www/luci-static/uniwrt
-	$(CP) $(PKG_BUILD_DIR)/htdocs/luci-static/uniwrt/* $(1)/www/luci-static/uniwrt/
-	$(INSTALL_DIR) $(1)/usr/share/ucode/luci/template/themes/uniwrt
-	$(CP) $(PKG_BUILD_DIR)/ucode/template/themes/uniwrt/* $(1)/usr/share/ucode/luci/template/themes/uniwrt/
+define Package/luci-theme-cleanx/install
+	$(INSTALL_DIR) $(1)/www/luci-static/cleanx
+	$(CP) ./htdocs/luci-static/cleanx/* $(1)/www/luci-static/cleanx/
+
+	$(INSTALL_DIR) $(1)/usr/share/ucode/luci/template/themes/cleanx
+	$(CP) ./ucode/template/themes/cleanx/* $(1)/usr/share/ucode/luci/template/themes/cleanx/
+
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/root/etc/uci-defaults/30_luci-theme-uniwrt $(1)/etc/uci-defaults/30_luci-theme-uniwrt
+	$(INSTALL_BIN) ./root/etc/uci-defaults/30_luci-theme-cleanx $(1)/etc/uci-defaults/30_luci-theme-cleanx
 endef
 
-define Package/luci-theme-uniwrt/postinst
+define Package/luci-theme-cleanx/postinst
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
-	[ -x /etc/uci-defaults/30_luci-theme-uniwrt ] && /etc/uci-defaults/30_luci-theme-uniwrt || true
-	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+	[ -x /etc/uci-defaults/30_luci-theme-cleanx ] && /etc/uci-defaults/30_luci-theme-cleanx || true
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null || true
 }
 exit 0
 endef
 
-define Package/luci-theme-uniwrt/postrm
+define Package/luci-theme-cleanx/postrm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
+	uci -q delete luci.themes.CleanX
 	uci -q delete luci.themes.UniWRT
-	uci -q delete luci.themes.UniWRTDark
-	uci -q delete luci.themes.UniWRTLight
+	uci -q delete luci.themes.X1Wrt
 	uci commit luci
-	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null || true
 }
 exit 0
 endef
 
-$(eval $(call BuildPackage,luci-theme-uniwrt))
+$(eval $(call BuildPackage,luci-theme-cleanx))
