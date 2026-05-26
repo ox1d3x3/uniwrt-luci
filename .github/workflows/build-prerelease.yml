@@ -1,7 +1,7 @@
-name: Build CleanX pre-release packages
+name: Build UniWRT pre-release packages
 
 env:
-  PACKAGE_NAME: luci-theme-cleanx
+  PACKAGE_NAME: luci-theme-uniwrt
   TARGET: mediatek
   SUBTARGET: mt7622
 
@@ -22,7 +22,7 @@ on:
       - ".github/workflows/build-prerelease.yml"
 
 concurrency:
-  group: cleanx-prerelease-${{ github.ref }}
+  group: uniwrt-prerelease-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -42,27 +42,20 @@ jobs:
             sdk_base_url: https://downloads.openwrt.org/releases/24.10.6/targets/mediatek/mt7622/
             format: ipk
             artifact_suffix: openwrt-24.10.6-mt7622-ipk
-            asset_suffix: all-openwrt-24.10.6
 
           - label: OpenWrt 25.12.4 APK
             sdk_base_url: https://downloads.openwrt.org/releases/25.12.4/targets/mediatek/mt7622/
             format: apk
             artifact_suffix: openwrt-25.12.4-mt7622-apk
-            asset_suffix: all-openwrt-25.12.4
-
-          - label: OpenWrt Snapshot APK
-            sdk_base_url: https://downloads.openwrt.org/snapshots/targets/mediatek/mt7622/
-            format: apk
-            artifact_suffix: openwrt-snapshot-mt7622-apk
-            asset_suffix: all-openwrt-snapshot
 
     steps:
-      - name: Checkout CleanX source
-        uses: actions/checkout@v5
+      - name: Checkout UniWRT source
+        uses: actions/checkout@v4
         with:
           path: theme
 
       - name: Install host dependencies
+        shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
@@ -92,72 +85,74 @@ jobs:
             libelf-dev
 
       - name: Prepare output directories
+        shell: bash
         run: |
           set -euo pipefail
           mkdir -p "${GITHUB_WORKSPACE}/package-artifacts" "${GITHUB_WORKSPACE}/build-logs"
 
+      - name: Run source self-test
+        working-directory: theme
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/self-test.sh
+          ./scripts/self-test.sh
+
       - name: Download OpenWrt SDK
+        shell: bash
+        working-directory: ${{ runner.temp }}
         run: |
           set -euo pipefail
           SDK_BASE_URL="${{ matrix.sdk_base_url }}"
           LOG_FILE="${GITHUB_WORKSPACE}/build-logs/sdk-${{ matrix.artifact_suffix }}.log"
 
           {
-            echo "CleanX SDK download log"
+            echo "UniWRT SDK download log"
             echo "Label: ${{ matrix.label }}"
             echo "SDK base URL: ${SDK_BASE_URL}"
             echo "Started: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 
-            SDK_FILE="$(curl -fsSL "${SDK_BASE_URL}" | grep -oE 'openwrt-sdk-[^"<>]+Linux-x86_64\.tar\.(xz|zst)' | head -n 1)"
+            SDK_FILE="$(curl -fsSL "${SDK_BASE_URL}" | grep -oE 'openwrt-sdk-[^"<>]+Linux-x86_64\.tar\.(xz|zst)' | sort -V | tail -n 1 || true)"
             if [ -z "${SDK_FILE}" ]; then
               echo "ERROR: Could not detect OpenWrt SDK archive from ${SDK_BASE_URL}"
               exit 1
             fi
 
             echo "Detected SDK archive: ${SDK_FILE}"
-            curl -fL "${SDK_BASE_URL}${SDK_FILE}" -o "${SDK_FILE}"
+            curl -fL --retry 5 --retry-delay 3 --retry-all-errors "${SDK_BASE_URL}${SDK_FILE}" -o "${SDK_FILE}"
 
             case "${SDK_FILE}" in
               *.tar.zst) tar --zstd -xf "${SDK_FILE}" ;;
               *.tar.xz)  tar -xf "${SDK_FILE}" ;;
-              *) echo "ERROR: unsupported SDK archive: ${SDK_FILE}"; exit 1 ;;
+              *) echo "ERROR: Unsupported SDK archive: ${SDK_FILE}"; exit 1 ;;
             esac
 
-            SDK_DIR="$(find . -maxdepth 1 -type d -name 'openwrt-sdk-*' | head -n 1)"
+            SDK_DIR="$(find "${{ runner.temp }}" -maxdepth 1 -type d -name 'openwrt-sdk-*' | sort -V | tail -n 1)"
             if [ -z "${SDK_DIR}" ]; then
               echo "ERROR: SDK directory not found after extraction"
               exit 1
             fi
 
+            SDK_DIR="$(cd "${SDK_DIR}" && pwd)"
             echo "SDK_DIR=${SDK_DIR}" >> "${GITHUB_ENV}"
             echo "Using SDK directory: ${SDK_DIR}"
             echo "Finished: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           } 2>&1 | tee "${LOG_FILE}"
 
-      - name: Prepare OpenWrt feeds
-        working-directory: ${{ env.SDK_DIR }}
-        run: |
-          set -euo pipefail
-          LOG_FILE="${GITHUB_WORKSPACE}/build-logs/feeds-${{ matrix.artifact_suffix }}.log"
-          {
-            echo "CleanX feeds log"
-            echo "Label: ${{ matrix.label }}"
-            echo "Started: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            ./scripts/feeds update -a
-            ./scripts/feeds install -a
-            echo "Finished: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          } 2>&1 | tee "${LOG_FILE}"
-
-      - name: Copy CleanX package into SDK
+      - name: Copy UniWRT package into SDK
+        shell: bash
         run: |
           set -euo pipefail
           LOG_FILE="${GITHUB_WORKSPACE}/build-logs/package-copy-${{ matrix.artifact_suffix }}.log"
 
           {
-            echo "CleanX package copy log"
+            echo "UniWRT package copy log"
             echo "Label: ${{ matrix.label }}"
-            rm -rf "${SDK_DIR}/package/custom/${PACKAGE_NAME}"
-            mkdir -p "${SDK_DIR}/package/custom/${PACKAGE_NAME}"
+
+            PKG_DIR="${SDK_DIR}/package/custom/${PACKAGE_NAME}"
+            rm -rf "${PKG_DIR}"
+            mkdir -p "${PKG_DIR}"
+
             rsync -a --delete \
               --exclude ".git" \
               --exclude ".github" \
@@ -165,101 +160,115 @@ jobs:
               --exclude "artifacts" \
               --exclude "package-artifacts" \
               --exclude "build-logs" \
-              theme/ "${SDK_DIR}/package/custom/${PACKAGE_NAME}/"
+              --exclude "dist" \
+              --exclude ".sdk-*" \
+              theme/ "${PKG_DIR}/"
 
-            echo "Makefile package name check:"
-            grep -nE 'PKG_NAME|PKG_VERSION|LUCI_TITLE' "${SDK_DIR}/package/custom/${PACKAGE_NAME}/Makefile"
+            echo "Package Makefile check:"
+            grep -nE 'PKG_NAME|PKG_VERSION|PKG_RELEASE|package.mk|luci.mk|Package/luci-theme|BuildPackage' "${PKG_DIR}/Makefile" || true
+
+            if grep -q 'luci.mk' "${PKG_DIR}/Makefile"; then
+              echo "ERROR: Do not use luci.mk for this static theme package. Use package.mk only."
+              exit 1
+            fi
+
+            if grep -RInE 'C[l]eanX|c[l]eanx|luci-theme-c[l]eanx' "${PKG_DIR}" 2>/dev/null; then
+              echo "ERROR: Old legacy naming still exists. This package must be UniWRT / luci-theme-uniwrt only."
+              exit 1
+            fi
+
+            test -f "${PKG_DIR}/htdocs/luci-static/uniwrt/cascade.css"
+            test -f "${PKG_DIR}/htdocs/luci-static/uniwrt/uniwrt.js"
+            test -f "${PKG_DIR}/ucode/template/themes/uniwrt/header.ut"
+            test -x "${PKG_DIR}/root/etc/uci-defaults/30_luci-theme-uniwrt"
           } 2>&1 | tee "${LOG_FILE}"
 
-      - name: Build CleanX package
+      - name: Build UniWRT package
+        shell: bash
         working-directory: ${{ env.SDK_DIR }}
         run: |
           set -euo pipefail
           LOG_FILE="${GITHUB_WORKSPACE}/build-logs/build-${{ matrix.artifact_suffix }}.log"
 
           {
-            echo "CleanX package build log"
+            echo "UniWRT package build log"
             echo "Label: ${{ matrix.label }}"
             echo "Target: ${TARGET}/${SUBTARGET}"
             echo "Format: ${{ matrix.format }}"
             echo "Commit: ${GITHUB_SHA}"
             echo "Started: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+            # Static theme package: do not update/install LuCI feeds here.
+            # Installing luci-base in the SDK pulls ucode/rpcd/libnl/lua build deps and caused your APK/IPK failures.
+            sed -i "/^CONFIG_PACKAGE_${PACKAGE_NAME}=/d" .config 2>/dev/null || true
+            echo "CONFIG_PACKAGE_${PACKAGE_NAME}=m" >> .config
             make defconfig
-            make "package/${PACKAGE_NAME}/clean" V=s || true
-            make "package/${PACKAGE_NAME}/compile" V=s -j"$(nproc)"
+
+            make "package/custom/${PACKAGE_NAME}/clean" V=s || true
+            make "package/custom/${PACKAGE_NAME}/compile" V=s -j1
+
             echo "Finished: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           } 2>&1 | tee "${LOG_FILE}"
 
-      - name: Collect package artifacts
+      - name: Collect package artifact
+        shell: bash
         run: |
           set -euo pipefail
           LOG_FILE="${GITHUB_WORKSPACE}/build-logs/artifacts-${{ matrix.artifact_suffix }}.log"
 
           {
-            echo "CleanX artifact collection log"
+            echo "UniWRT artifact collection log"
             echo "Label: ${{ matrix.label }}"
 
-            while IFS= read -r -d '' pkg; do
-              base="$(basename "${pkg}")"
-              ext="${base##*.}"
-              stem="${base%.*}"
-              out="${GITHUB_WORKSPACE}/package-artifacts/${stem}-${{ matrix.asset_suffix }}.${ext}"
-              cp -v "${pkg}" "${out}"
-            done < <(find "${SDK_DIR}/bin" -type f \
+            mapfile -d '' packages < <(find "${SDK_DIR}/bin" -type f \
               \( \
                 -name "${PACKAGE_NAME}_*.ipk" \
                 -o -name "${PACKAGE_NAME}-*.apk" \
                 -o -name "${PACKAGE_NAME}_*.apk" \
               \) -print0)
 
+            if [ "${#packages[@]}" -eq 0 ]; then
+              echo "ERROR: No package artifact found under ${SDK_DIR}/bin"
+              find "${SDK_DIR}/bin" -type f | sort | tail -100 || true
+              exit 1
+            fi
+
+            selected=""
+            for pkg in "${packages[@]}"; do
+              case "${pkg}" in
+                *.${{ matrix.format }}) selected="${pkg}"; break ;;
+              esac
+            done
+
+            if [ -z "${selected}" ]; then
+              echo "ERROR: No ${{ matrix.format }} package was produced. Found:"
+              printf '%s\n' "${packages[@]}"
+              exit 1
+            fi
+
+            cp -v "${selected}" "${GITHUB_WORKSPACE}/package-artifacts/${PACKAGE_NAME}.${{ matrix.format }}"
+            cp -v "${selected}" "${GITHUB_WORKSPACE}/package-artifacts/${PACKAGE_NAME}-${{ matrix.artifact_suffix }}.${{ matrix.format }}"
+
             echo "Collected package artifacts:"
             ls -lah "${GITHUB_WORKSPACE}/package-artifacts"
-
-            if [ "${{ matrix.format }}" = "ipk" ]; then
-              test "$(find "${GITHUB_WORKSPACE}/package-artifacts" -type f -name '*.ipk' | wc -l)" -gt 0
-            fi
-
-            if [ "${{ matrix.format }}" = "apk" ]; then
-              test "$(find "${GITHUB_WORKSPACE}/package-artifacts" -type f -name '*.apk' | wc -l)" -gt 0
-            fi
           } 2>&1 | tee "${LOG_FILE}"
 
-      - name: Write build summary
-        if: always()
-        run: |
-          set -euo pipefail
-          SUMMARY_FILE="${GITHUB_WORKSPACE}/build-logs/summary-${{ matrix.artifact_suffix }}.md"
-          {
-            echo "# CleanX build summary"
-            echo
-            echo "- Label: ${{ matrix.label }}"
-            echo "- Target: ${TARGET}/${SUBTARGET}"
-            echo "- Package format: ${{ matrix.format }}"
-            echo "- Commit: ${GITHUB_SHA}"
-            echo "- Workflow run: ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
-            echo "- Finished: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-            echo
-            echo "## Package files"
-            find "${GITHUB_WORKSPACE}/package-artifacts" -maxdepth 1 -type f -printf '- %f\n' 2>/dev/null || true
-            echo
-            echo "## Log files"
-            find "${GITHUB_WORKSPACE}/build-logs" -maxdepth 1 -type f -printf '- %f\n' | sort
-          } > "${SUMMARY_FILE}"
-
-      - name: Upload package artifacts
+      - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cleanx-packages-${{ matrix.artifact_suffix }}
+          name: uniwrt-package-${{ matrix.artifact_suffix }}
           path: package-artifacts/*
           if-no-files-found: error
+          retention-days: 14
 
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cleanx-logs-${{ matrix.artifact_suffix }}
+          name: uniwrt-logs-${{ matrix.artifact_suffix }}
           path: build-logs/*
           if-no-files-found: warn
+          retention-days: 14
 
   prerelease:
     name: Publish GitHub pre-release
@@ -268,15 +277,16 @@ jobs:
     if: ${{ success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') }}
 
     steps:
-      - name: Checkout CleanX source
-        uses: actions/checkout@v5
+      - name: Checkout UniWRT source
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Download package and log artifacts
+      - name: Download package artifacts
         uses: actions/download-artifact@v4
         with:
           path: release-assets
+          pattern: uniwrt-package-*
           merge-multiple: true
 
       - name: Generate release notes and checksums
@@ -287,110 +297,94 @@ jobs:
 
           VERSION="$(tr -d '[:space:]' < VERSION)"
           VERSION="${VERSION#v}"
-          TAG="v${VERSION}-pre.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
-          TITLE="CleanX v${VERSION} pre-release #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+          mkdir -p release-upload
 
-          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
-          echo "title=${TITLE}" >> "${GITHUB_OUTPUT}"
+          IPK_SRC="$(find release-assets -maxdepth 1 -type f -name '${PACKAGE_NAME}.ipk' | head -n 1 || true)"
+          APK_SRC="$(find release-assets -maxdepth 1 -type f -name '${PACKAGE_NAME}.apk' | head -n 1 || true)"
 
-          mkdir -p release-assets
-
-          (
-            cd release-assets
-            find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -printf '%f\0' \
-              | sort -z \
-              | xargs -0 -r sha256sum
-          ) > release-assets/SHA256SUMS.txt
-
-          CHANGELOG_SECTION=""
-          if [ -f CHANGELOG.md ]; then
-            CHANGELOG_SECTION="$(awk -v ver="${VERSION}" '
-              $0 ~ "^## \\[?v?" ver "\\]?" { capture=1; next }
-              capture && $0 ~ "^## " { exit }
-              capture { print }
-            ' CHANGELOG.md | sed '/^[[:space:]]*$/d' || true)"
-          fi
-
-          if [ -z "${CHANGELOG_SECTION}" ]; then
-            CHANGELOG_SECTION="- Automated CleanX SDK build for testing."
-          fi
-
-          LAST_STABLE_TAG="$(git tag --list 'v[0-9]*' --sort=-v:refname | grep -v -- '-pre\.' | head -n 1 || true)"
-          if [ -n "${LAST_STABLE_TAG}" ]; then
-            COMMIT_RANGE="${LAST_STABLE_TAG}..HEAD"
-          else
-            COMMIT_RANGE="HEAD"
-          fi
-
-          RECENT_COMMITS="$(git log ${COMMIT_RANGE} --pretty=format:'- `%h` %s' --no-merges -n 30 || true)"
-          if [ -z "${RECENT_COMMITS}" ]; then
-            RECENT_COMMITS="- No extra commit summary available."
-          fi
-
-          PACKAGE_LIST="$(find release-assets -maxdepth 1 -type f \( -name '*.ipk' -o -name '*.apk' \) -printf '- `%f`\n' | sort || true)"
-          if [ -z "${PACKAGE_LIST}" ]; then
-            echo "ERROR: no APK/IPK files found in release-assets"
-            find release-assets -maxdepth 1 -type f -print
+          if [ -z "${IPK_SRC}" ]; then
+            echo "ERROR: luci-theme-uniwrt.ipk missing from artifacts"
+            find release-assets -maxdepth 2 -type f -print || true
             exit 1
           fi
 
-          LOG_LIST="$(find release-assets -maxdepth 1 -type f \( -name '*.log' -o -name 'summary-*.md' \) -printf '- `%f`\n' | sort || true)"
-          if [ -z "${LOG_LIST}" ]; then
-            LOG_LIST="- No log files were collected."
+          if [ -z "${APK_SRC}" ]; then
+            echo "ERROR: luci-theme-uniwrt.apk missing from artifacts"
+            find release-assets -maxdepth 2 -type f -print || true
+            exit 1
           fi
 
-          cat > release-notes.md <<EOF
-          # CleanX v${VERSION} pre-release
+          cp -f "${IPK_SRC}" release-upload/${PACKAGE_NAME}.ipk
+          cp -f "${APK_SRC}" release-upload/${PACKAGE_NAME}.apk
 
-          This is an automated **pre-release** generated by GitHub Actions after the OpenWrt SDK builds completed successfully.
+          (
+            cd release-upload
+            sha256sum ${PACKAGE_NAME}.ipk ${PACKAGE_NAME}.apk > SHA256SUMS.txt
+          )
 
-          ## Changes, fixes and features
+          cat > RELEASE_NOTES.md <<EOF_NOTES
+          # UniWRT v${VERSION} rolling pre-release
 
-          ${CHANGELOG_SECTION}
+          Automated UniWRT LuCI theme package build.
 
-          ## Built packages
+          ## Assets
 
-          ${PACKAGE_LIST}
+          - \`${PACKAGE_NAME}.apk\` for OpenWrt 25.12.4 / APK-based builds.
+          - \`${PACKAGE_NAME}.ipk\` for OpenWrt 24.10.6 / OPKG-based builds.
+          - \`SHA256SUMS.txt\` for checksums.
 
-          Architecture note: CleanX is a LuCI theme package with no compiled binaries. The built files are marked `all` and are intended to be architecture-independent across OpenWrt targets; use the package format that matches your OpenWrt version.
+          ## Install on OpenWrt 25.12.4
 
-          ## Build logs included
-
-          ${LOG_LIST}
-
-          ## Recent commits
-
-          ${RECENT_COMMITS}
-
-          ## Testing notes
-
-          Use the OpenWrt package format that matches your router firmware:
-
-          - OpenWrt 24.10.x and older: use the file ending in `.ipk`.
-          - OpenWrt 25.12+ and release builds: use the release `.apk`.
-          - OpenWrt snapshot: use the snapshot `.apk` only on a matching snapshot build.
-
-          After installing, clear LuCI cache and hard refresh the browser:
-
-          ```sh
+          \`\`\`sh
+          cd /tmp
+          apk del ${PACKAGE_NAME} 2>/dev/null || true
+          sed -i '/^${PACKAGE_NAME}/d' /etc/apk/world 2>/dev/null || true
+          wget https://github.com/${GITHUB_REPOSITORY}/releases/download/pre-release/${PACKAGE_NAME}.apk
+          apk add --allow-untrusted ./${PACKAGE_NAME}.apk
+          uci set luci.main.mediaurlbase='/luci-static/uniwrt'
+          uci commit luci
           rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
           /etc/init.d/uhttpd restart
-          ```
+          \`\`\`
 
-          If testing passes, create a stable release manually from GitHub using the tested package assets.
-          EOF
+          ## Install on OpenWrt 24.10.6
 
-          cp release-notes.md release-assets/RELEASE_NOTES.txt
+          \`\`\`sh
+          cd /tmp
+          wget https://github.com/${GITHUB_REPOSITORY}/releases/download/pre-release/${PACKAGE_NAME}.ipk
+          opkg install ./${PACKAGE_NAME}.ipk
+          uci set luci.main.mediaurlbase='/luci-static/uniwrt'
+          uci commit luci
+          rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
+          /etc/init.d/uhttpd restart
+          \`\`\`
+          EOF_NOTES
 
-      - name: Create GitHub pre-release
+          cp RELEASE_NOTES.md release-upload/RELEASE_NOTES.txt
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Replace moving pre-release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release_meta.outputs.version }}
         run: |
           set -euo pipefail
-          gh release create "${{ steps.release_meta.outputs.tag }}" \
-            release-assets/* \
+
+          # No custom PAT/secret required. This uses GitHub's built-in workflow token.
+          # Required repo setting: Settings > Actions > General > Workflow permissions > Read and write permissions.
+          gh release delete pre-release --yes --cleanup-tag 2>/dev/null || true
+          git push origin :refs/tags/pre-release 2>/dev/null || true
+
+          mapfile -t assets < <(find release-upload -maxdepth 1 -type f | sort)
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "ERROR: No release asset files were prepared."
+            exit 1
+          fi
+
+          gh release create pre-release "${assets[@]}" \
             --repo "${GITHUB_REPOSITORY}" \
             --target "${GITHUB_SHA}" \
-            --title "${{ steps.release_meta.outputs.title }}" \
-            --notes-file release-notes.md \
+            --title "UniWRT v${VERSION} rolling pre-release #${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" \
+            --notes-file RELEASE_NOTES.md \
             --prerelease

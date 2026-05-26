@@ -1,45 +1,19 @@
 # Changelog
 
+## 0.2.8
 
-## v0.2.5
+- Renamed the project cleanly to UniWRT everywhere.
+- Removed all legacy project/release/workflow naming.
+- Removed duplicate package build workflow entry so only one package workflow runs.
+- Fixed GitHub pre-release publishing to use the built-in `${{ github.token }}` with `contents: write` only, no custom PAT secret.
+- Fixed static theme packaging to use `package.mk` only, never `luci.mk`.
+- Removed `DEPENDS:=+luci-base` and feed installation from the SDK build path to stop LuCI/ucode/rpcd/libnl/lua dependency builds from breaking APK/IPK packaging.
+- Builds exactly the required package formats: OpenWrt 24.10.6 IPK and OpenWrt 25.12.4 APK for mediatek/mt7622.
+- Publishes a moving GitHub pre-release named `pre-release` with clean package assets.
 
-### Fixed
+## 0.2.0
 
-- Removed duplicate workflow files from `.github/workflows`.
-- Kept only `build-prerelease.yml` as the single source of truth for IPK, APK and GitHub pre-release publishing.
-- Removed the old `build-packages.yml` workflow that still contained the stale package-only validator.
-- Removed the manual placeholder workflow to avoid confusion in the GitHub Actions UI.
-- Fixed the README OpenWrt 24.10 install command typo.
-
-## v0.2.4
-
-### Fixed
-
-- Replaced the broken custom package-only workflow with the proven CleanX pre-release workflow style.
-- Removed the bad validation logic that rejected `luci.mk`.
-- Changed the package Makefile to use the correct LuCI helper from the SDK feeds:
-
-  ```make
-  include $(TOPDIR)/feeds/luci/luci.mk
-  ```
-
-- Added feed preparation before package build:
-
-  ```sh
-  ./scripts/feeds update -a
-  ./scripts/feeds install -a
-  ```
-
-- Builds:
-  - OpenWrt 24.10.6 `.ipk`
-  - OpenWrt 25.12.4 `.apk`
-  - OpenWrt snapshot `.apk`
-
-- Publishes package assets and build logs to a GitHub pre-release.
-
-## v0.2.3
-
-### Fixed
-
-- Initial full project scaffold.
-- This version had a broken workflow validator and should not be used.
+- Switched GitHub Actions back to OpenWrt SDK builds for mediatek/mt7622 only.
+- Builds IPK for OpenWrt 24.10.6 and APK for OpenWrt 25.12.4.
+- Copies the package into `package/custom/luci-theme-uniwrt` and builds the matching SDK target.
+- Removed broad all-architecture and manual package generation from the CI path.

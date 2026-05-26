@@ -1,104 +1,98 @@
-# CleanX LuCI Theme
+# UniWRT LuCI Theme
 
-CleanX is a clean, responsive LuCI theme for OpenWrt.
+UniWRT is a clean, modern, responsive LuCI theme for OpenWrt.
 
-This project ZIP is rolled as **v0.2.5** and fixes the broken APK/IPK workflow from the previous package.
+## Package names
 
-## Direct verdict
+- Project/theme name: `UniWRT`
+- Package name: `luci-theme-uniwrt`
+- Static assets: `/www/luci-static/uniwrt`
+- LuCI templates: `/usr/share/ucode/luci/template/themes/uniwrt`
 
-For your OpenWrt 25.x router, use the generated **`.apk`** package.
+## Rolling update v0.2.8
 
-The `.ipk` output is for OpenWrt 24.10.x/opkg compatibility.
+This update fixes the package/release workflow mess:
 
-## What was wrong before
+- Removed all old legacy naming.
+- Removed duplicated package workflow file.
+- Builds both required package formats:
+  - `luci-theme-uniwrt.ipk` for OpenWrt 24.10.6 / OPKG.
+  - `luci-theme-uniwrt.apk` for OpenWrt 25.12.4 / APK.
+- Publishes a moving GitHub pre-release named `pre-release`.
+- Uses GitHub's built-in `${{ github.token }}` with `contents: write`.
+- Does not use a custom PAT or custom secret.
+- Uses `package.mk` only. This package must not use `luci.mk`.
+- Does not build `luci-base`, `ucode`, `rpcd`, `lucihttp`, `libnl`, or Lua dependencies in the SDK path.
 
-The previous workflow failed before build because it had a bad self-check:
+## Important before pushing
 
-```text
-ERROR: Do not use luci.mk for this static theme package. Use package.mk only.
-```
-
-That check was wrong for this project. Real LuCI themes normally use the LuCI package helper, and your working workflow already prepares feeds before building.
-
-## What changed in v0.2.5
-
-- Keeps only one GitHub Actions workflow: `build-prerelease.yml`.
-- Removes the old duplicate `build-packages.yml` workflow that triggered the broken APK build.
-- Removes the manual placeholder `build-openwrt-packages.yml` so the repository is not confusing.
-- Builds OpenWrt 24.10.6 `.ipk`.
-- Builds OpenWrt 25.12.4 `.apk`.
-- Builds OpenWrt snapshot `.apk`.
-- Publishes packages and logs to a GitHub pre-release.
-- Uses the correct LuCI package helper:
-
-```make
-include $(TOPDIR)/feeds/luci/luci.mk
-```
-
-- Removes the broken validator that failed on its own comment.
-- Keeps package name as:
-
-```text
-luci-theme-cleanx
-```
-
-## How to build
-
-Push the full project to GitHub:
+Delete old duplicate workflow files from the repo first. If they remain in GitHub, GitHub will still show/run them.
 
 ```sh
-git add .
-git commit -m "CleanX v0.2.5 keep single prerelease workflow"
+rm -f .github/workflows/build-openwrt-packages.yml
+rm -f .github/workflows/build-packages.yml
+rm -f .github/workflows/openwrt-25-apk.yml
+rm -f .github/workflows/apk-build.yml
+rm -f .github/workflows/ipk-build.yml
+```
+
+Then push this project:
+
+```sh
+chmod +x scripts/*.sh
+./scripts/clean-repo-before-push.sh
+git add -A
+git commit -m "Roll UniWRT v0.2.8 package workflow fix"
 git push
 ```
 
-Then run:
+## GitHub release permissions
 
-```text
-Actions → Build CleanX pre-release packages → Run workflow
+No custom GitHub token is required.
+
+The workflow uses:
+
+```yaml
+permissions:
+  contents: write
+  actions: read
 ```
 
-The workflow will publish a GitHub pre-release with:
+and:
 
-- OpenWrt 24.10.6 IPK
-- OpenWrt 25.12.4 APK
-- OpenWrt snapshot APK
-- Build logs
-- SHA256SUMS
+```yaml
+env:
+  GH_TOKEN: ${{ github.token }}
+```
 
-## Install on OpenWrt 25.x
+If GitHub still throws `HTTP 403: Resource not accessible by integration`, fix the repo setting:
+
+`Settings > Actions > General > Workflow permissions > Read and write permissions`
+
+## Install from the moving pre-release
+
+OpenWrt 25.12.4 / APK:
 
 ```sh
-scp luci-theme-cleanx-*.apk root@192.168.1.1:/tmp/
-
-ssh root@192.168.1.1
-apk add --allow-untrusted /tmp/luci-theme-cleanx-*.apk
-rm -f /tmp/luci-indexcache.*
-rm -rf /tmp/luci-modulecache/
+cd /tmp
+apk del luci-theme-uniwrt 2>/dev/null || true
+sed -i '/^luci-theme-uniwrt/d' /etc/apk/world 2>/dev/null || true
+wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.apk
+apk add --allow-untrusted ./luci-theme-uniwrt.apk
+uci set luci.main.mediaurlbase='/luci-static/uniwrt'
+uci commit luci
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 /etc/init.d/uhttpd restart
 ```
 
-If your firmware uses a different LAN IP, replace `192.168.1.1`.
-
-## Install on OpenWrt 24.10.x
+OpenWrt 24.10.6 / OPKG:
 
 ```sh
-scp luci-theme-cleanx_*.ipk root@192.168.1.1:/tmp/
-
-ssh root@192.168.1.1
-opkg install /tmp/luci-theme-cleanx_*.ipk
-rm -f /tmp/luci-indexcache.*
-rm -rf /tmp/luci-modulecache/
+cd /tmp
+wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.ipk
+opkg install ./luci-theme-uniwrt.ipk
+uci set luci.main.mediaurlbase='/luci-static/uniwrt'
+uci commit luci
+rm -rf /tmp/luci-indexcache /tmp/luci-modulecache
 /etc/init.d/uhttpd restart
 ```
-
-## Notes
-
-The package still registers legacy aliases for:
-
-```text
-UniWRT
-X1Wrt
-```
-
-That helps old selected theme entries avoid breaking immediately after upgrading to CleanX.

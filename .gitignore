@@ -1,9 +1,4 @@
-.sdk-work/
-package-artifacts/
-build-logs/
+dist/
+.sdk-*/
 *.zip
-*.tar
-*.tar.zst
-*.tar.xz
-openwrt-sdk-*/
 .DS_Store

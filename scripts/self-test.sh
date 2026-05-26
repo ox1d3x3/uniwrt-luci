@@ -13,41 +13,33 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 root = Path('.')
 version = root.joinpath('VERSION').read_text().strip()
-assert version == '0.2.0', f'Unexpected VERSION: {version}'
+assert version == '0.2.8', f'Unexpected VERSION: {version}'
 makefile = root.joinpath('Makefile').read_text()
-assert 'PKG_VERSION:=0.2.0' in makefile
-assert 'UNIWRT_PKG_DIR' in makefile
-assert 'include $(INCLUDE_DIR)/package.mk' in makefile
-assert '$(eval $(call BuildPackage,luci-theme-uniwrt))' in makefile
-assert 'DEPENDS:=+luci-base' in makefile
-assert 'luci-theme-bootstrap' not in makefile
-build = root.joinpath('scripts/build-sdk.sh').read_text()
-assert 'package/custom/$PKG_NAME/compile' in build
-assert './scripts/feeds install luci-base' in build
-assert './scripts/feeds install -a' not in build
 workflow = root.joinpath('.github/workflows/build-prerelease.yml').read_text()
-assert '25.12.4' in workflow and '24.10.6' in workflow
-assert 'target: x86' not in workflow
-assert 'mediatek' in workflow and 'mt7622' in workflow
-assert 'package/custom/${PACKAGE_NAME}/compile' in workflow
+assert ('C' + 'leanX') not in makefile
+assert ('c' + 'leanx') not in makefile
+assert ('luci-theme-' + 'old-legacy-name') not in makefile
+assert 'include $(INCLUDE_DIR)/package.mk' in makefile
+assert 'luci.mk' not in makefile
+assert 'DEPENDS:=+luci-base' not in makefile
+assert 'PKG_NAME:=luci-theme-uniwrt' in makefile
+assert 'PKG_VERSION:=0.2.8' in makefile
+assert 'PKGARCH:=all' in makefile
+assert '$(eval $(call BuildPackage,luci-theme-uniwrt))' in makefile
+assert 'Build UniWRT pre-release packages' in workflow
+assert ('C' + 'leanX') not in workflow
+assert ('c' + 'leanx') not in workflow
+assert ('CLEAN' + 'X_RELEASE_TOKEN') not in workflow
+assert 'secrets.' not in workflow
+assert 'GH_TOKEN: ${{ github.token }}' in workflow
+assert 'contents: write' in workflow
 assert './scripts/feeds install -a' not in workflow
+assert './scripts/feeds install luci-base' not in workflow
 assert 'luci-theme-uniwrt.apk' in workflow and 'luci-theme-uniwrt.ipk' in workflow
 for name in ['logo.svg', 'favicon.svg']:
     ET.parse(root / 'htdocs/luci-static/uniwrt' / name)
+assert not (root / '.github/workflows/build-openwrt-packages.yml').exists()
 print('static-ok')
 PYINNER
-
-mock="/tmp/uniwrt-sdk-mock-$$"
-rm -rf "$mock"
-mkdir -p "$mock/openwrt-sdk-test/bin" "$mock/openwrt-sdk-test/package/custom"
-printf 'ok
-' > "$mock/openwrt-sdk-test/README"
-tar -C "$mock" -caf "$mock/openwrt-sdk-test.Linux-x86_64.tar.zst" openwrt-sdk-test
-rm -rf "$mock/openwrt-sdk-test" "$mock/sdk"
-tar --zstd -xf "$mock/openwrt-sdk-test.Linux-x86_64.tar.zst" -C "$mock"
-SDK_TOPDIR="$(find "$mock" -maxdepth 1 -type d -name 'openwrt-sdk-*' | sort -V | tail -n1)"
-mv "$SDK_TOPDIR" "$mock/sdk"
-test -f "$mock/sdk/README"
-rm -rf "$mock"
 
 echo 'self-test-ok'
