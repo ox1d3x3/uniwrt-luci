@@ -25,7 +25,7 @@ env:
 
 jobs:
   build:
-    name: Build ${{ matrix.package_type }} on OpenWrt ${{ matrix.openwrt_version }}
+    name: Build universal ${{ matrix.package_type }} on OpenWrt ${{ matrix.openwrt_version }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -48,7 +48,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential clang flex bison g++ gawk gcc-multilib gettext git \
+            binutils build-essential clang flex bison g++ gawk gcc-multilib gettext git \
             libncurses-dev libssl-dev python3 python3-setuptools rsync unzip \
             zlib1g-dev file wget curl tar xz-utils zstd
 
@@ -62,19 +62,22 @@ jobs:
           OPENWRT_VERSION: ${{ matrix.openwrt_version }}
           TARGET: ${{ matrix.target }}
           SUBTARGET: ${{ matrix.subtarget }}
-          WORK_DIR: ${{ runner.temp }}/uniwrt-sdk-${{ matrix.openwrt_version }}
+          WORK_DIR: ${{ runner.temp }}/uniwrt-sdk-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}
         run: |
           chmod +x scripts/build-sdk.sh
           ./scripts/build-sdk.sh
 
       - name: Normalise artifact names
         run: |
+          set -euo pipefail
           mkdir -p upload
-          cp -f dist/build-${{ matrix.openwrt_version }}.log upload/build-${{ matrix.openwrt_version }}-${{ matrix.package_type }}.log
+          cp -f dist/build-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}.log upload/build-${{ matrix.openwrt_version }}-${{ matrix.target }}-${{ matrix.subtarget }}-${{ matrix.package_type }}.log
           if [ "${{ matrix.package_type }}" = "ipk" ]; then
             cp -f dist/luci-theme-uniwrt.ipk upload/luci-theme-uniwrt.ipk
+            cp -f dist/luci-theme-uniwrt_all.ipk upload/luci-theme-uniwrt_all.ipk
           else
             cp -f dist/luci-theme-uniwrt.apk upload/luci-theme-uniwrt.apk
+            cp -f dist/luci-theme-uniwrt_all.apk upload/luci-theme-uniwrt_all.apk
           fi
 
       - name: Upload workflow artifacts
@@ -104,7 +107,7 @@ jobs:
       - name: Generate pre-release notes
         run: |
           short_sha="${GITHUB_SHA::7}"
-          version="$(cat VERSION 2>/dev/null || echo 0.1.5)"
+          version="$(cat VERSION 2>/dev/null || echo 0.1.6)"
           cat > PRE_RELEASE_NOTES.md <<EOF_NOTES
           # UniWRT Theme pre-release
 
@@ -116,8 +119,9 @@ jobs:
           $(git log -n 15 --pretty=format:'- %s (%h)' || true)
 
           ## Artifacts
-          - `luci-theme-uniwrt.ipk` for OpenWrt 24.10.x / opkg systems
-          - `luci-theme-uniwrt.apk` for OpenWrt 25.12.x / apk systems
+          - `luci-theme-uniwrt.ipk` universal package for OpenWrt 24.x / opkg systems
+          - `luci-theme-uniwrt.apk` universal package for OpenWrt 25.x / apk systems
+          - `_all` copies are included as explicit universal package aliases
           - Build logs are attached for troubleshooting
 
           ## Install
@@ -135,6 +139,8 @@ jobs:
           ```sh
           cd /tmp
           wget https://github.com/${GITHUB_REPOSITORY}/releases/download/pre-release/luci-theme-uniwrt.apk
+          apk del luci-theme-uniwrt 2>/dev/null || true
+          sed -i '/^luci-theme-uniwrt/d' /etc/apk/world 2>/dev/null || true
           apk add --allow-untrusted luci-theme-uniwrt.apk
           uci set luci.main.mediaurlbase='/luci-static/uniwrt'
           uci commit luci
@@ -157,6 +163,8 @@ jobs:
 
           test -f release-upload/luci-theme-uniwrt.ipk
           test -f release-upload/luci-theme-uniwrt.apk
+          test -f release-upload/luci-theme-uniwrt_all.ipk
+          test -f release-upload/luci-theme-uniwrt_all.apk
 
       - name: Replace moving pre-release
         env:

@@ -4,11 +4,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-theme-uniwrt
-PKG_VERSION:=0.1.5
+PKG_VERSION:=0.1.6
 PKG_RELEASE:=1
 PKG_LICENSE:=Apache-2.0
 PKG_MAINTAINER:=Mahabub X <mgrsubhany7@gmail.com>
-PKGARCH:=all
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -18,6 +17,7 @@ define Package/luci-theme-uniwrt
   SUBMENU:=4. Themes
   TITLE:=UniWRT Theme - modern LuCI controller skin
   DEPENDS:=+luci-base +luci-theme-bootstrap
+  PKGARCH:=all
 endef
 
 define Package/luci-theme-uniwrt/description

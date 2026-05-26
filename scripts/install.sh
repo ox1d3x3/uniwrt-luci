@@ -1,11 +1,11 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
-# Quick installer for testing UniWRT from GitHub releases.
 
 set -eu
 
 REPO="${REPO:-ox1d3x3/uniwrt-luci}"
 TAG="${TAG:-pre-release}"
+PKG_NAME="luci-theme-uniwrt"
 TMP_DIR="/tmp/uniwrt-install"
 mkdir -p "$TMP_DIR"
 
@@ -22,23 +22,39 @@ else
 	fail "Neither apk nor opkg was found. This does not look like a supported OpenWrt system."
 fi
 
-URL="https://github.com/${REPO}/releases/download/${TAG}/luci-theme-uniwrt.${EXT}"
-PKG="${TMP_DIR}/luci-theme-uniwrt.${EXT}"
+log "Detected package manager: ${PM}"
+log "Kernel: $(uname -m 2>/dev/null || echo unknown)"
+[ -r /etc/openwrt_release ] && . /etc/openwrt_release && log "OpenWrt target: ${DISTRIB_TARGET:-unknown}"
 
-log "Downloading UniWRT ${EXT} package from ${REPO} ${TAG}"
-if command -v uclient-fetch >/dev/null 2>&1; then
-	uclient-fetch -O "$PKG" "$URL"
-elif command -v wget >/dev/null 2>&1; then
-	wget -O "$PKG" "$URL"
-else
-	fail "Need uclient-fetch or wget to download the package."
-fi
+fetch_one() {
+	name="$1"
+	url="https://github.com/${REPO}/releases/download/${TAG}/${name}"
+	out="${TMP_DIR}/${name}"
+	rm -f "$out"
+	log "Trying ${name}"
+	if command -v uclient-fetch >/dev/null 2>&1; then
+		uclient-fetch -q -O "$out" "$url" >/dev/null 2>&1 || return 1
+	elif command -v wget >/dev/null 2>&1; then
+		wget -q -O "$out" "$url" || return 1
+	else
+		fail "Need uclient-fetch or wget to download the package."
+	fi
+	[ -s "$out" ] || return 1
+	PKG_PATH="$out"
+	return 0
+}
 
-log "Installing package with ${PM}"
+PKG_PATH=""
+fetch_one "${PKG_NAME}.${EXT}" || fetch_one "${PKG_NAME}_all.${EXT}" || fail "Could not download UniWRT ${EXT} package from ${REPO} ${TAG}."
+
+log "Installing ${PKG_PATH}"
 if [ "$PM" = "apk" ]; then
-	apk add --allow-untrusted "$PKG"
+	# Clean up a previously failed architecture-specific install request from /etc/apk/world.
+	apk del "$PKG_NAME" >/dev/null 2>&1 || true
+	[ -f /etc/apk/world ] && sed -i "/^${PKG_NAME}/d" /etc/apk/world || true
+	apk add --allow-untrusted "$PKG_PATH"
 else
-	opkg install "$PKG"
+	opkg install "$PKG_PATH"
 fi
 
 log "Activating UniWRT"

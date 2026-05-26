@@ -4,21 +4,18 @@ UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses 
 
 > Project package name: `luci-theme-uniwrt`  
 > Static theme path: `/luci-static/uniwrt`  
-> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.4`
+> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.6`
 
 ## What it includes
 
-- OpenWrt 24.x `.ipk` build path through the OpenWrt SDK
-- OpenWrt 25.x `.apk` build path through the OpenWrt SDK
+- Universal OpenWrt 24.x `.ipk` package for `opkg` systems
+- Universal OpenWrt 25.x `.apk` package for `apk` systems
+- Architecture-independent package metadata for ARM, ARM64, MIPS, x86, x86_64, RISC-V, PowerPC and other OpenWrt targets
 - Automatic GitHub Actions build
 - Automatic moving GitHub **pre-release** named `pre-release`
 - Build logs attached to every pre-release
 - Modern glass-card UI, fixed left controller rail on desktop, rounded dashboard panels, smooth transitions, dark/light/auto mode toggle, mobile responsiveness
 - Compatibility-first structure: UniWRT inherits LuCI Bootstrap ucode templates, then applies its own CSS/JS skin
-
-## Why this structure
-
-OpenWrt 24.10 and older systems use `opkg`/`.ipk`, while OpenWrt 25.12 and newer use `apk`/`.apk`. The workflow builds both using the official OpenWrt SDK so the packages are valid router packages, not fake renamed archives.
 
 ## Repository structure
 
@@ -39,6 +36,7 @@ luci-theme-uniwrt/
 ├── scripts/
 │   ├── build-sdk.sh
 │   ├── install.sh
+│   ├── self-test.sh
 │   └── uninstall.sh
 └── ucode/template/themes/uniwrt/
     ├── footer.ut
@@ -46,7 +44,15 @@ luci-theme-uniwrt/
     └── sysauth.ut
 ```
 
-## Install from pre-release
+## Quick install from pre-release
+
+```sh
+wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci/main/scripts/install.sh | sh
+```
+
+The installer detects `apk` or `opkg`, downloads the correct universal package, cleans up any failed previous APK world entry, installs UniWRT, activates it, and restarts LuCI.
+
+## Manual install from pre-release
 
 ### OpenWrt 24.x / opkg
 
@@ -63,8 +69,10 @@ uci commit luci
 
 ```sh
 cd /tmp
+apk del luci-theme-uniwrt 2>/dev/null || true
+sed -i '/^luci-theme-uniwrt/d' /etc/apk/world 2>/dev/null || true
 wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.apk
-apk add --allow-untrusted luci-theme-uniwrt.apk
+apk add --allow-untrusted ./luci-theme-uniwrt.apk
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
 /etc/init.d/uhttpd restart
@@ -72,31 +80,19 @@ uci commit luci
 
 Then hard refresh LuCI with `Ctrl + F5`.
 
-## Quick install script
-
-```sh
-wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci/main/scripts/install.sh | sh
-```
-
-By default, this downloads from the moving `pre-release`. You can override it:
-
-```sh
-REPO=ox1d3x3/uniwrt-luci TAG=pre-release sh scripts/install.sh
-```
-
 ## Build locally with OpenWrt SDK
 
 ```sh
 sudo apt update
-sudo apt install -y build-essential clang flex bison g++ gawk gcc-multilib gettext git \
+sudo apt install -y binutils build-essential clang flex bison g++ gawk gcc-multilib gettext git \
   libncurses-dev libssl-dev python3 python3-setuptools rsync unzip zlib1g-dev \
   file wget curl tar xz-utils zstd
 
-# Build IPK for 24.10.2
-OPENWRT_VERSION=24.10.2 ./scripts/build-sdk.sh
+# Build universal IPK for OpenWrt 24.10.2 / opkg
+OPENWRT_VERSION=24.10.2 TARGET=x86 SUBTARGET=64 ./scripts/build-sdk.sh
 
-# Build APK for 25.12.4
-OPENWRT_VERSION=25.12.4 ./scripts/build-sdk.sh
+# Build universal APK for OpenWrt 25.12.4 / apk
+OPENWRT_VERSION=25.12.4 TARGET=x86 SUBTARGET=64 ./scripts/build-sdk.sh
 ```
 
 Packages will be copied into `dist/`.
@@ -105,8 +101,10 @@ Packages will be copied into `dist/`.
 
 Every push to `main` or `master` builds:
 
-- `luci-theme-uniwrt.ipk` using OpenWrt `24.10.2`
-- `luci-theme-uniwrt.apk` using OpenWrt `25.12.4`
+- `luci-theme-uniwrt.ipk`
+- `luci-theme-uniwrt.apk`
+- `luci-theme-uniwrt_all.ipk`
+- `luci-theme-uniwrt_all.apk`
 - `build-*.log` files
 
 Then it deletes and recreates a moving GitHub pre-release called `pre-release`. This gives you one clean testing release every time. After testing, create your stable release manually from the package files you trust.
