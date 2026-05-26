@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  var VERSION = '0.1.1';
+  var VERSION = '0.1.2';
   var STORAGE_KEY = 'uniwrt.theme.mode';
 
   function qs(sel, root) { return (root || document).querySelector(sel); }
@@ -174,7 +174,7 @@
     var footer = qs('footer, .footer, #footer');
     if (!footer || qs('.uniwrt-author-line', footer)) return;
     var line = createEl('div', 'uniwrt-author-line');
-    line.innerHTML = '<a href="https://github.com/ox1d3x3/uniwrt-luci-theme" target="_blank" rel="noreferrer">Author: @Ox1d3x3 × UniWRT Theme v' + VERSION + '</a>';
+    line.innerHTML = '<a href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noreferrer">Author: @Ox1d3x3 × UniWRT Theme v' + VERSION + '</a>';
     footer.appendChild(line);
   }
 

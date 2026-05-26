@@ -4,7 +4,7 @@
 
 set -eu
 
-REPO="${REPO:-ox1d3x3/uniwrt-luci-theme}"
+REPO="${REPO:-ox1d3x3/uniwrt-luci}"
 TAG="${TAG:-pre-release}"
 TMP_DIR="/tmp/uniwrt-install"
 mkdir -p "$TMP_DIR"

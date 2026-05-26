@@ -22,8 +22,14 @@ SDK_FILE="$(curl -fsSL "$SDK_BASE" | grep -oE "openwrt-sdk-[^\"]+Linux-x86_64\\.
 if [ ! -d sdk ]; then
 	printf '==> Downloading %s\n' "$SDK_FILE"
 	curl -fL "$SDK_BASE/$SDK_FILE" -o "$SDK_FILE"
+
+	printf '==> Extracting SDK\n'
+	SDK_TOPDIR="$(tar -tf "$SDK_FILE" | head -n1 | cut -d/ -f1)"
+	[ -n "$SDK_TOPDIR" ] || { echo "ERROR: Could not detect SDK root directory in $SDK_FILE" >&2; exit 1; }
+	rm -rf "$SDK_TOPDIR" sdk
 	tar -xf "$SDK_FILE"
-	mv openwrt-sdk-* sdk
+	[ -d "$SDK_TOPDIR" ] || { echo "ERROR: Extracted SDK directory not found: $SDK_TOPDIR" >&2; exit 1; }
+	mv "$SDK_TOPDIR" sdk
 fi
 
 printf '==> Copying package source\n'

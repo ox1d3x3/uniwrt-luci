@@ -4,7 +4,7 @@ UniWRT is a clean, modern LuCI theme for OpenWrt **24.x** and **25.x**. It uses 
 
 > Project package name: `luci-theme-uniwrt`  
 > Static theme path: `/luci-static/uniwrt`  
-> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.1`
+> Author footer: `Author: @Ox1d3x3 × UniWRT Theme v0.1.2`
 
 ## What it includes
 
@@ -52,7 +52,7 @@ luci-theme-uniwrt/
 
 ```sh
 cd /tmp
-wget https://github.com/ox1d3x3/uniwrt-luci-theme/releases/download/pre-release/luci-theme-uniwrt.ipk
+wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.ipk
 opkg install luci-theme-uniwrt.ipk
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
@@ -63,7 +63,7 @@ uci commit luci
 
 ```sh
 cd /tmp
-wget https://github.com/ox1d3x3/uniwrt-luci-theme/releases/download/pre-release/luci-theme-uniwrt.apk
+wget https://github.com/ox1d3x3/uniwrt-luci/releases/download/pre-release/luci-theme-uniwrt.apk
 apk add --allow-untrusted luci-theme-uniwrt.apk
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
@@ -75,13 +75,13 @@ Then hard refresh LuCI with `Ctrl + F5`.
 ## Quick install script
 
 ```sh
-wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci-theme/main/scripts/install.sh | sh
+wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci/main/scripts/install.sh | sh
 ```
 
 By default, this downloads from the moving `pre-release`. You can override it:
 
 ```sh
-REPO=ox1d3x3/uniwrt-luci-theme TAG=pre-release sh scripts/install.sh
+REPO=ox1d3x3/uniwrt-luci TAG=pre-release sh scripts/install.sh
 ```
 
 ## Build locally with OpenWrt SDK
@@ -122,7 +122,7 @@ uci commit luci
 Or fully remove:
 
 ```sh
-wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci-theme/main/scripts/uninstall.sh | sh
+wget -O- https://raw.githubusercontent.com/ox1d3x3/uniwrt-luci/main/scripts/uninstall.sh | sh
 ```
 
 ## Design notes
