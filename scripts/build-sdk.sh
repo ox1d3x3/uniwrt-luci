@@ -50,7 +50,17 @@ make defconfig
 
 printf '==> Building luci-theme-uniwrt for OpenWrt %s\n' "$OPENWRT_VERSION"
 make package/luci-theme-uniwrt/clean V=s || true
+
+set +e
 make package/luci-theme-uniwrt/compile V=s 2>&1 | tee "$DIST_DIR/build-${OPENWRT_VERSION}.log"
+build_status=${PIPESTATUS[0]}
+set -e
+
+if [ "$build_status" -ne 0 ]; then
+	echo "ERROR: OpenWrt SDK package build failed with exit code $build_status" >&2
+	echo "Build log saved to: $DIST_DIR/build-${OPENWRT_VERSION}.log" >&2
+	exit "$build_status"
+fi
 
 printf '==> Collecting packages\n'
 find bin -type f \( -name 'luci-theme-uniwrt*.ipk' -o -name 'luci-theme-uniwrt*.apk' \) -print -exec cp -f {} "$DIST_DIR/" \;
@@ -58,5 +68,10 @@ find bin -type f \( -name 'luci-theme-uniwrt*.ipk' -o -name 'luci-theme-uniwrt*.
 # Friendly fixed names for release downloads.
 for f in "$DIST_DIR"/luci-theme-uniwrt*.ipk; do [ -e "$f" ] && cp -f "$f" "$DIST_DIR/luci-theme-uniwrt.ipk"; done
 for f in "$DIST_DIR"/luci-theme-uniwrt*.apk; do [ -e "$f" ] && cp -f "$f" "$DIST_DIR/luci-theme-uniwrt.apk"; done
+
+if ! find "$DIST_DIR" -maxdepth 1 -type f \( -name 'luci-theme-uniwrt*.ipk' -o -name 'luci-theme-uniwrt*.apk' \) | grep -q .; then
+	echo "ERROR: Build completed but no UniWRT package was found in bin/." >&2
+	exit 1
+fi
 
 printf '==> Done. Output is in %s\n' "$DIST_DIR"
