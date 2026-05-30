@@ -57,15 +57,17 @@ jobs:
           FEEDNAME: uniwrt
           PACKAGES: luci-theme-uniwrt
           V: s
-          INDEX: "1"
 
       - name: Collect package
         run: |
           mkdir -p dist
-          find "$GITHUB_WORKSPACE/bin" -type f -name "*.${{ matrix.pm }}" \
-            -exec cp -v {} dist/ \; || true
+          # Match ONLY our package — the SDK also builds its dependency tree
+          # (luci-base, bootstrap, libc, i18n, ...) into bin/, and we must not
+          # ship those. This yields exactly one file per job.
+          find "$GITHUB_WORKSPACE/bin" -type f -name "luci-theme-uniwrt*.${{ matrix.pm }}" \
+            -exec cp -v {} dist/ \;
           echo "----"; ls -la dist
-          test -n "$(ls -A dist)" || { echo "::error::no ${{ matrix.pm }} built"; exit 1; }
+          test -n "$(ls -A dist)" || { echo "::error::no luci-theme-uniwrt ${{ matrix.pm }} built"; exit 1; }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -122,12 +124,12 @@ jobs:
             | Your OpenWrt | File |
             |-------------:|:-----|
             | 23.05.x / 24.10.x | `luci-theme-uniwrt_*_all.ipk` |
-            | 25.12.x+ | `luci-theme-uniwrt_*_all.apk` |
+            | 25.12.x+ | `luci-theme-uniwrt-*.apk` |
 
             ```sh
             # 23.05 / 24.10
             opkg install ./luci-theme-uniwrt_*_all.ipk
             # 25.12+
-            apk add --allow-untrusted ./luci-theme-uniwrt_*_all.apk
+            apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
             ```
             Then hard-refresh LuCI (Ctrl+Shift+R).

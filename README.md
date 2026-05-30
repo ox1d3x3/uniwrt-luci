@@ -17,7 +17,7 @@ because that determines the package manager:
 |-------------:|:----------------|:-------------------|
 | 23.05.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
 | 24.10.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
-| 25.12.x+ | apk | `luci-theme-uniwrt_*_all.apk` |
+| 25.12.x+ | apk | `luci-theme-uniwrt-*.apk` |
 
 So there are only ever **two files**: one universal `.ipk` (for 23.05 + 24.10)
 and one universal `.apk` (for 25.12+). Pick by version, not by router.
@@ -38,7 +38,7 @@ or in LuCI: **Status → Overview** (firmware version). `23.*`/`24.*` → take t
 opkg install ./luci-theme-uniwrt_*_all.ipk
 
 # OpenWrt 25.12+  (apk)
-apk add --allow-untrusted ./luci-theme-uniwrt_*_all.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
 ```
 
 The theme registers itself and becomes active on install. Hard-refresh LuCI
@@ -64,7 +64,7 @@ git clone <this-repo> package/luci-theme-uniwrt-src
 ln -s ../package/luci-theme-uniwrt-src/luci-theme-uniwrt package/luci-theme-uniwrt
 ./scripts/feeds update -a && ./scripts/feeds install -a
 make package/luci-theme-uniwrt/compile V=s
-# result: bin/packages/<arch>/uniwrt/luci-theme-uniwrt_*_all.{ipk,apk}
+# result: bin/packages/<arch>/uniwrt/luci-theme-uniwrt_*.ipk  (or  luci-theme-uniwrt-*.apk on 25.12)
 ```
 
 ## How it works
