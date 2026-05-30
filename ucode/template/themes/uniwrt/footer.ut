@@ -1,2 +1,0 @@
-{# UniWRT footer wrapper. Licensed under Apache-2.0. -#}
-{% include('themes/bootstrap/footer') %}

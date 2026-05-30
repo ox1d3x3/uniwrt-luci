@@ -1,0 +1,133 @@
+name: Build & Pre-release
+
+# Builds the theme against three OpenWrt releases using the official SDK
+# containers, then publishes/refreshes a rolling pre-release with the
+# resulting packages. Because the theme is architecture-independent
+# (LUCI_PKGARCH:=all), one build per release works on EVERY OpenWrt target.
+#
+#   23.05  -> opkg  -> luci-theme-unifios_*_all.ipk
+#   24.10  -> opkg  -> luci-theme-unifios_*_all.ipk
+#   25.12  -> apk   -> luci-theme-unifios_*_all.apk   (apk is the default PM here)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'luci-theme-unifios/**'
+      - '.github/workflows/build.yml'
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.release }} (${{ matrix.pm }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ---- Keep these pinned to the latest point release on Docker Hub:
+          # ---- https://hub.docker.com/r/openwrt/sdk/tags  (tag = <arch>-<release>)
+          - release: "23.05.5"
+            pm: ipk
+          - release: "24.10.1"
+            pm: ipk
+          - release: "25.12.2"
+            pm: apk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@main
+        env:
+          # arch is irrelevant for an "all" package — x86_64 is just the
+          # fastest, always-published SDK. The release suffix selects the
+          # OpenWrt version (and therefore the package format).
+          ARCH: x86_64-${{ matrix.release }}
+          FEEDNAME: unifios
+          PACKAGES: luci-theme-unifios
+          # stamp the package release with the CI run number
+          EXTRA_FEEDS: ""
+          V: s
+          INDEX: "1"
+          IGNORE_ERRORS: ""
+
+      - name: Collect packages
+        run: |
+          mkdir -p dist
+          find "$GITHUB_WORKSPACE/bin" -type f \( -name '*.ipk' -o -name '*.apk' \) \
+            -exec cp -v {} dist/ \; || true
+          echo "----"; ls -la dist
+          test -n "$(ls -A dist)" || { echo "::error::no packages were built"; exit 1; }
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-theme-unifios-${{ matrix.release }}-${{ matrix.pm }}
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish pre-release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all packages
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Flatten
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.ipk' -o -name '*.apk' \) -exec cp -v {} release/ \;
+          ls -la release
+
+      - name: Decide tag
+        id: tag
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "name=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "title=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=nightly" >> "$GITHUB_OUTPUT"
+            echo "title=Nightly build (#${GITHUB_RUN_NUMBER})" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish / refresh pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: ${{ steps.tag.outputs.title }}
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: release/*
+          body: |
+            Automated pre-release built from `${{ github.sha }}`.
+
+            | OpenWrt | Manager | File |
+            |---------|---------|------|
+            | 23.05.x | opkg | `*_all.ipk` |
+            | 24.10.x | opkg | `*_all.ipk` |
+            | 25.12.x | apk  | `*_all.apk` |
+
+            **Install (opkg / 23.05–24.10):**
+            ```sh
+            opkg install ./luci-theme-unifios_*_all.ipk
+            ```
+            **Install (apk / 25.12+):**
+            ```sh
+            apk add --allow-untrusted ./luci-theme-unifios_*_all.apk
+            ```
+            Then hard-refresh LuCI (Ctrl+Shift+R). The package is `all`-arch, so
+            each file installs on any router architecture for that release line.

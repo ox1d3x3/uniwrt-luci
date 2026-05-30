@@ -1,0 +1,518 @@
+/*
+ * luci-theme-unifios  —  UniFi OS design language for OpenWrt LuCI
+ * SPDX-License-Identifier: MIT
+ *
+ * This stylesheet does the heavy lifting of the look. It targets luci-base
+ * classes (.cbi-*, .table, .alert-message …) which are stable across LuCI
+ * 23.05 / 24.10 / 25.12, plus the common bootstrap-derived layout classes.
+ * The sidebar shell is wired up by unifios.js, which adds the
+ * `unifios-shell` class to <body> once the menu has been relocated.
+ *
+ * NOTE ON FONT: UniFi OS uses Ubiquiti's proprietary "UI Sans" typeface,
+ * which cannot be redistributed. Inter is the closest free stand-in and is
+ * what reads as "UniFi" to most eyes. To self-host instead of relying on the
+ * system fallback, drop Inter*.woff2 into ../fonts/ and uncomment the
+ * @font-face block below.
+ */
+
+/* @font-face { font-family:"Inter"; font-weight:400; font-display:swap;
+   src:url("../fonts/Inter-Regular.woff2") format("woff2"); }
+   @font-face { font-family:"Inter"; font-weight:500; font-display:swap;
+   src:url("../fonts/Inter-Medium.woff2") format("woff2"); }
+   @font-face { font-family:"Inter"; font-weight:600; font-display:swap;
+   src:url("../fonts/Inter-SemiBold.woff2") format("woff2"); } */
+
+/* ============================ DESIGN TOKENS ============================ */
+:root {
+  /* Brand */
+  --u-blue:        #006fff;
+  --u-blue-600:    #0059d6;
+  --u-blue-700:    #0046ad;
+  --u-blue-soft:   #e8f1ff;
+
+  /* Light surfaces */
+  --u-bg:          #f7f8fa;
+  --u-bg-2:        #eef1f5;
+  --u-card:        #ffffff;
+  --u-card-hover:  #fafbfc;
+  --u-border:      #e6e8eb;
+  --u-border-2:    #d8dce1;
+  --u-text:        #1c1e21;
+  --u-text-2:      #50555c;
+  --u-muted:       #8a9099;
+
+  /* Status */
+  --u-online:      #1bb36b;
+  --u-online-soft: #e6f7ef;
+  --u-warn:        #f5a623;
+  --u-warn-soft:   #fdf3e2;
+  --u-error:       #e54d42;
+  --u-error-soft:  #fce9e7;
+
+  /* Shape & depth */
+  --u-radius:      10px;
+  --u-radius-sm:   7px;
+  --u-radius-lg:   14px;
+  --u-pill:        999px;
+  --u-shadow-sm:   0 1px 2px rgba(20,28,46,.06);
+  --u-shadow:      0 1px 3px rgba(20,28,46,.07), 0 1px 2px rgba(20,28,46,.04);
+  --u-shadow-md:   0 4px 14px rgba(20,28,46,.08);
+  --u-shadow-pop:  0 10px 30px rgba(20,28,46,.14);
+  --u-ring:        0 0 0 3px rgba(0,111,255,.18);
+
+  /* Layout */
+  --u-rail:        248px;
+  --u-rail-min:    72px;
+  --u-topbar-h:    58px;
+  --u-gap:         20px;
+
+  --u-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+  --u-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code",
+            Menlo, Consolas, monospace;
+}
+
+/* Dark mode — UniFi OS dark is near-black, not navy. Honors both the manual
+   toggle (html[data-theme]) and the OS preference. */
+html[data-theme="dark"] {
+  --u-bg:          #0e0f12;
+  --u-bg-2:        #16181c;
+  --u-card:        #1b1d22;
+  --u-card-hover:  #20232a;
+  --u-border:      #2a2d34;
+  --u-border-2:    #353941;
+  --u-text:        #e9eaed;
+  --u-text-2:      #b3b7bf;
+  --u-muted:       #7b818b;
+  --u-blue-soft:   #15233c;
+  --u-online-soft: #102a1e;
+  --u-warn-soft:   #2c2415;
+  --u-error-soft:  #2e1816;
+  --u-shadow-sm:   0 1px 2px rgba(0,0,0,.4);
+  --u-shadow:      0 1px 3px rgba(0,0,0,.45);
+  --u-shadow-md:   0 4px 14px rgba(0,0,0,.5);
+  --u-shadow-pop:  0 10px 30px rgba(0,0,0,.6);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    --u-bg:#0e0f12; --u-bg-2:#16181c; --u-card:#1b1d22; --u-card-hover:#20232a;
+    --u-border:#2a2d34; --u-border-2:#353941; --u-text:#e9eaed;
+    --u-text-2:#b3b7bf; --u-muted:#7b818b; --u-blue-soft:#15233c;
+    --u-online-soft:#102a1e; --u-warn-soft:#2c2415; --u-error-soft:#2e1816;
+    --u-shadow-sm:0 1px 2px rgba(0,0,0,.4); --u-shadow:0 1px 3px rgba(0,0,0,.45);
+    --u-shadow-md:0 4px 14px rgba(0,0,0,.5); --u-shadow-pop:0 10px 30px rgba(0,0,0,.6);
+  }
+}
+
+/* ============================ BASE / RESET ============================ */
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--u-bg);
+  color: var(--u-text);
+  font-family: var(--u-font);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--u-blue); text-decoration: none; }
+a:hover { color: var(--u-blue-600); text-decoration: underline; }
+
+h1,h2,h3,h4,h5 { color: var(--u-text); font-weight: 600; letter-spacing: -.01em; }
+hr { border: 0; border-top: 1px solid var(--u-border); margin: var(--u-gap) 0; }
+
+code, pre, tt { font-family: var(--u-mono); font-size: .86em; }
+pre {
+  background: var(--u-bg-2);
+  border: 1px solid var(--u-border);
+  border-radius: var(--u-radius-sm);
+  padding: 12px 14px;
+  overflow: auto;
+}
+
+/* Thin UniFi-style scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--u-border-2) transparent; }
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-thumb {
+  background: var(--u-border-2); border-radius: var(--u-pill);
+  border: 2px solid transparent; background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--u-muted); background-clip: padding-box; }
+
+/* ====================== APP SHELL (set by JS) ====================== */
+/* When unifios.js has relocated the menu into the rail, <body> gets the
+   `unifios-shell` class and content is shifted right of the rail. */
+body.unifios-shell #maincontent,
+body.unifios-shell .main-right,
+body.unifios-shell > .container,
+body.unifios-shell #view {
+  margin-left: var(--u-rail);
+  padding: calc(var(--u-topbar-h) + var(--u-gap)) clamp(16px, 3vw, 36px) 48px;
+  min-height: 100vh;
+  transition: margin-left .22s ease;
+}
+body.unifios-shell.rail-collapsed #maincontent,
+body.unifios-shell.rail-collapsed .main-right,
+body.unifios-shell.rail-collapsed > .container,
+body.unifios-shell.rail-collapsed #view { margin-left: var(--u-rail-min); }
+
+/* The left rail */
+.unifios-sidebar {
+  position: fixed; inset: 0 auto 0 0; z-index: 1000;
+  width: var(--u-rail);
+  display: flex; flex-direction: column;
+  background: var(--u-card);
+  border-right: 1px solid var(--u-border);
+  box-shadow: var(--u-shadow-sm);
+  transition: width .22s ease, transform .22s ease;
+  overflow: hidden;
+}
+body.rail-collapsed .unifios-sidebar { width: var(--u-rail-min); }
+
+.unifios-brand {
+  display: flex; align-items: center; gap: 11px;
+  height: var(--u-topbar-h); flex: 0 0 var(--u-topbar-h);
+  padding: 0 18px;
+  border-bottom: 1px solid var(--u-border);
+  font-weight: 600; font-size: 15px; letter-spacing: -.01em;
+  white-space: nowrap;
+}
+.unifios-brand img, .unifios-brand svg { width: 26px; height: 26px; flex: 0 0 26px; }
+.unifios-brand .brand-text { transition: opacity .15s ease; }
+body.rail-collapsed .unifios-brand .brand-text { opacity: 0; }
+
+/* Nav list inside the rail */
+.unifios-nav { flex: 1 1 auto; overflow-y: auto; padding: 10px 12px; }
+.unifios-nav ul { list-style: none; margin: 0; padding: 0; }
+.unifios-nav li { margin: 1px 0; }
+.unifios-nav a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: var(--u-radius-sm);
+  color: var(--u-text-2); font-weight: 500; font-size: 13.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background .12s ease, color .12s ease;
+}
+.unifios-nav a:hover { background: var(--u-bg-2); color: var(--u-text); text-decoration: none; }
+.unifios-nav a.active,
+.unifios-nav a[aria-current="page"] {
+  background: var(--u-blue-soft); color: var(--u-blue);
+}
+.unifios-nav .nav-ico {
+  width: 20px; height: 20px; flex: 0 0 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: .85;
+}
+.unifios-nav .nav-label { transition: opacity .15s ease; }
+body.rail-collapsed .unifios-nav .nav-label { opacity: 0; }
+body.rail-collapsed .unifios-nav a { justify-content: center; }
+
+.unifios-rail-foot {
+  flex: 0 0 auto; padding: 12px; border-top: 1px solid var(--u-border);
+  font-size: 11.5px; color: var(--u-muted); white-space: nowrap;
+}
+
+/* Floating top bar */
+.unifios-topbar {
+  position: fixed; top: 0; right: 0; left: var(--u-rail); z-index: 900;
+  height: var(--u-topbar-h);
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 clamp(16px, 3vw, 28px);
+  background: color-mix(in srgb, var(--u-bg) 82%, transparent);
+  backdrop-filter: saturate(160%) blur(10px);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+  border-bottom: 1px solid var(--u-border);
+  transition: left .22s ease;
+}
+body.rail-collapsed .unifios-topbar { left: var(--u-rail-min); }
+.unifios-topbar .crumb { font-weight: 600; font-size: 15px; color: var(--u-text); }
+.unifios-topbar .spacer { flex: 1 1 auto; }
+
+.unifios-iconbtn {
+  width: 36px; height: 36px; flex: 0 0 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--u-border); border-radius: var(--u-radius-sm);
+  background: var(--u-card); color: var(--u-text-2); cursor: pointer;
+  transition: all .12s ease;
+}
+.unifios-iconbtn:hover { background: var(--u-bg-2); color: var(--u-text); border-color: var(--u-border-2); }
+.unifios-iconbtn svg { width: 18px; height: 18px; }
+
+/* Mobile overlay */
+.unifios-scrim {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(10,12,18,.45); opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+@media (max-width: 900px) {
+  .unifios-sidebar { transform: translateX(-100%); width: var(--u-rail); box-shadow: var(--u-shadow-pop); }
+  body.rail-open .unifios-sidebar { transform: none; }
+  body.rail-open .unifios-scrim { opacity: 1; pointer-events: auto; }
+  body.unifios-shell #maincontent,
+  body.unifios-shell .main-right,
+  body.unifios-shell > .container,
+  body.unifios-shell #view { margin-left: 0 !important; }
+  .unifios-topbar { left: 0 !important; }
+}
+
+/* ============================ CARDS / SECTIONS ============================ */
+.cbi-map, .cbi-section, .panel, .Document > fieldset, fieldset.cbi-section {
+  background: var(--u-card);
+  border: 1px solid var(--u-border);
+  border-radius: var(--u-radius-lg);
+  box-shadow: var(--u-shadow);
+  padding: 22px 24px;
+  margin: 0 0 var(--u-gap) 0;
+}
+.cbi-map > .cbi-section,
+.cbi-section .cbi-section,
+.cbi-map fieldset.cbi-section {
+  box-shadow: none; border: 1px solid var(--u-border);
+  border-radius: var(--u-radius); padding: 16px 18px;
+}
+.cbi-map > h2, h2.section-title, .cbi-map-descr + h2 { margin: 4px 0 16px; font-size: 22px; }
+.cbi-section > h3, legend, .cbi-section-node > h3 {
+  font-size: 15px; font-weight: 600; margin: 0 0 14px;
+  color: var(--u-text); padding: 0;
+}
+legend { width: auto; border: 0; }
+.cbi-map-descr, .cbi-section-descr, .cbi-value-description {
+  color: var(--u-muted); font-size: 13px; line-height: 1.55;
+}
+.cbi-section-descr { margin: -6px 0 16px; }
+
+/* ============================ FORM ROWS ============================ */
+.cbi-value {
+  display: flex; align-items: flex-start; flex-wrap: wrap;
+  padding: 12px 0; border-bottom: 1px solid var(--u-border);
+  gap: 10px 16px; margin: 0;
+}
+.cbi-value:last-child, .cbi-value.cbi-value-last { border-bottom: 0; }
+.cbi-value-title {
+  flex: 0 0 230px; max-width: 230px;
+  color: var(--u-text-2); font-weight: 500; font-size: 13.5px;
+  padding-top: 8px; text-align: left;
+}
+.cbi-value-field { flex: 1 1 320px; min-width: 0; }
+@media (max-width: 640px) {
+  .cbi-value-title { flex-basis: 100%; max-width: none; padding-top: 0; }
+}
+
+/* ============================ INPUTS ============================ */
+input[type="text"], input[type="password"], input[type="search"],
+input[type="number"], input[type="email"], input[type="url"],
+input[type="date"], input[type="time"], select, textarea,
+.cbi-input-text, .cbi-input-password, .cbi-input-user {
+  appearance: none; -webkit-appearance: none;
+  background: var(--u-card);
+  color: var(--u-text);
+  border: 1px solid var(--u-border-2);
+  border-radius: var(--u-radius-sm);
+  padding: 8px 11px; font: inherit; font-size: 13.5px;
+  min-height: 38px; max-width: 100%;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+textarea { min-height: 96px; line-height: 1.5; resize: vertical; }
+input:focus, select:focus, textarea:focus,
+.cbi-input-text:focus, .cbi-input-password:focus {
+  outline: none; border-color: var(--u-blue); box-shadow: var(--u-ring);
+}
+input::placeholder, textarea::placeholder { color: var(--u-muted); }
+select {
+  padding-right: 34px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a9099' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center;
+}
+input[type="file"] { padding: 6px; }
+
+/* ============================ BUTTONS ============================ */
+.btn, .cbi-button, button, input[type="submit"], input[type="button"], input[type="reset"] {
+  appearance: none; -webkit-appearance: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  font: inherit; font-size: 13.5px; font-weight: 600; line-height: 1;
+  padding: 9px 16px; min-height: 38px;
+  border: 1px solid var(--u-border-2);
+  border-radius: var(--u-pill);
+  background: var(--u-card); color: var(--u-text);
+  cursor: pointer; white-space: nowrap;
+  transition: background .12s ease, border-color .12s ease, color .12s ease, box-shadow .12s ease, transform .04s ease;
+}
+.btn:hover, .cbi-button:hover, button:hover,
+input[type="submit"]:hover, input[type="button"]:hover {
+  background: var(--u-bg-2); border-color: var(--u-border-2); text-decoration: none;
+}
+.btn:active, .cbi-button:active, button:active { transform: translateY(1px); }
+.cbi-button:focus-visible, button:focus-visible { outline: none; box-shadow: var(--u-ring); }
+
+/* Primary / positive — the UniFi blue */
+.cbi-button-apply, .cbi-button-save, .cbi-button-add, .cbi-button-positive,
+.cbi-button-action, .btn.primary, input.cbi-button-apply, input.cbi-button-save {
+  background: var(--u-blue); border-color: var(--u-blue); color: #fff;
+  box-shadow: 0 1px 2px rgba(0,111,255,.25);
+}
+.cbi-button-apply:hover, .cbi-button-save:hover, .cbi-button-add:hover,
+.cbi-button-positive:hover, .cbi-button-action:hover, .btn.primary:hover {
+  background: var(--u-blue-600); border-color: var(--u-blue-600); color: #fff;
+}
+
+/* Destructive */
+.cbi-button-remove, .cbi-button-negative, .cbi-button-reset, .btn.danger {
+  background: var(--u-card); border-color: var(--u-border-2); color: var(--u-error);
+}
+.cbi-button-remove:hover, .cbi-button-negative:hover, .btn.danger:hover {
+  background: var(--u-error); border-color: var(--u-error); color: #fff;
+}
+
+/* Neutral / link */
+.cbi-button-neutral, .cbi-button-link, .cbi-button-edit, .cbi-button-download {
+  background: var(--u-card); color: var(--u-text-2);
+}
+.cbi-button[disabled], button[disabled], .btn[disabled] {
+  opacity: .5; cursor: not-allowed; transform: none;
+}
+
+/* Page action bar (Save & Apply / Reset) — sticky footer card */
+.cbi-page-actions {
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  background: var(--u-card);
+  border: 1px solid var(--u-border);
+  border-radius: var(--u-radius-lg);
+  box-shadow: var(--u-shadow);
+  padding: 14px 18px; margin-top: var(--u-gap);
+  position: sticky; bottom: 12px;
+}
+
+/* ============================ TOGGLES / CHECKBOXES ============================ */
+/* LuCI renders boolean values with .cbi-checkbox; turn the native checkbox
+   into a UniFi pill switch. */
+.cbi-checkbox { position: relative; display: inline-flex; align-items: center; }
+.cbi-checkbox input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none;
+  width: 42px; height: 24px; border-radius: var(--u-pill);
+  background: var(--u-border-2); border: none; cursor: pointer;
+  position: relative; transition: background .16s ease; min-height: 0;
+}
+.cbi-checkbox input[type="checkbox"]::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3);
+  transition: transform .16s ease;
+}
+.cbi-checkbox input[type="checkbox"]:checked { background: var(--u-blue); }
+.cbi-checkbox input[type="checkbox"]:checked::after { transform: translateX(18px); }
+.cbi-checkbox input[type="checkbox"]:focus-visible { box-shadow: var(--u-ring); }
+
+/* ============================ TABLES ============================ */
+.table, table.table, .cbi-section-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  background: var(--u-card);
+  border: 1px solid var(--u-border);
+  border-radius: var(--u-radius); overflow: hidden;
+}
+.th, .td, table.table th, table.table td,
+.cbi-section-table-cell, .cbi-section-table-titles .th {
+  padding: 11px 14px; text-align: left; vertical-align: middle;
+  border-bottom: 1px solid var(--u-border); font-size: 13.5px;
+}
+.thead .th, table.table thead th,
+.cbi-section-table-titles, .cbi-section-table-titles .th {
+  background: var(--u-bg-2); color: var(--u-text-2);
+  font-weight: 600; font-size: 12px; text-transform: none;
+  letter-spacing: .01em;
+}
+.tr:last-child .td, table.table tbody tr:last-child td { border-bottom: 0; }
+.tr:hover, table.table tbody tr:hover,
+.cbi-section-table-row:hover { background: var(--u-card-hover); }
+.cbi-rowstyle-1, .cbi-rowstyle-2 { background: transparent; }
+
+/* ============================ ALERTS / NOTIFICATIONS ============================ */
+.alert-message, .cbi-section-error, #cbi_apply_status, .notification {
+  border: 1px solid var(--u-border);
+  border-left: 4px solid var(--u-muted);
+  border-radius: var(--u-radius-sm);
+  background: var(--u-bg-2); color: var(--u-text);
+  padding: 12px 16px; margin: 0 0 var(--u-gap);
+}
+.alert-message.info    { border-left-color: var(--u-blue);   background: var(--u-blue-soft); }
+.alert-message.success { border-left-color: var(--u-online); background: var(--u-online-soft); }
+.alert-message.warning { border-left-color: var(--u-warn);   background: var(--u-warn-soft); }
+.alert-message.error, .cbi-section-error {
+  border-left-color: var(--u-error); background: var(--u-error-soft);
+}
+
+/* Status dots used across LuCI overview pages */
+.label, .ifacebadge, .cbi-value-field .badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: var(--u-pill); padding: 3px 10px;
+  font-size: 12px; font-weight: 600;
+  background: var(--u-bg-2); color: var(--u-text-2);
+}
+
+/* ============================ TABS ============================ */
+.cbi-tabmenu, #tabmenu, ul.cbi-tabmenu {
+  display: flex; flex-wrap: wrap; gap: 4px; list-style: none;
+  margin: 0 0 var(--u-gap); padding: 4px;
+  background: var(--u-bg-2); border-radius: var(--u-pill);
+  width: fit-content; max-width: 100%;
+}
+.cbi-tabmenu li, #tabmenu li { margin: 0; }
+.cbi-tabmenu li a, #tabmenu li a {
+  display: block; padding: 7px 16px; border-radius: var(--u-pill);
+  color: var(--u-text-2); font-weight: 600; font-size: 13px;
+}
+.cbi-tabmenu li a:hover, #tabmenu li a:hover { color: var(--u-text); text-decoration: none; }
+.cbi-tabmenu li.cbi-tab a, #tabmenu li.cbi-tab a,
+.cbi-tabmenu li.active a {
+  background: var(--u-card); color: var(--u-blue); box-shadow: var(--u-shadow-sm);
+}
+
+/* ============================ LOGIN ============================ */
+/* The sysauth view is a small .cbi-map form. Centre it on a clean field. */
+body.unifios-login {
+  background:
+    radial-gradient(1100px 600px at 80% -10%, rgba(0,111,255,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(0,111,255,.08), transparent 55%),
+    var(--u-bg);
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 24px;
+}
+body.unifios-login .cbi-map, body.unifios-login form {
+  width: 100%; max-width: 380px;
+  border-radius: var(--u-radius-lg);
+  box-shadow: var(--u-shadow-pop);
+  padding: 30px 30px 26px;
+}
+body.unifios-login .cbi-map > h2 { text-align: center; font-size: 19px; }
+body.unifios-login .cbi-value { border: 0; flex-direction: column; align-items: stretch; }
+body.unifios-login .cbi-value-title { flex-basis: auto; max-width: none; padding: 0 0 6px; }
+body.unifios-login input { width: 100%; }
+body.unifios-login .cbi-page-actions { box-shadow: none; border: 0; padding: 14px 0 0; position: static; }
+body.unifios-login .cbi-page-actions .cbi-button { width: 100%; }
+.unifios-login-brand {
+  text-align: center; margin-bottom: 18px;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.unifios-login-brand svg, .unifios-login-brand img { width: 44px; height: 44px; }
+
+/* ============================ MISC POLISH ============================ */
+/* Hide the native LuCI top header/menu once the rail is active (JS adds the
+   class only after a successful relocation, so nothing is hidden if the rail
+   could not be built). */
+body.unifios-shell > header,
+body.unifios-shell #header,
+body.unifios-shell .main > .main-left { display: none !important; }
+
+/* Loading / spinner accent */
+.spinning, .cbi-button-loading::before { border-top-color: var(--u-blue) !important; }
+
+/* Generic anchor buttons in tables */
+.td a.cbi-button, .cbi-section-table-cell a.cbi-button { padding: 6px 12px; min-height: 32px; }
+
+/* Footer text */
+footer, .footer, #footer {
+  color: var(--u-muted); font-size: 12px; text-align: center;
+  padding: 24px 0 8px;
+}

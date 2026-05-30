@@ -1,4 +1,6 @@
 /dist/
-/.sdk/
-*.zip
-.DS_Store
+/bin/
+/build_dir/
+/staging_dir/
+*.ipk
+*.apk
