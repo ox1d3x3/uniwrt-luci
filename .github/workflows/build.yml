@@ -106,6 +106,16 @@ jobs:
             echo "title=Nightly build (#${GITHUB_RUN_NUMBER})" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Wipe previous nightly release (clear stale assets)
+        if: github.ref_type != 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # The rolling "nightly" release is rebuilt from scratch each run so
+          # old assets never pile up. (Tagged v* releases are left untouched.)
+          gh release delete nightly --yes --cleanup-tag || true
+
       - name: Publish / refresh pre-release
         uses: softprops/action-gh-release@v2
         with:
