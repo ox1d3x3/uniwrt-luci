@@ -12,35 +12,41 @@
  * navigation never disappears if the script can't run.
  */
 
-/* ----------------------------- tokens ----------------------------- */
+/* ----------------------------- tokens -----------------------------
+ * Values measured from a real UniFi OS console (colors, radii, spacing,
+ * font). Reproduced as our own token set — not copied stylesheet. */
 :root{
-  --u-blue:#006fff; --u-blue-600:#0059d6; --u-blue-soft:#e8f1ff;
-  --u-bg:#f6f7f9; --u-bg-2:#eef1f5; --u-card:#fff; --u-card-2:#fafbfc;
-  --u-border:#e7e9ec; --u-border-2:#d7dbe0;
-  --u-text:#1b1d21; --u-text-2:#565b63; --u-muted:#8b919b;
-  --u-online:#1bb36b; --u-online-soft:#e6f7ef; --u-warn:#f5a623; --u-warn-soft:#fdf3e2;
-  --u-error:#e54d42; --u-error-soft:#fce9e7;
-  --u-radius:10px; --u-radius-sm:7px; --u-radius-lg:14px; --u-pill:999px;
-  --u-shadow:0 1px 3px rgba(20,28,46,.07),0 1px 2px rgba(20,28,46,.04);
-  --u-shadow-sm:0 1px 2px rgba(20,28,46,.06); --u-shadow-pop:0 12px 34px rgba(20,28,46,.16);
-  --u-ring:0 0 0 3px rgba(0,111,255,.18);
-  --u-rail:240px; --u-rail-min:64px; --u-top:56px;
-  --u-font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --u-mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --u-blue:#006fff; --u-blue-600:#0e65d8; --u-blue-700:#0b4ead; --u-blue-soft:#e6f1ff;
+  --u-accent:#4797ff;
+  --u-bg:#f9fafa; --u-bg-2:#eef0f1; --u-card:#fff; --u-card-2:#f4f5f6;
+  --u-border:#dee0e3; --u-border-2:#c2c6cb;
+  --u-text:#212327; --u-text-2:#50565e; --u-muted:#808893; --u-faint:#b7bcc2;
+  --u-online:#38cc65; --u-online-soft:#e6f9ec; --u-warn:#f5a524; --u-warn-soft:#fdf3e2;
+  --u-error:#f0383b; --u-error-soft:#fdecec;
+  --u-radius:8px; --u-radius-sm:4px; --u-radius-lg:14px; --u-pill:99999px;
+  --u-shadow:0 1px 2px rgba(33,35,39,.07),0 1px 3px rgba(33,35,39,.04);
+  --u-shadow-sm:0 1px 2px rgba(33,35,39,.06);
+  --u-shadow-md:0 2px 8px rgba(33,35,39,.08);
+  --u-shadow-pop:0 12px 34px rgba(33,35,39,.12);
+  --u-ring:0 0 0 3px rgba(0,111,255,.2);
+  --u-rail:220px; --u-rail-min:60px; --u-top:56px;
+  --u-font:"Inter","UI Sans","Lato",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --u-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 html[data-theme="dark"]{
-  --u-bg:#0e0f12; --u-bg-2:#16181c; --u-card:#1a1c21; --u-card-2:#1f2228;
-  --u-border:#292c33; --u-border-2:#363a42;
-  --u-text:#e9eaed; --u-text-2:#b2b7bf; --u-muted:#797f89;
-  --u-blue-soft:#14233c; --u-online-soft:#102a1e; --u-warn-soft:#2c2415; --u-error-soft:#2e1816;
-  --u-shadow:0 1px 3px rgba(0,0,0,.45); --u-shadow-sm:0 1px 2px rgba(0,0,0,.4);
-  --u-shadow-pop:0 12px 34px rgba(0,0,0,.6);
+  --u-bg:#131416; --u-bg-2:#1c1e21; --u-card:#212327; --u-card-2:#282b2f;
+  --u-border:#34383d; --u-border-2:#42474d;
+  --u-text:#f4f5f6; --u-text-2:#c2c6cb; --u-muted:#808893; --u-faint:#676f79;
+  --u-blue-soft:#05254d; --u-online-soft:#0f2a1a; --u-warn-soft:#2c2415; --u-error-soft:#2e1717;
+  --u-shadow:0 1px 2px rgba(0,0,0,.4); --u-shadow-sm:0 1px 2px rgba(0,0,0,.35);
+  --u-shadow-md:0 2px 8px rgba(0,0,0,.45); --u-shadow-pop:0 12px 34px rgba(0,0,0,.6);
 }
 @media (prefers-color-scheme:dark){html:not([data-theme="light"]){
-  --u-bg:#0e0f12; --u-bg-2:#16181c; --u-card:#1a1c21; --u-card-2:#1f2228;
-  --u-border:#292c33; --u-border-2:#363a42; --u-text:#e9eaed; --u-text-2:#b2b7bf;
-  --u-muted:#797f89; --u-blue-soft:#14233c; --u-online-soft:#102a1e; --u-warn-soft:#2c2415;
-  --u-error-soft:#2e1816; --u-shadow:0 1px 3px rgba(0,0,0,.45); --u-shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --u-bg:#131416; --u-bg-2:#1c1e21; --u-card:#212327; --u-card-2:#282b2f;
+  --u-border:#34383d; --u-border-2:#42474d; --u-text:#f4f5f6; --u-text-2:#c2c6cb;
+  --u-muted:#808893; --u-faint:#676f79; --u-blue-soft:#05254d; --u-online-soft:#0f2a1a;
+  --u-warn-soft:#2c2415; --u-error-soft:#2e1717; --u-shadow:0 1px 2px rgba(0,0,0,.4);
+  --u-shadow-sm:0 1px 2px rgba(0,0,0,.35); --u-shadow-md:0 2px 8px rgba(0,0,0,.45);
   --u-shadow-pop:0 12px 34px rgba(0,0,0,.6);
 }}
 
