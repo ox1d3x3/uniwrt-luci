@@ -1,18 +1,17 @@
 /*
- * luci-theme-unifios  —  UniFi OS design language for OpenWrt LuCI
+ * luci-theme-uniwrt  —  UniWRT design language for OpenWrt LuCI
  * SPDX-License-Identifier: MIT
  *
  * This stylesheet does the heavy lifting of the look. It targets luci-base
  * classes (.cbi-*, .table, .alert-message …) which are stable across LuCI
  * 23.05 / 24.10 / 25.12, plus the common bootstrap-derived layout classes.
- * The sidebar shell is wired up by unifios.js, which adds the
- * `unifios-shell` class to <body> once the menu has been relocated.
+ * The sidebar shell is wired up by uniwrt.js, which adds the
+ * `uniwrt-shell` class to <body> once the menu has been relocated.
  *
- * NOTE ON FONT: UniFi OS uses Ubiquiti's proprietary "UI Sans" typeface,
- * which cannot be redistributed. Inter is the closest free stand-in and is
- * what reads as "UniFi" to most eyes. To self-host instead of relying on the
- * system fallback, drop Inter*.woff2 into ../fonts/ and uncomment the
- * @font-face block below.
+ * FONT: ships with a clean neutral sans stack and falls back to Inter, a
+ * freely redistributable typeface. To self-host Inter, drop the .woff2 files
+ * into ../fonts/ and uncomment the @font-face block below; otherwise the
+ * system sans is used.
  */
 
 /* @font-face { font-family:"Inter"; font-weight:400; font-display:swap;
@@ -72,7 +71,7 @@
             Menlo, Consolas, monospace;
 }
 
-/* Dark mode — UniFi OS dark is near-black, not navy. Honors both the manual
+/* Dark mode — UniWRT dark is near-black, not navy. Honors both the manual
    toggle (html[data-theme]) and the OS preference. */
 html[data-theme="dark"] {
   --u-bg:          #0e0f12;
@@ -134,7 +133,7 @@ pre {
   overflow: auto;
 }
 
-/* Thin UniFi-style scrollbars */
+/* Thin UniWRT-style scrollbars */
 * { scrollbar-width: thin; scrollbar-color: var(--u-border-2) transparent; }
 *::-webkit-scrollbar { width: 9px; height: 9px; }
 *::-webkit-scrollbar-thumb {
@@ -144,24 +143,24 @@ pre {
 *::-webkit-scrollbar-thumb:hover { background: var(--u-muted); background-clip: padding-box; }
 
 /* ====================== APP SHELL (set by JS) ====================== */
-/* When unifios.js has relocated the menu into the rail, <body> gets the
-   `unifios-shell` class and content is shifted right of the rail. */
-body.unifios-shell #maincontent,
-body.unifios-shell .main-right,
-body.unifios-shell > .container,
-body.unifios-shell #view {
+/* When uniwrt.js has relocated the menu into the rail, <body> gets the
+   `uniwrt-shell` class and content is shifted right of the rail. */
+body.uniwrt-shell #maincontent,
+body.uniwrt-shell .main-right,
+body.uniwrt-shell > .container,
+body.uniwrt-shell #view {
   margin-left: var(--u-rail);
   padding: calc(var(--u-topbar-h) + var(--u-gap)) clamp(16px, 3vw, 36px) 48px;
   min-height: 100vh;
   transition: margin-left .22s ease;
 }
-body.unifios-shell.rail-collapsed #maincontent,
-body.unifios-shell.rail-collapsed .main-right,
-body.unifios-shell.rail-collapsed > .container,
-body.unifios-shell.rail-collapsed #view { margin-left: var(--u-rail-min); }
+body.uniwrt-shell.rail-collapsed #maincontent,
+body.uniwrt-shell.rail-collapsed .main-right,
+body.uniwrt-shell.rail-collapsed > .container,
+body.uniwrt-shell.rail-collapsed #view { margin-left: var(--u-rail-min); }
 
 /* The left rail */
-.unifios-sidebar {
+.uniwrt-sidebar {
   position: fixed; inset: 0 auto 0 0; z-index: 1000;
   width: var(--u-rail);
   display: flex; flex-direction: column;
@@ -171,9 +170,9 @@ body.unifios-shell.rail-collapsed #view { margin-left: var(--u-rail-min); }
   transition: width .22s ease, transform .22s ease;
   overflow: hidden;
 }
-body.rail-collapsed .unifios-sidebar { width: var(--u-rail-min); }
+body.rail-collapsed .uniwrt-sidebar { width: var(--u-rail-min); }
 
-.unifios-brand {
+.uniwrt-brand {
   display: flex; align-items: center; gap: 11px;
   height: var(--u-topbar-h); flex: 0 0 var(--u-topbar-h);
   padding: 0 18px;
@@ -181,42 +180,42 @@ body.rail-collapsed .unifios-sidebar { width: var(--u-rail-min); }
   font-weight: 600; font-size: 15px; letter-spacing: -.01em;
   white-space: nowrap;
 }
-.unifios-brand img, .unifios-brand svg { width: 26px; height: 26px; flex: 0 0 26px; }
-.unifios-brand .brand-text { transition: opacity .15s ease; }
-body.rail-collapsed .unifios-brand .brand-text { opacity: 0; }
+.uniwrt-brand img, .uniwrt-brand svg { width: 26px; height: 26px; flex: 0 0 26px; }
+.uniwrt-brand .brand-text { transition: opacity .15s ease; }
+body.rail-collapsed .uniwrt-brand .brand-text { opacity: 0; }
 
 /* Nav list inside the rail */
-.unifios-nav { flex: 1 1 auto; overflow-y: auto; padding: 10px 12px; }
-.unifios-nav ul { list-style: none; margin: 0; padding: 0; }
-.unifios-nav li { margin: 1px 0; }
-.unifios-nav a {
+.uniwrt-nav { flex: 1 1 auto; overflow-y: auto; padding: 10px 12px; }
+.uniwrt-nav ul { list-style: none; margin: 0; padding: 0; }
+.uniwrt-nav li { margin: 1px 0; }
+.uniwrt-nav a {
   display: flex; align-items: center; gap: 12px;
   padding: 9px 12px; border-radius: var(--u-radius-sm);
   color: var(--u-text-2); font-weight: 500; font-size: 13.5px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   transition: background .12s ease, color .12s ease;
 }
-.unifios-nav a:hover { background: var(--u-bg-2); color: var(--u-text); text-decoration: none; }
-.unifios-nav a.active,
-.unifios-nav a[aria-current="page"] {
+.uniwrt-nav a:hover { background: var(--u-bg-2); color: var(--u-text); text-decoration: none; }
+.uniwrt-nav a.active,
+.uniwrt-nav a[aria-current="page"] {
   background: var(--u-blue-soft); color: var(--u-blue);
 }
-.unifios-nav .nav-ico {
+.uniwrt-nav .nav-ico {
   width: 20px; height: 20px; flex: 0 0 20px;
   display: inline-flex; align-items: center; justify-content: center;
   opacity: .85;
 }
-.unifios-nav .nav-label { transition: opacity .15s ease; }
-body.rail-collapsed .unifios-nav .nav-label { opacity: 0; }
-body.rail-collapsed .unifios-nav a { justify-content: center; }
+.uniwrt-nav .nav-label { transition: opacity .15s ease; }
+body.rail-collapsed .uniwrt-nav .nav-label { opacity: 0; }
+body.rail-collapsed .uniwrt-nav a { justify-content: center; }
 
-.unifios-rail-foot {
+.uniwrt-rail-foot {
   flex: 0 0 auto; padding: 12px; border-top: 1px solid var(--u-border);
   font-size: 11.5px; color: var(--u-muted); white-space: nowrap;
 }
 
 /* Floating top bar */
-.unifios-topbar {
+.uniwrt-topbar {
   position: fixed; top: 0; right: 0; left: var(--u-rail); z-index: 900;
   height: var(--u-topbar-h);
   display: flex; align-items: center; gap: 14px;
@@ -227,35 +226,35 @@ body.rail-collapsed .unifios-nav a { justify-content: center; }
   border-bottom: 1px solid var(--u-border);
   transition: left .22s ease;
 }
-body.rail-collapsed .unifios-topbar { left: var(--u-rail-min); }
-.unifios-topbar .crumb { font-weight: 600; font-size: 15px; color: var(--u-text); }
-.unifios-topbar .spacer { flex: 1 1 auto; }
+body.rail-collapsed .uniwrt-topbar { left: var(--u-rail-min); }
+.uniwrt-topbar .crumb { font-weight: 600; font-size: 15px; color: var(--u-text); }
+.uniwrt-topbar .spacer { flex: 1 1 auto; }
 
-.unifios-iconbtn {
+.uniwrt-iconbtn {
   width: 36px; height: 36px; flex: 0 0 36px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--u-border); border-radius: var(--u-radius-sm);
   background: var(--u-card); color: var(--u-text-2); cursor: pointer;
   transition: all .12s ease;
 }
-.unifios-iconbtn:hover { background: var(--u-bg-2); color: var(--u-text); border-color: var(--u-border-2); }
-.unifios-iconbtn svg { width: 18px; height: 18px; }
+.uniwrt-iconbtn:hover { background: var(--u-bg-2); color: var(--u-text); border-color: var(--u-border-2); }
+.uniwrt-iconbtn svg { width: 18px; height: 18px; }
 
 /* Mobile overlay */
-.unifios-scrim {
+.uniwrt-scrim {
   position: fixed; inset: 0; z-index: 999;
   background: rgba(10,12,18,.45); opacity: 0; pointer-events: none;
   transition: opacity .2s ease;
 }
 @media (max-width: 900px) {
-  .unifios-sidebar { transform: translateX(-100%); width: var(--u-rail); box-shadow: var(--u-shadow-pop); }
-  body.rail-open .unifios-sidebar { transform: none; }
-  body.rail-open .unifios-scrim { opacity: 1; pointer-events: auto; }
-  body.unifios-shell #maincontent,
-  body.unifios-shell .main-right,
-  body.unifios-shell > .container,
-  body.unifios-shell #view { margin-left: 0 !important; }
-  .unifios-topbar { left: 0 !important; }
+  .uniwrt-sidebar { transform: translateX(-100%); width: var(--u-rail); box-shadow: var(--u-shadow-pop); }
+  body.rail-open .uniwrt-sidebar { transform: none; }
+  body.rail-open .uniwrt-scrim { opacity: 1; pointer-events: auto; }
+  body.uniwrt-shell #maincontent,
+  body.uniwrt-shell .main-right,
+  body.uniwrt-shell > .container,
+  body.uniwrt-shell #view { margin-left: 0 !important; }
+  .uniwrt-topbar { left: 0 !important; }
 }
 
 /* ============================ CARDS / SECTIONS ============================ */
@@ -347,7 +346,7 @@ input[type="submit"]:hover, input[type="button"]:hover {
 .btn:active, .cbi-button:active, button:active { transform: translateY(1px); }
 .cbi-button:focus-visible, button:focus-visible { outline: none; box-shadow: var(--u-ring); }
 
-/* Primary / positive — the UniFi blue */
+/* Primary / positive — the UniWRT blue */
 .cbi-button-apply, .cbi-button-save, .cbi-button-add, .cbi-button-positive,
 .cbi-button-action, .btn.primary, input.cbi-button-apply, input.cbi-button-save {
   background: var(--u-blue); border-color: var(--u-blue); color: #fff;
@@ -387,7 +386,7 @@ input[type="submit"]:hover, input[type="button"]:hover {
 
 /* ============================ TOGGLES / CHECKBOXES ============================ */
 /* LuCI renders boolean values with .cbi-checkbox; turn the native checkbox
-   into a UniFi pill switch. */
+   into a UniWRT pill switch. */
 .cbi-checkbox { position: relative; display: inline-flex; align-items: center; }
 .cbi-checkbox input[type="checkbox"] {
   appearance: none; -webkit-appearance: none;
@@ -471,7 +470,7 @@ input[type="submit"]:hover, input[type="button"]:hover {
 
 /* ============================ LOGIN ============================ */
 /* The sysauth view is a small .cbi-map form. Centre it on a clean field. */
-body.unifios-login {
+body.uniwrt-login {
   background:
     radial-gradient(1100px 600px at 80% -10%, rgba(0,111,255,.10), transparent 60%),
     radial-gradient(900px 500px at -10% 110%, rgba(0,111,255,.08), transparent 55%),
@@ -479,31 +478,31 @@ body.unifios-login {
   display: flex; align-items: center; justify-content: center;
   min-height: 100vh; padding: 24px;
 }
-body.unifios-login .cbi-map, body.unifios-login form {
+body.uniwrt-login .cbi-map, body.uniwrt-login form {
   width: 100%; max-width: 380px;
   border-radius: var(--u-radius-lg);
   box-shadow: var(--u-shadow-pop);
   padding: 30px 30px 26px;
 }
-body.unifios-login .cbi-map > h2 { text-align: center; font-size: 19px; }
-body.unifios-login .cbi-value { border: 0; flex-direction: column; align-items: stretch; }
-body.unifios-login .cbi-value-title { flex-basis: auto; max-width: none; padding: 0 0 6px; }
-body.unifios-login input { width: 100%; }
-body.unifios-login .cbi-page-actions { box-shadow: none; border: 0; padding: 14px 0 0; position: static; }
-body.unifios-login .cbi-page-actions .cbi-button { width: 100%; }
-.unifios-login-brand {
+body.uniwrt-login .cbi-map > h2 { text-align: center; font-size: 19px; }
+body.uniwrt-login .cbi-value { border: 0; flex-direction: column; align-items: stretch; }
+body.uniwrt-login .cbi-value-title { flex-basis: auto; max-width: none; padding: 0 0 6px; }
+body.uniwrt-login input { width: 100%; }
+body.uniwrt-login .cbi-page-actions { box-shadow: none; border: 0; padding: 14px 0 0; position: static; }
+body.uniwrt-login .cbi-page-actions .cbi-button { width: 100%; }
+.uniwrt-login-brand {
   text-align: center; margin-bottom: 18px;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
 }
-.unifios-login-brand svg, .unifios-login-brand img { width: 44px; height: 44px; }
+.uniwrt-login-brand svg, .uniwrt-login-brand img { width: 44px; height: 44px; }
 
 /* ============================ MISC POLISH ============================ */
 /* Hide the native LuCI top header/menu once the rail is active (JS adds the
    class only after a successful relocation, so nothing is hidden if the rail
    could not be built). */
-body.unifios-shell > header,
-body.unifios-shell #header,
-body.unifios-shell .main > .main-left { display: none !important; }
+body.uniwrt-shell > header,
+body.uniwrt-shell #header,
+body.uniwrt-shell .main > .main-left { display: none !important; }
 
 /* Loading / spinner accent */
 .spinning, .cbi-button-loading::before { border-top-color: var(--u-blue) !important; }

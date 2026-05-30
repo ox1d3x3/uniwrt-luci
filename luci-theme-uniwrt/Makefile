@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 #
-# luci-theme-unifios — a UniFi OS-styled theme for OpenWrt LuCI
+# luci-theme-uniwrt — a UniWRT-styled theme for OpenWrt LuCI
 #
 # Architecture-independent ("all"): one build works on every OpenWrt target.
 # Builds as .ipk on 23.05 / 24.10 (opkg) and as .apk on 25.12+ (apk) — the
@@ -8,10 +8,10 @@
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=UniFi OS styled theme for LuCI
-LUCI_DESCRIPTION:=A clean, card-based LuCI theme inspired by the UniFi OS \
-  design language: left icon rail, soft shadows, rounded surfaces, pill \
-  controls and automatic light/dark modes.
+LUCI_TITLE:=UniWRT theme for LuCI
+LUCI_DESCRIPTION:=UniWRT — a clean, card-based LuCI theme: left icon rail, \
+  soft shadows, rounded surfaces, pill controls and automatic light/dark \
+  modes. Architecture-independent; works on any OpenWrt target.
 # We inherit the stock bootstrap chrome (menu / i18n / theme machinery) and
 # restyle it, so bootstrap must be present.
 LUCI_DEPENDS:=+luci-theme-bootstrap

@@ -1,5 +1,5 @@
 /*
- * luci-theme-unifios  —  shell behaviour
+ * luci-theme-uniwrt  —  shell behaviour
  * SPDX-License-Identifier: MIT
  *
  * LuCI renders most of its chrome client-side, so the top menu may not exist
@@ -13,8 +13,8 @@
 (function () {
   "use strict";
 
-  var KEY_THEME = "unifios:theme";   // "light" | "dark" | "" (=auto)
-  var KEY_RAIL  = "unifios:rail";    // "collapsed" | ""
+  var KEY_THEME = "uniwrt:theme";   // "light" | "dark" | "" (=auto)
+  var KEY_RAIL  = "uniwrt:rail";    // "collapsed" | ""
 
   /* ---- icons (Lucide-style, label-keyed) ---- */
   var I = {
@@ -42,7 +42,7 @@
     if (t.indexOf("log") === 0 || t.indexOf("logout") !== -1) return svg(I.logout);
     return svg(I["default"]);
   }
-  // un-classed icons for the top-bar buttons (sized via .unifios-iconbtn svg)
+  // un-classed icons for the top-bar buttons (sized via .uniwrt-iconbtn svg)
   function bsvg(inner) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
       'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -73,7 +73,7 @@
     ls(false, KEY_THEME, next); applyTheme(next); paintThemeBtn(next);
   }
   function paintThemeBtn(mode) {
-    var b = document.getElementById("unifios-theme-btn"); if (!b) return;
+    var b = document.getElementById("uniwrt-theme-btn"); if (!b) return;
     b.innerHTML = (mode === "dark") ? ICON_SUN : ICON_MOON;
     b.title = (mode === "dark") ? "Switch to light mode" : "Switch to dark mode";
   }
@@ -90,7 +90,7 @@
   }
 
   function buildRail(menu) {
-    if (document.querySelector(".unifios-sidebar")) return; // already built
+    if (document.querySelector(".uniwrt-sidebar")) return; // already built
     var body = document.body;
 
     /* gather top-level links */
@@ -109,7 +109,7 @@
 
     /* sidebar */
     var aside = document.createElement("aside");
-    aside.className = "unifios-sidebar";
+    aside.className = "uniwrt-sidebar";
     var navHtml = links.map(function (l) {
       return '<li><a href="' + l.href + '"' + (l.active ? ' class="active"' : '') + '>' +
              iconFor(l.label) + '<span class="nav-label">' +
@@ -117,31 +117,31 @@
     }).join("");
 
     aside.innerHTML =
-      '<div class="unifios-brand">' +
-        '<img src="/luci-static/unifios/logo.svg" alt="" onerror="this.style.display=\'none\'">' +
-        '<span class="brand-text">UniFi&nbsp;OS</span>' +
+      '<div class="uniwrt-brand">' +
+        '<img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'">' +
+        '<span class="brand-text">UniWRT</span>' +
       '</div>' +
-      '<nav class="unifios-nav"><ul>' + navHtml + '</ul></nav>' +
-      '<div class="unifios-rail-foot">OpenWrt &middot; LuCI</div>';
+      '<nav class="uniwrt-nav"><ul>' + navHtml + '</ul></nav>' +
+      '<div class="uniwrt-rail-foot">OpenWrt &middot; LuCI</div>';
 
     /* top bar */
     var bar = document.createElement("div");
-    bar.className = "unifios-topbar";
+    bar.className = "uniwrt-topbar";
     var pageTitle = document.title.split(" - ")[0] || "Dashboard";
     bar.innerHTML =
-      '<button class="unifios-iconbtn" id="unifios-collapse" title="Toggle menu">' +
+      '<button class="uniwrt-iconbtn" id="uniwrt-collapse" title="Toggle menu">' +
         ICON_MENU + '</button>' +
       '<span class="crumb">' + pageTitle.replace(/</g, "&lt;") + '</span>' +
       '<span class="spacer"></span>' +
-      '<button class="unifios-iconbtn" id="unifios-theme-btn" title="Theme"></button>';
+      '<button class="uniwrt-iconbtn" id="uniwrt-theme-btn" title="Theme"></button>';
 
     var scrim = document.createElement("div");
-    scrim.className = "unifios-scrim";
+    scrim.className = "uniwrt-scrim";
 
     body.appendChild(aside);
     body.appendChild(bar);
     body.appendChild(scrim);
-    body.classList.add("unifios-shell");
+    body.classList.add("uniwrt-shell");
 
     /* restore collapse state */
     if (ls(true, KEY_RAIL) === "collapsed") body.classList.add("rail-collapsed");
@@ -156,7 +156,7 @@
     }
 
     /* wires */
-    document.getElementById("unifios-collapse").addEventListener("click", function () {
+    document.getElementById("uniwrt-collapse").addEventListener("click", function () {
       if (window.innerWidth <= 900) {
         body.classList.toggle("rail-open");
       } else {
@@ -165,7 +165,7 @@
       }
     });
     scrim.addEventListener("click", function () { body.classList.remove("rail-open"); });
-    var tb = document.getElementById("unifios-theme-btn");
+    var tb = document.getElementById("uniwrt-theme-btn");
     tb.addEventListener("click", toggleTheme);
     paintThemeBtn(currentMode());
   }
@@ -173,13 +173,13 @@
   function decorateLogin() {
     var pw = document.querySelector('input[type="password"]');
     if (!pw || findMenu()) return false;
-    document.body.classList.add("unifios-login");
+    document.body.classList.add("uniwrt-login");
     var form = pw.closest("form, .cbi-map");
-    if (form && !form.querySelector(".unifios-login-brand")) {
+    if (form && !form.querySelector(".uniwrt-login-brand")) {
       var b = document.createElement("div");
-      b.className = "unifios-login-brand";
-      b.innerHTML = '<img src="/luci-static/unifios/logo.svg" alt="" ' +
-        'onerror="this.style.display=\'none\'"><strong>UniFi&nbsp;OS</strong>';
+      b.className = "uniwrt-login-brand";
+      b.innerHTML = '<img src="/luci-static/uniwrt/logo.svg" alt="" ' +
+        'onerror="this.style.display=\'none\'"><strong>UniWRT</strong>';
       form.insertBefore(b, form.firstChild);
     }
     return true;

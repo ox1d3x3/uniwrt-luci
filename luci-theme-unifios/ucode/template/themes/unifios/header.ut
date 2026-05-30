@@ -1,3 +1,0 @@
-<!-- luci-theme-unifios: inherit stock bootstrap chrome, then layer the UniFi OS look. -->
-{% include('themes/bootstrap/header') %}
-<link rel="stylesheet" type="text/css" href="/luci-static/unifios/css/unifios.css?v=1.0.0" />

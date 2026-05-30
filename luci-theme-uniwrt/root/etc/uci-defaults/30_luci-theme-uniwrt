@@ -1,10 +1,10 @@
 #!/bin/sh
-# luci-theme-unifios — register the theme and make it the active LuCI theme.
+# luci-theme-uniwrt — register the theme and make it the active LuCI theme.
 # Runs once on install; uci-defaults removes the script afterwards.
 
 uci -q batch <<-EOF
-	set luci.themes.UniFiOS=/luci-static/unifios
-	set luci.main.mediaurlbase=/luci-static/unifios
+	set luci.themes.UniWRT=/luci-static/uniwrt
+	set luci.main.mediaurlbase=/luci-static/uniwrt
 	commit luci
 EOF
 

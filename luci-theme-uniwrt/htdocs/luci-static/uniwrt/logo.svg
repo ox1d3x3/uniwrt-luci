@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="UniWRT">
+  <rect width="48" height="48" rx="12" fill="#006fff"/>
+  <!-- original UniWRT mark: a "W" drawn as an ascending signal/throughput line -->
+  <path d="M11 17 L16.5 32 L24 23 L31.5 32 L37 17"
+        fill="none" stroke="#ffffff" stroke-width="3.4"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="24" cy="23" r="2.6" fill="#ffffff"/>
+</svg>
