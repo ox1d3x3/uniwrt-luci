@@ -340,7 +340,9 @@ body.modal-active #modal_overlay{opacity:1;visibility:visible}
 body.uniwrt-login{background:radial-gradient(1100px 600px at 80% -10%,rgba(0,111,255,.10),transparent 60%),
   radial-gradient(900px 500px at -10% 110%,rgba(0,111,255,.08),transparent 55%),var(--u-bg);
   min-height:100vh;margin:0;padding:48px 16px}
-body.uniwrt-login>header,body.uniwrt-login>footer{display:none!important}
+body.uniwrt-login>header{display:none!important}
+body.uniwrt-login>footer{display:block;text-align:center;margin:18px auto 0;max-width:380px;
+  color:var(--u-muted);font-size:12px;background:transparent;border:0;padding:8px 0}
 body.uniwrt-login form{width:100%;max-width:380px;margin:6vh auto 0;background:var(--u-card);
   border:1px solid var(--u-border);border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow-pop);
   padding:30px;box-sizing:border-box}
@@ -368,4 +370,6 @@ body.uniwrt-login .cbi-page-actions .cbi-button,body.uniwrt-login input[type=sub
   background:var(--u-bg-2);border:1px solid var(--u-border);border-radius:var(--u-radius)}
 .cbi-section pre,.cbi-map pre{max-height:70vh;overflow:auto}
 footer,.footer,#footer{color:var(--u-muted);font-size:12px;text-align:center;padding:24px 0 8px}
+footer .uniwrt-ver{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:var(--u-pill);
+  background:var(--u-bg-2);color:var(--u-muted);font-size:11px;font-weight:600}
 .spinning,.cbi-button-loading::before{border-top-color:var(--u-blue)!important}

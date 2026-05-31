@@ -15,6 +15,7 @@
  */
 (function () {
   "use strict";
+  var UNIWRT_VERSION = "1.4.1";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -182,7 +183,8 @@
     if(!f||f.getAttribute("data-uniwrt")==="1")return;
     f.setAttribute("data-uniwrt","1");
     f.innerHTML='<span>Author: <a href="https://github.com/ox1d3x3/uniwrt-luci" '+
-      'target="_blank" rel="noreferrer">Ox1d3x3 &times; UniWRT</a></span>';
+      'target="_blank" rel="noreferrer">Ox1d3x3 &times; UniWRT</a>'+
+      '<span class="uniwrt-ver">v'+UNIWRT_VERSION+'</span></span>';
   }
 
   function init(){
@@ -193,11 +195,12 @@
     return m?buildRail(m):false;
   }
   function start(){
+    rebrandFooter();
     if(init())return;
-    var tries=0;
-    var obs=new MutationObserver(function(){if(init()||++tries>80)obs.disconnect();});
+    var tries=0, MAX=200;
+    var obs=new MutationObserver(function(){rebrandFooter();if(init()||++tries>MAX)obs.disconnect();});
     obs.observe(document.body,{childList:true,subtree:true});
-    var poll=setInterval(function(){if(init()||tries>80){clearInterval(poll);}tries++;},200);
+    var poll=setInterval(function(){rebrandFooter();if(init()||tries>MAX){clearInterval(poll);}tries++;},200);
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){
