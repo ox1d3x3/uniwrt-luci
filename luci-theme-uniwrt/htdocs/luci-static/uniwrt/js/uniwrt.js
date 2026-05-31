@@ -15,7 +15,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.6.0";
+  var UNIWRT_VERSION = "1.6.1";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -248,25 +248,35 @@
       '<span class="uniwrt-ver">v'+UNIWRT_VERSION+'</span></span>';
   }
 
+  // One-time setup guard: the rail/chrome must be built exactly once. After
+  // that we MUST stop touching the DOM, because LuCI's own JS (L.poll) keeps
+  // mutating the page to fill Memory/Storage, build tables and open modals —
+  // re-running on every mutation creates a feedback loop and can interrupt
+  // LuCI's updates (blank Memory/Storage, dead buttons). So: build once, then
+  // disconnect and never re-run.
+  var SETUP_DONE=false;
+
   function init(){
     applyTheme(curMode());
     rebrandFooter();
-    if(decorateLogin())return true;
-    // Build the rail whether or not LuCI's menu exists yet — buildRail falls
-    // back to the theme's own fixed nav when the live menu is empty/absent.
-    return buildRail(findMenu());
+    if(decorateLogin()){SETUP_DONE=true;return true;}
+    if(buildRail(findMenu())){SETUP_DONE=true;return true;}
+    return false;
   }
   function start(){
     rebrandFooter();
     if(init())return;
-    // Persistent watcher: LuCI renders/replaces its menu client-side, sometimes
-    // well after load (e.g. the post-login Overview). Keep watching so the rail
-    // builds whenever the menu appears, and rebuild if LuCI wipes it.
-    var obs=new MutationObserver(function(){rebrandFooter();init();});
-    obs.observe(document.body,{childList:true,subtree:true});
-    // light poll as a belt-and-braces for environments where mutations are missed
+    // Wait for the menu/body to be ready, but stop the moment setup succeeds
+    // (or after a bounded number of tries) so we never linger on LuCI's DOM.
     var n=0;
-    var poll=setInterval(function(){rebrandFooter();init();if(++n>150)clearInterval(poll);},250);
+    var obs=new MutationObserver(function(){
+      if(SETUP_DONE||init()||++n>40){try{obs.disconnect();}catch(e){}}
+    });
+    try{obs.observe(document.body,{childList:true});}catch(e){}
+    var tries=0;
+    var poll=setInterval(function(){
+      if(SETUP_DONE||init()||++tries>40){clearInterval(poll);try{obs.disconnect();}catch(e){}}
+    },200);
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){
