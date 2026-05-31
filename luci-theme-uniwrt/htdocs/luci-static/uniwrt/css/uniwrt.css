@@ -116,11 +116,12 @@ body.rail-collapsed .uniwrt-nav a{justify-content:center}
 body.rail-collapsed .uniwrt-topbar{left:var(--u-rail-min)}
 .uniwrt-topbar .crumb{font-weight:600;font-size:15px;color:var(--u-text)}
 .uniwrt-topbar .spacer{flex:1 1 auto}
-.uniwrt-iconbtn{width:36px;height:36px;flex:0 0 36px;display:inline-flex;align-items:center;justify-content:center;
-  border:1px solid var(--u-border);border-radius:var(--u-radius-sm);background:var(--u-card);
-  color:var(--u-text-2);cursor:pointer;transition:all .12s ease}
-.uniwrt-iconbtn:hover{background:var(--u-bg-2);color:var(--u-text);border-color:var(--u-border-2)}
-.uniwrt-iconbtn svg{width:18px;height:18px}
+.uniwrt-iconbtn{width:40px;height:40px;flex:0 0 40px;display:inline-flex;align-items:center;justify-content:center;
+  border:0;border-radius:var(--u-radius-sm);background:transparent;
+  color:var(--u-text-2);cursor:pointer;transition:background .12s ease,color .12s ease}
+.uniwrt-iconbtn:hover{background:var(--u-bg-2);color:var(--u-text)}
+.uniwrt-iconbtn:active{background:var(--u-border)}
+.uniwrt-iconbtn svg{width:22px;height:22px}
 .uniwrt-scrim{position:fixed;inset:0;z-index:999;background:rgba(10,12,18,.45);opacity:0;pointer-events:none;transition:opacity .2s ease}
 
 @media (max-width:900px){
@@ -247,16 +248,58 @@ select{padding-right:32px;cursor:pointer;background-repeat:no-repeat;background-
 .cbi-dynlist .add-item,.cbi-dynlist .cbi-input-text{margin-top:2px}
 .cbi-section-create{display:flex;align-items:center;gap:10px;margin-top:12px}
 
-/* ------------------------ toggles -------------------------------- */
-.cbi-checkbox{position:relative;display:inline-flex;align-items:center}
-.cbi-checkbox input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px;height:24px;
-  border-radius:var(--u-pill);background:var(--u-border-2);border:0;cursor:pointer;position:relative;
-  transition:background .16s ease;min-height:0}
-.cbi-checkbox input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;
+/* ------------------------ toggles / checkboxes -------------------
+ * LuCI markup: <div class="cbi-checkbox"><input type=checkbox><label></label></div>
+ * The input is hidden; the LABEL is the visible switch. Clicking the label
+ * toggles the input natively, and `:checked + label` reflects state. */
+.cbi-checkbox{position:relative;display:inline-flex;align-items:center;min-height:24px}
+.cbi-checkbox input[type=checkbox]{position:absolute;width:1px;height:1px;opacity:0;margin:0;pointer-events:none}
+.cbi-checkbox label{display:inline-block;width:42px;height:24px;border-radius:var(--u-pill);
+  background:var(--u-border-2);position:relative;cursor:pointer;margin:0;
+  transition:background .16s ease}
+.cbi-checkbox label::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;
   border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .16s ease}
-.cbi-checkbox input[type=checkbox]:checked{background:var(--u-blue)}
-.cbi-checkbox input[type=checkbox]:checked::after{transform:translateX(18px)}
-.cbi-checkbox input[type=checkbox]:focus-visible{box-shadow:var(--u-ring)}
+.cbi-checkbox input[type=checkbox]:checked + label{background:var(--u-blue)}
+.cbi-checkbox input[type=checkbox]:checked + label::after{transform:translateX(18px)}
+.cbi-checkbox input[type=checkbox]:focus-visible + label{box-shadow:var(--u-ring)}
+.cbi-checkbox input[type=checkbox]:disabled + label{opacity:.5;cursor:not-allowed}
+
+/* radio buttons (LuCI choice widgets) */
+input[type=radio],.cbi-input-radio{appearance:none;-webkit-appearance:none;width:18px;height:18px;min-height:0;
+  border:2px solid var(--u-border-2);border-radius:50%;background:var(--u-card);position:relative;
+  cursor:pointer;vertical-align:middle;margin:0 6px 0 0;transition:border-color .12s ease}
+input[type=radio]:checked,.cbi-input-radio:checked{border-color:var(--u-blue)}
+input[type=radio]:checked::after,.cbi-input-radio:checked::after{content:"";position:absolute;top:3px;left:3px;
+  width:8px;height:8px;border-radius:50%;background:var(--u-blue)}
+input[type=radio]:focus-visible,.cbi-input-radio:focus-visible{outline:0;box-shadow:var(--u-ring)}
+
+/* a field holding several checkbox/radio choices flows left-to-right, not stacked
+ * (reduces vertical scroll on pages like DNS "Cache arbitrary RR") */
+.cbi-value-field > .cbi-checkbox + .cbi-checkbox{margin-left:14px}
+.cbi-value-field.cbi-checkbox-list,.cbi-value-field .cbi-checkbox-list{
+  display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+
+/* ----------------------------- modals ---------------------------
+ * LuCI builds dialogs as <div id="modal_overlay"><div class="modal" role=dialog>
+ * appended to <body>; body gets `modal-active` while open. Without this the
+ * dialog renders as an unstyled block at the bottom of the page. */
+#modal_overlay{position:fixed;inset:0;z-index:2000;display:flex;align-items:flex-start;justify-content:center;
+  overflow-y:auto;padding:48px 16px;background:rgba(20,22,26,.55);
+  opacity:0;visibility:hidden;transition:opacity .15s ease;-webkit-overflow-scrolling:touch}
+body.modal-active{overflow:hidden}
+body.modal-active #modal_overlay{opacity:1;visibility:visible}
+.modal{background:var(--u-card);color:var(--u-text);border:1px solid var(--u-border);
+  border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow-pop);
+  width:100%;max-width:720px;margin:auto;padding:24px 26px;max-height:88vh;overflow:auto}
+.modal>h4,.modal>h3{margin:0 0 16px;font-size:17px;font-weight:600}
+.modal .cbi-map,.modal .cbi-section,.modal fieldset.cbi-section{
+  background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0 0 12px}
+.modal .cbi-section .cbi-section{border:1px solid var(--u-border);border-radius:var(--u-radius);padding:14px 16px}
+.modal .right,.modal .cbi-page-actions{position:static;box-shadow:none;border:0;background:transparent;
+  padding:16px 0 0;margin:8px 0 0;justify-content:flex-end}
+.modal-active .uniwrt-sidebar,.modal-active .uniwrt-topbar{filter:blur(1px)}
+@media (max-width:640px){.modal{max-width:100%;padding:18px 16px}}
+
 
 /* --------------------------- tables ------------------------------ */
 .table,table.table,.cbi-section-table{width:100%;border-collapse:separate;border-spacing:0;background:var(--u-card);
@@ -284,10 +327,11 @@ select{padding-right:32px;cursor:pointer;background-repeat:no-repeat;background-
   padding:4px;background:var(--u-bg-2);border-radius:var(--u-pill);width:fit-content;max-width:100%}
 #tabmenu li,.cbi-tabmenu li{margin:0}
 #tabmenu li a,.cbi-tabmenu li a{display:block;padding:7px 16px;border-radius:var(--u-pill);
-  color:var(--u-text-2);font-weight:600;font-size:13px}
+  color:var(--u-text-2);font-weight:600;font-size:13px;cursor:pointer;text-decoration:none}
 #tabmenu li a:hover,.cbi-tabmenu li a:hover{color:var(--u-text)}
 #tabmenu li.cbi-tab a,.cbi-tabmenu li.cbi-tab a,.cbi-tabmenu li.active a{
-  background:var(--u-card);color:var(--u-blue);box-shadow:var(--u-shadow-sm)}
+  background:var(--u-blue);color:#fff;box-shadow:var(--u-shadow-sm)}
+.cbi-tabmenu li.cbi-tab-disabled a{color:var(--u-text-2)}
 
 /* --------------------------- login ------------------------------- */
 body.uniwrt-login{background:radial-gradient(1100px 600px at 80% -10%,rgba(0,111,255,.10),transparent 60%),
@@ -304,5 +348,12 @@ body.uniwrt-login .cbi-page-actions .cbi-button{width:100%}
 .uniwrt-login-brand svg,.uniwrt-login-brand img{width:44px;height:44px;border-radius:11px}
 
 /* footer */
+/* ---------------------- log / output boxes ----------------------
+ * System Log uses <textarea id="syslog" wrap=off rows=1001>. Make it
+ * size to the viewport instead of a tiny fixed box. */
+#syslog,textarea#syslog,textarea[readonly]{width:100%;min-height:320px;height:68vh;max-height:78vh;
+  font-family:var(--u-mono);font-size:12px;line-height:1.45;white-space:pre;overflow:auto;
+  background:var(--u-bg-2);border:1px solid var(--u-border);border-radius:var(--u-radius)}
+.cbi-section pre,.cbi-map pre{max-height:70vh;overflow:auto}
 footer,.footer,#footer{color:var(--u-muted);font-size:12px;text-align:center;padding:24px 0 8px}
 .spinning,.cbi-button-loading::before{border-top-color:var(--u-blue)!important}
