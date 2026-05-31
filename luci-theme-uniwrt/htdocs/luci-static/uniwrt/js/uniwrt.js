@@ -177,8 +177,17 @@
     return true;
   }
 
+  function rebrandFooter(){
+    var f=document.querySelector("footer")||document.getElementById("footer");
+    if(!f||f.getAttribute("data-uniwrt")==="1")return;
+    f.setAttribute("data-uniwrt","1");
+    f.innerHTML='<span>Author: <a href="https://github.com/ox1d3x3/uniwrt-luci" '+
+      'target="_blank" rel="noreferrer">Ox1d3x3 &times; UniWRT</a></span>';
+  }
+
   function init(){
     applyTheme(curMode());
+    rebrandFooter();
     if(decorateLogin())return true;
     var m=findMenu();
     return m?buildRail(m):false;

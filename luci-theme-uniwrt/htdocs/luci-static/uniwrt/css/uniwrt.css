@@ -333,18 +333,30 @@ body.modal-active #modal_overlay{opacity:1;visibility:visible}
   background:var(--u-blue);color:#fff;box-shadow:var(--u-shadow-sm)}
 .cbi-tabmenu li.cbi-tab-disabled a{color:var(--u-text-2)}
 
-/* --------------------------- login ------------------------------- */
+/* --------------------------- login ------------------------------
+ * The login <body> also holds <header> and <footer> as siblings of the
+ * <form>, so we do NOT flex the body (that spreads them out and stretches
+ * the form). Instead we hide the chrome and center the <form> as one card. */
 body.uniwrt-login{background:radial-gradient(1100px 600px at 80% -10%,rgba(0,111,255,.10),transparent 60%),
   radial-gradient(900px 500px at -10% 110%,rgba(0,111,255,.08),transparent 55%),var(--u-bg);
-  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
-body.uniwrt-login .cbi-map,body.uniwrt-login form{width:100%;max-width:380px;border-radius:var(--u-radius-lg);
-  box-shadow:var(--u-shadow-pop);padding:30px}
-body.uniwrt-login .cbi-value{border:0;flex-direction:column;align-items:stretch}
-body.uniwrt-login .cbi-value-title{flex-basis:auto;max-width:none;padding:0 0 6px}
-body.uniwrt-login input{width:100%}
-body.uniwrt-login .cbi-page-actions{box-shadow:none;border:0;padding:14px 0 0;position:static}
-body.uniwrt-login .cbi-page-actions .cbi-button{width:100%}
-.uniwrt-login-brand{text-align:center;margin-bottom:18px;display:flex;flex-direction:column;align-items:center;gap:10px}
+  min-height:100vh;margin:0;padding:48px 16px}
+body.uniwrt-login>header,body.uniwrt-login>footer{display:none!important}
+body.uniwrt-login form{width:100%;max-width:380px;margin:6vh auto 0;background:var(--u-card);
+  border:1px solid var(--u-border);border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow-pop);
+  padding:30px;box-sizing:border-box}
+/* flatten the inner cbi-map / cbi-section so there's no nested box */
+body.uniwrt-login .cbi-map,body.uniwrt-login .cbi-section,body.uniwrt-login .cbi-section-node{
+  background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0}
+body.uniwrt-login .cbi-map>h2{text-align:center;font-size:19px;margin:0 0 4px}
+body.uniwrt-login .cbi-map-descr{text-align:center;margin:0 0 18px}
+body.uniwrt-login .cbi-value{border:0;flex-direction:column;align-items:stretch;gap:0;padding:8px 0}
+body.uniwrt-login .cbi-value-title{flex:none;max-width:none;padding:0 0 6px}
+body.uniwrt-login .cbi-value-field{flex:none}
+body.uniwrt-login input{width:100%;box-sizing:border-box}
+body.uniwrt-login .cbi-page-actions{box-shadow:none;border:0;background:transparent;padding:18px 0 0;
+  margin:0;position:static}
+body.uniwrt-login .cbi-page-actions .cbi-button,body.uniwrt-login input[type=submit]{width:100%}
+.uniwrt-login-brand{text-align:center;margin-bottom:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .uniwrt-login-brand svg,.uniwrt-login-brand img{width:44px;height:44px;border-radius:11px}
 
 /* footer */
