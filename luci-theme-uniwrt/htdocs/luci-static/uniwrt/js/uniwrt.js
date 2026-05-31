@@ -15,7 +15,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.5.1";
+  var UNIWRT_VERSION = "1.6.0";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -74,7 +74,10 @@
     return (window.matchMedia&&matchMedia("(prefers-color-scheme:dark)").matches)?"dark":"light";}
   function paintTheme(m){var b=document.getElementById("uniwrt-theme-btn");if(!b)return;
     b.innerHTML=(m==="dark")?ICON_SUN:ICON_MOON;b.title=(m==="dark")?"Switch to light mode":"Switch to dark mode";}
-  function toggleTheme(){var n=curMode()==="dark"?"light":"dark";ls(false,KEY_THEME,n);applyTheme(n);paintTheme(n);}
+  function toggleTheme(){var n=curMode()==="dark"?"light":"dark";ls(false,KEY_THEME,n);
+    var b=document.getElementById("uniwrt-theme-btn");
+    if(b){b.classList.add("swap");setTimeout(function(){applyTheme(n);paintTheme(n);b.classList.remove("swap");},180);}
+    else{applyTheme(n);paintTheme(n);}}
 
   function findMenu(){
     var m=document.getElementById("topmenu")||document.getElementById("mainmenu");

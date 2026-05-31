@@ -1,17 +1,13 @@
 #!/bin/sh
 # ============================================================================
-# UniWRT — clean apply script  (v1.5.1)
+# UniWRT — clean apply script  (v1.6.0)
 # Auto-detects a luci-theme-uniwrt package in /tmp (or current dir), installs
 # it with the right package manager (apk or opkg), then writes the verified
 # CSS/JS, activates the theme, clears caches and restarts uhttpd.
-# Safe to re-run. Usage:  sh uniwrt-apply.sh
+# Safe to re-run.  Usage:  sh uniwrt-apply.sh
 # ============================================================================
 D=/www/luci-static/uniwrt
-VER="1.5.1"
-
-echo "==> UniWRT apply ($VER)"
-
-# --- 1. locate a package file (apk preferred, then ipk) -------------------
+echo "==> UniWRT apply (1.6.0)"
 PKG=""
 for dir in /tmp .; do
   for pat in "$dir"/luci-theme-uniwrt-*.apk "$dir"/luci-theme-uniwrt_*.apk \
@@ -20,33 +16,23 @@ for dir in /tmp .; do
   done
   [ -n "$PKG" ] && break
 done
-
-# --- 2. install via whichever package manager exists ----------------------
 if [ -n "$PKG" ]; then
   echo "==> Found package: $PKG"
   if command -v apk >/dev/null 2>&1; then
-    echo "==> apk: removing any old version"
     apk del luci-theme-uniwrt >/dev/null 2>&1
-    # clear any stuck world constraint left by a failed install
     [ -f /etc/apk/world ] && sed -i '/luci-theme-uniwrt/d' /etc/apk/world
-    echo "==> apk: installing"
     apk add --allow-untrusted "$PKG"
   elif command -v opkg >/dev/null 2>&1; then
-    echo "==> opkg: removing any old version"
     opkg remove luci-theme-uniwrt >/dev/null 2>&1
-    echo "==> opkg: installing"
     opkg install "$PKG"
   else
-    echo "!! no apk/opkg found — skipping package install, writing assets only"
+    echo "!! no apk/opkg found — writing assets only"
   fi
 else
-  echo "==> No package in /tmp — writing embedded assets only (still a full apply)"
+  echo "==> No package in /tmp — writing embedded assets only"
 fi
-
-# --- 3. write the verified assets (guarantees exact known-good files) ------
 echo "==> Writing verified CSS/JS"
 mkdir -p "$D/css" "$D/js"
-
 cat > "$D/css/uniwrt.css" <<'UNIWRT_CSS_EOF'
 /*
  * luci-theme-uniwrt — UniFi-style theme for OpenWrt LuCI
@@ -166,12 +152,16 @@ body.rail-collapsed .uniwrt-nav a{justify-content:center}
 body.rail-collapsed .uniwrt-topbar{left:var(--u-rail-min)}
 .uniwrt-topbar .crumb{font-weight:600;font-size:15px;color:var(--u-text)}
 .uniwrt-topbar .spacer{flex:1 1 auto}
-.uniwrt-iconbtn{width:40px;height:40px;flex:0 0 40px;display:inline-flex;align-items:center;justify-content:center;
+.uniwrt-iconbtn{width:42px;height:42px;flex:0 0 42px;display:inline-flex;align-items:center;justify-content:center;
   border:0;border-radius:var(--u-radius-sm);background:transparent;
   color:var(--u-text-2);cursor:pointer;transition:background .12s ease,color .12s ease}
 .uniwrt-iconbtn:hover{background:var(--u-bg-2);color:var(--u-text)}
 .uniwrt-iconbtn:active{background:var(--u-border)}
-.uniwrt-iconbtn svg{width:22px;height:22px}
+.uniwrt-iconbtn svg{width:24px;height:24px}
+/* animated theme toggle: icon rotates + fades when switching */
+#uniwrt-theme-btn svg{transition:transform .4s cubic-bezier(.5,1.6,.4,1),opacity .2s ease}
+#uniwrt-theme-btn:hover svg{transform:rotate(25deg)}
+#uniwrt-theme-btn.swap svg{transform:rotate(180deg) scale(.6);opacity:0}
 .uniwrt-scrim{position:fixed;inset:0;z-index:999;background:rgba(10,12,18,.45);opacity:0;pointer-events:none;transition:opacity .2s ease}
 
 @media (max-width:900px){
@@ -330,14 +320,14 @@ input[type=radio]:focus-visible,.cbi-input-radio:focus-visible{outline:0;box-sha
   display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
 
 /* ----------------------------- modals ---------------------------
- * LuCI builds dialogs as <div id="modal_overlay"><div class="modal" role=dialog>
- * appended to <body>; body gets `modal-active` while open. Without this the
- * dialog renders as an unstyled block at the bottom of the page. */
+ * LuCI's ui.js shows a dialog by adding class `active` to #modal_overlay
+ * and `modal-overlay-active` to <body>. (Earlier this keyed off a class
+ * that was never set, so dialogs stayed invisible = "edit does nothing".) */
 #modal_overlay{position:fixed;inset:0;z-index:2000;display:flex;align-items:flex-start;justify-content:center;
   overflow-y:auto;padding:48px 16px;background:rgba(20,22,26,.55);
   opacity:0;visibility:hidden;transition:opacity .15s ease;-webkit-overflow-scrolling:touch}
-body.modal-active{overflow:hidden}
-body.modal-active #modal_overlay{opacity:1;visibility:visible}
+#modal_overlay.active{opacity:1;visibility:visible}
+body.modal-overlay-active{overflow:hidden}
 .modal{background:var(--u-card);color:var(--u-text);border:1px solid var(--u-border);
   border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow-pop);
   width:100%;max-width:720px;margin:auto;padding:24px 26px;max-height:88vh;overflow:auto}
@@ -347,7 +337,6 @@ body.modal-active #modal_overlay{opacity:1;visibility:visible}
 .modal .cbi-section .cbi-section{border:1px solid var(--u-border);border-radius:var(--u-radius);padding:14px 16px}
 .modal .right,.modal .cbi-page-actions{position:static;box-shadow:none;border:0;background:transparent;
   padding:16px 0 0;margin:8px 0 0;justify-content:flex-end}
-.modal-active .uniwrt-sidebar,.modal-active .uniwrt-topbar{filter:blur(1px)}
 @media (max-width:640px){.modal{max-width:100%;padding:18px 16px}}
 
 
@@ -369,8 +358,21 @@ body.modal-active #modal_overlay{opacity:1;visibility:visible}
 .alert-message.success{border-left-color:var(--u-online);background:var(--u-online-soft)}
 .alert-message.warning{border-left-color:var(--u-warn);background:var(--u-warn-soft)}
 .alert-message.error,.cbi-section-error{border-left-color:var(--u-error);background:var(--u-error-soft)}
-.label,.ifacebadge{display:inline-flex;align-items:center;gap:6px;border-radius:var(--u-pill);
+/* status labels stay as small pills */
+.label{display:inline-flex;align-items:center;gap:6px;border-radius:var(--u-pill);
   padding:3px 10px;font-size:12px;font-weight:600;background:var(--u-bg-2);color:var(--u-text-2)}
+/* ifacebadge wraps signal icons and wifi/network info; the old pill background
+ * turned these into ugly bubbles. Make them clean, transparent inline groups;
+ * the "large" variant (wireless overview blocks) becomes a proper bordered box. */
+.ifacebadge{display:inline-flex;align-items:center;gap:8px;background:transparent;
+  border:0;border-radius:0;padding:0;color:var(--u-text-2);font-size:12.5px}
+.ifacebadge img,.ifacebadge svg{width:18px;height:18px;flex:0 0 auto}
+.ifacebadge.large,.ifacebadge-active.large{display:inline-flex;align-items:center;gap:10px;
+  background:var(--u-bg-2);border:1px solid var(--u-border);border-radius:var(--u-radius);
+  padding:10px 14px;color:var(--u-text)}
+/* wireless overview "network box" tiles -> clean cards, not dark bubbles */
+.cbi-section .ifacebadge.large{background:var(--u-card)}
+table .ifacebadge{padding:0}
 
 /* ---------------------------- tabs ------------------------------- */
 #tabmenu,.cbi-tabmenu,ul.cbi-tabmenu{display:flex;flex-wrap:wrap;gap:4px;list-style:none;margin:0 0 18px;
@@ -443,7 +445,7 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.5.1";
+  var UNIWRT_VERSION = "1.6.0";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -502,7 +504,10 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
     return (window.matchMedia&&matchMedia("(prefers-color-scheme:dark)").matches)?"dark":"light";}
   function paintTheme(m){var b=document.getElementById("uniwrt-theme-btn");if(!b)return;
     b.innerHTML=(m==="dark")?ICON_SUN:ICON_MOON;b.title=(m==="dark")?"Switch to light mode":"Switch to dark mode";}
-  function toggleTheme(){var n=curMode()==="dark"?"light":"dark";ls(false,KEY_THEME,n);applyTheme(n);paintTheme(n);}
+  function toggleTheme(){var n=curMode()==="dark"?"light":"dark";ls(false,KEY_THEME,n);
+    var b=document.getElementById("uniwrt-theme-btn");
+    if(b){b.classList.add("swap");setTimeout(function(){applyTheme(n);paintTheme(n);b.classList.remove("swap");},180);}
+    else{applyTheme(n);paintTheme(n);}}
 
   function findMenu(){
     var m=document.getElementById("topmenu")||document.getElementById("mainmenu");
@@ -698,17 +703,10 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
     if(!ls(true,KEY_THEME)){applyTheme(curMode());paintTheme(curMode());}});
 })();
 UNIWRT_JS_EOF
-
-# --- 4. activate, clear caches, restart -----------------------------------
-echo "==> Activating theme"
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
-rm -f /tmp/luci-indexcache
-rm -rf /tmp/luci-modulecache
-echo "==> Restarting uhttpd"
+rm -f /tmp/luci-indexcache; rm -rf /tmp/luci-modulecache
 /etc/init.d/uhttpd restart
-
-echo ""
-echo "==> Done. Deployed JS version:"
+echo ""; echo "==> Done. Deployed JS version:"
 grep -o 'UNIWRT_VERSION = "[0-9.]*"' "$D/js/uniwrt.js"
-echo "==> Hard-refresh your browser with cache disabled (or use Incognito)."
+echo "==> Now hard-refresh your browser with cache disabled (or use Incognito)."
