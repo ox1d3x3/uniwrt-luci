@@ -69,7 +69,7 @@ body.uniwrt-shell>header{display:none!important}
 /* ------------------------- app shell ----------------------------- */
 body.uniwrt-shell #maincontent.container{
   margin-left:var(--u-rail);
-  padding:calc(var(--u-top) + 18px) clamp(16px,3vw,34px) 56px;
+  padding:74px 28px 48px;
   max-width:none;width:auto;min-height:100vh;
   transition:margin-left .2s ease;
 }
@@ -109,8 +109,8 @@ body.rail-collapsed .uniwrt-nav a{justify-content:center}
   font-size:11.5px;color:var(--u-muted);white-space:nowrap}
 
 .uniwrt-topbar{position:fixed;top:0;right:0;left:var(--u-rail);z-index:900;height:var(--u-top);
-  display:flex;align-items:center;gap:13px;padding:0 clamp(16px,3vw,26px);
-  background:color-mix(in srgb,var(--u-bg) 80%,transparent);
+  display:flex;align-items:center;gap:13px;padding:0 22px;
+  background:var(--u-bg);
   backdrop-filter:saturate(160%) blur(10px);-webkit-backdrop-filter:saturate(160%) blur(10px);
   border-bottom:1px solid var(--u-border);transition:left .2s ease}
 body.rail-collapsed .uniwrt-topbar{left:var(--u-rail-min)}
