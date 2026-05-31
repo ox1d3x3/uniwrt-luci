@@ -1,7 +1,50 @@
 #!/bin/sh
-# UniWRT v1.5.0 — self-contained apply script. Run on the router (any dir).
-# Writes the theme CSS+JS directly, activates the theme, clears caches, restarts uhttpd.
+# ============================================================================
+# UniWRT — clean apply script  (v1.5.1)
+# Auto-detects a luci-theme-uniwrt package in /tmp (or current dir), installs
+# it with the right package manager (apk or opkg), then writes the verified
+# CSS/JS, activates the theme, clears caches and restarts uhttpd.
+# Safe to re-run. Usage:  sh uniwrt-apply.sh
+# ============================================================================
 D=/www/luci-static/uniwrt
+VER="1.5.1"
+
+echo "==> UniWRT apply ($VER)"
+
+# --- 1. locate a package file (apk preferred, then ipk) -------------------
+PKG=""
+for dir in /tmp .; do
+  for pat in "$dir"/luci-theme-uniwrt-*.apk "$dir"/luci-theme-uniwrt_*.apk \
+             "$dir"/luci-theme-uniwrt-*.ipk "$dir"/luci-theme-uniwrt_*.ipk; do
+    [ -f "$pat" ] && { PKG="$pat"; break; }
+  done
+  [ -n "$PKG" ] && break
+done
+
+# --- 2. install via whichever package manager exists ----------------------
+if [ -n "$PKG" ]; then
+  echo "==> Found package: $PKG"
+  if command -v apk >/dev/null 2>&1; then
+    echo "==> apk: removing any old version"
+    apk del luci-theme-uniwrt >/dev/null 2>&1
+    # clear any stuck world constraint left by a failed install
+    [ -f /etc/apk/world ] && sed -i '/luci-theme-uniwrt/d' /etc/apk/world
+    echo "==> apk: installing"
+    apk add --allow-untrusted "$PKG"
+  elif command -v opkg >/dev/null 2>&1; then
+    echo "==> opkg: removing any old version"
+    opkg remove luci-theme-uniwrt >/dev/null 2>&1
+    echo "==> opkg: installing"
+    opkg install "$PKG"
+  else
+    echo "!! no apk/opkg found — skipping package install, writing assets only"
+  fi
+else
+  echo "==> No package in /tmp — writing embedded assets only (still a full apply)"
+fi
+
+# --- 3. write the verified assets (guarantees exact known-good files) ------
+echo "==> Writing verified CSS/JS"
 mkdir -p "$D/css" "$D/js"
 
 cat > "$D/css/uniwrt.css" <<'UNIWRT_CSS_EOF'
@@ -400,7 +443,7 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.5.0";
+  var UNIWRT_VERSION = "1.5.1";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -508,8 +551,8 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
       {label:"Status",items:[
         {href:b+"/admin/status/overview",label:"Overview"},
         {href:b+"/admin/status/routes",label:"Routing"},
-        {href:b+"/admin/status/firewall",label:"Firewall"},
-        {href:b+"/admin/status/syslog",label:"System Log"},
+        {href:b+"/admin/status/nftables",label:"Firewall"},
+        {href:b+"/admin/status/logs/syslog",label:"System Log"},
         {href:b+"/admin/status/processes",label:"Processes"},
         {href:b+"/admin/status/channel_analysis",label:"Channel Analysis"},
         {href:b+"/admin/status/realtime/load",label:"Realtime Graphs"}
@@ -520,16 +563,16 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
         {href:b+"/admin/system/package-manager",label:"Software"},
         {href:b+"/admin/system/startup",label:"Startup"},
         {href:b+"/admin/system/crontab",label:"Scheduled Tasks"},
-        {href:b+"/admin/system/mounts",label:"Mount Points"},
         {href:b+"/admin/system/leds",label:"LED Configuration"},
+        {href:b+"/admin/system/attendedsysupgrade",label:"Attended Sysupgrade"},
         {href:b+"/admin/system/flash",label:"Backup / Flash Firmware"},
         {href:b+"/admin/system/reboot",label:"Reboot"}
       ]},
       {label:"Network",items:[
         {href:b+"/admin/network/network",label:"Interfaces"},
         {href:b+"/admin/network/wireless",label:"Wireless"},
-        {href:b+"/admin/network/dhcp",label:"DHCP and DNS"},
-        {href:b+"/admin/network/hosts",label:"Hostnames"},
+        {href:b+"/admin/network/dhcp",label:"DHCP"},
+        {href:b+"/admin/network/dns",label:"DNS"},
         {href:b+"/admin/network/routes",label:"Static Routes"},
         {href:b+"/admin/network/diagnostics",label:"Diagnostics"},
         {href:b+"/admin/network/firewall",label:"Firewall"}
@@ -656,9 +699,16 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
 })();
 UNIWRT_JS_EOF
 
+# --- 4. activate, clear caches, restart -----------------------------------
+echo "==> Activating theme"
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
-rm -f /tmp/luci-indexcache; rm -rf /tmp/luci-modulecache
+rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache
+echo "==> Restarting uhttpd"
 /etc/init.d/uhttpd restart
-echo ""; echo "UniWRT applied. Deployed JS version:"
+
+echo ""
+echo "==> Done. Deployed JS version:"
 grep -o 'UNIWRT_VERSION = "[0-9.]*"' "$D/js/uniwrt.js"
+echo "==> Hard-refresh your browser with cache disabled (or use Incognito)."

@@ -15,7 +15,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.5.0";
+  var UNIWRT_VERSION = "1.5.1";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -123,8 +123,8 @@
       {label:"Status",items:[
         {href:b+"/admin/status/overview",label:"Overview"},
         {href:b+"/admin/status/routes",label:"Routing"},
-        {href:b+"/admin/status/firewall",label:"Firewall"},
-        {href:b+"/admin/status/syslog",label:"System Log"},
+        {href:b+"/admin/status/nftables",label:"Firewall"},
+        {href:b+"/admin/status/logs/syslog",label:"System Log"},
         {href:b+"/admin/status/processes",label:"Processes"},
         {href:b+"/admin/status/channel_analysis",label:"Channel Analysis"},
         {href:b+"/admin/status/realtime/load",label:"Realtime Graphs"}
@@ -135,16 +135,16 @@
         {href:b+"/admin/system/package-manager",label:"Software"},
         {href:b+"/admin/system/startup",label:"Startup"},
         {href:b+"/admin/system/crontab",label:"Scheduled Tasks"},
-        {href:b+"/admin/system/mounts",label:"Mount Points"},
         {href:b+"/admin/system/leds",label:"LED Configuration"},
+        {href:b+"/admin/system/attendedsysupgrade",label:"Attended Sysupgrade"},
         {href:b+"/admin/system/flash",label:"Backup / Flash Firmware"},
         {href:b+"/admin/system/reboot",label:"Reboot"}
       ]},
       {label:"Network",items:[
         {href:b+"/admin/network/network",label:"Interfaces"},
         {href:b+"/admin/network/wireless",label:"Wireless"},
-        {href:b+"/admin/network/dhcp",label:"DHCP and DNS"},
-        {href:b+"/admin/network/hosts",label:"Hostnames"},
+        {href:b+"/admin/network/dhcp",label:"DHCP"},
+        {href:b+"/admin/network/dns",label:"DNS"},
         {href:b+"/admin/network/routes",label:"Static Routes"},
         {href:b+"/admin/network/diagnostics",label:"Diagnostics"},
         {href:b+"/admin/network/firewall",label:"Firewall"}
