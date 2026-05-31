@@ -15,7 +15,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.4.1";
+  var UNIWRT_VERSION = "1.4.2";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -100,6 +100,16 @@
       }
       if(label&&items.length)groups.push({label:label,items:items});
     });
+    // Fallback: if the two-level structure wasn't found but the menu has links,
+    // build a single flat group so the rail ALWAYS appears when a menu exists.
+    if(!groups.length){
+      var flat=[];
+      menu.querySelectorAll("a").forEach(function(a){
+        var h=a.getAttribute("href")||"",t=(a.textContent||"").trim();
+        if(t&&h&&h!=="#")flat.push({href:h,label:t,active:pathOf(h)===cur});
+      });
+      if(flat.length)groups.push({label:"Menu",items:flat});
+    }
     return groups;
   }
 
@@ -197,10 +207,14 @@
   function start(){
     rebrandFooter();
     if(init())return;
-    var tries=0, MAX=200;
-    var obs=new MutationObserver(function(){rebrandFooter();if(init()||++tries>MAX)obs.disconnect();});
+    // Persistent watcher: LuCI renders/replaces its menu client-side, sometimes
+    // well after load (e.g. the post-login Overview). Keep watching so the rail
+    // builds whenever the menu appears, and rebuild if LuCI wipes it.
+    var obs=new MutationObserver(function(){rebrandFooter();init();});
     obs.observe(document.body,{childList:true,subtree:true});
-    var poll=setInterval(function(){rebrandFooter();if(init()||tries>MAX){clearInterval(poll);}tries++;},200);
+    // light poll as a belt-and-braces for environments where mutations are missed
+    var n=0;
+    var poll=setInterval(function(){rebrandFooter();init();if(++n>150)clearInterval(poll);},250);
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){
