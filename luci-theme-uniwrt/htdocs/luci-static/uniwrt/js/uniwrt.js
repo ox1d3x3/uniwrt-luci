@@ -15,7 +15,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.4.2";
+  var UNIWRT_VERSION = "1.5.0";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -113,12 +113,70 @@
     return groups;
   }
 
+  // Fixed UniFi-style navigation. Built into the theme so the rail ALWAYS
+  // appears, independent of whether LuCI has finished rendering its own menu
+  // (on 25.12 the menu is built late via ubus and is often empty at load).
+  // Paths are LuCI's stable admin routes; LuCI resolves the script prefix.
+  function defaultNav(base){
+    var b=base||"/cgi-bin/luci";
+    return [
+      {label:"Status",items:[
+        {href:b+"/admin/status/overview",label:"Overview"},
+        {href:b+"/admin/status/routes",label:"Routing"},
+        {href:b+"/admin/status/firewall",label:"Firewall"},
+        {href:b+"/admin/status/syslog",label:"System Log"},
+        {href:b+"/admin/status/processes",label:"Processes"},
+        {href:b+"/admin/status/channel_analysis",label:"Channel Analysis"},
+        {href:b+"/admin/status/realtime/load",label:"Realtime Graphs"}
+      ]},
+      {label:"System",items:[
+        {href:b+"/admin/system/system",label:"System"},
+        {href:b+"/admin/system/admin",label:"Administration"},
+        {href:b+"/admin/system/package-manager",label:"Software"},
+        {href:b+"/admin/system/startup",label:"Startup"},
+        {href:b+"/admin/system/crontab",label:"Scheduled Tasks"},
+        {href:b+"/admin/system/mounts",label:"Mount Points"},
+        {href:b+"/admin/system/leds",label:"LED Configuration"},
+        {href:b+"/admin/system/flash",label:"Backup / Flash Firmware"},
+        {href:b+"/admin/system/reboot",label:"Reboot"}
+      ]},
+      {label:"Network",items:[
+        {href:b+"/admin/network/network",label:"Interfaces"},
+        {href:b+"/admin/network/wireless",label:"Wireless"},
+        {href:b+"/admin/network/dhcp",label:"DHCP and DNS"},
+        {href:b+"/admin/network/hosts",label:"Hostnames"},
+        {href:b+"/admin/network/routes",label:"Static Routes"},
+        {href:b+"/admin/network/diagnostics",label:"Diagnostics"},
+        {href:b+"/admin/network/firewall",label:"Firewall"}
+      ]}
+    ];
+  }
+
+  // Mark the entry matching the current path active (longest-prefix wins).
+  function markActive(groups){
+    var cur=location.pathname.replace(/\/+$/,""),best=null,bestLen=-1;
+    groups.forEach(function(g){g.items.forEach(function(it){
+      var p=pathOf(it.href);
+      if(p&&cur.indexOf(p)===0&&p.length>bestLen){best=it;bestLen=p.length;}
+      it.active=false;
+    });});
+    if(best)best.active=true;
+    return groups;
+  }
+
   function buildRail(menu){
     if(document.querySelector(".uniwrt-sidebar"))return true;
-    var groups=parseGroups(menu);
-    if(!groups.length)return false;
 
-    var anyActive=groups.some(function(g){return g.items.some(function(i){return i.active;});});
+    // Prefer LuCI's own menu when it actually has links (keeps any custom
+    // pages a build adds); otherwise fall back to our fixed nav so the rail
+    // is guaranteed to render.
+    var groups=menu?parseGroups(menu):[];
+    var total=groups.reduce(function(n,g){return n+g.items.length;},0);
+    if(total<3){
+      var base=(window.L&&L.env&&L.env.scriptname)?L.env.scriptname:"/cgi-bin/luci";
+      groups=markActive(defaultNav(base));
+    }
+    if(!groups.length)return false;
 
     var navHtml=groups.map(function(g){
       var lis=g.items.map(function(it){
@@ -136,7 +194,6 @@
       '<nav class="uniwrt-nav">'+navHtml+'</nav>'+
       '<div class="uniwrt-rail-foot">OpenWrt &middot; LuCI</div>';
 
-    var brand=document.querySelector("header .brand"), host=(document.querySelector("header .brand")||{}).textContent;
     var title=(document.title.split(" - ")[0]||document.title||"Dashboard").trim();
     var bar=document.createElement("div");
     bar.className="uniwrt-topbar";
@@ -152,15 +209,6 @@
     document.body.classList.add("uniwrt-shell");
     if(ls(true,KEY_RAIL)==="collapsed")document.body.classList.add("rail-collapsed");
 
-    /* fallback active match by prefix if nothing matched exactly */
-    if(!anyActive){
-      var cur=location.pathname.replace(/\/+$/,"");
-      aside.querySelectorAll("a").forEach(function(a){
-        var p=pathOf(a.getAttribute("href")||"");
-        if(p&&cur.indexOf(p)===0)a.classList.add("active");
-      });
-    }
-    /* scroll active item into view */
     var act=aside.querySelector("a.active");if(act)setTimeout(function(){try{act.scrollIntoView({block:"center"});}catch(e){}},0);
 
     document.getElementById("uniwrt-collapse").addEventListener("click",function(){
@@ -201,8 +249,9 @@
     applyTheme(curMode());
     rebrandFooter();
     if(decorateLogin())return true;
-    var m=findMenu();
-    return m?buildRail(m):false;
+    // Build the rail whether or not LuCI's menu exists yet — buildRail falls
+    // back to the theme's own fixed nav when the live menu is empty/absent.
+    return buildRail(findMenu());
   }
   function start(){
     rebrandFooter();
