@@ -117,3 +117,8 @@ Or use the helper:
 ## License
 
 MIT. UniWRT is an independent OpenWrt LuCI theme project.
+
+
+## v2.0.1
+
+- Fixed GitHub Actions Static QA permission failure by running `qa-static.sh` through `bash` instead of relying on executable file mode.

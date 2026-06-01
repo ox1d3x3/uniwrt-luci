@@ -50,7 +50,8 @@ jobs:
           sudo apt-get install -y nodejs python3-yaml
 
       - name: Run static QA
-        run: ./qa-static.sh
+        shell: bash
+        run: bash ./qa-static.sh
 
   build:
     name: Build ${{ matrix.label }}
