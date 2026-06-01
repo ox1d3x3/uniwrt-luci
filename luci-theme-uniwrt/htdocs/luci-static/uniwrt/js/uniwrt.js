@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.4";
+  var UNIWRT_VERSION = "2.0.6";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -122,7 +122,7 @@
       return '<div class="nav-group"><div class="nav-group-label">'+esc(g.label)+'</div><ul>'+lis+'</ul></div>';
     }).join("");
     var aside=document.createElement("aside"); aside.className="uniwrt-sidebar";
-    aside.innerHTML='<div class="uniwrt-brand"><img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'"><span class="brand-text">UniWRT</span></div>'+ '<div class="uniwrt-menu-search"><input type="search" id="uniwrt-menu-filter" placeholder="Search menu" autocomplete="off" aria-label="Search menu"></div>' + '<nav class="uniwrt-nav">'+navHtml+'</nav>'+ '<div class="uniwrt-rail-foot">Portal for OpenWrt'+(recovery?' · Recovery menu':'')+'</div>';
+    aside.innerHTML='<div class="uniwrt-brand"><img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'"><span class="brand-text">UniWRT</span></div>'+ '<div class="uniwrt-menu-search"><input type="search" id="uniwrt-menu-filter" placeholder="Search menu" autocomplete="off" aria-label="Search menu"></div>' + '<nav class="uniwrt-nav">'+navHtml+'</nav>'+ '<div class="uniwrt-rail-foot">UniWRT v'+UNIWRT_VERSION+(recovery?' · Recovery menu':'')+'</div>';
     var title=(document.title.split(" - ")[0]||document.title||"Dashboard").trim();
     var bar=document.createElement("div"); bar.className="uniwrt-topbar";
     bar.innerHTML='<button type="button" class="uniwrt-iconbtn" id="uniwrt-collapse" title="Toggle menu" aria-label="Toggle menu" aria-expanded="false">'+ICON_MENU+'</button>'+ '<span class="crumb">'+esc(title)+'</span><span class="uniwrt-context">LuCI</span><span class="spacer"></span>'+ '<button type="button" class="uniwrt-iconbtn" id="uniwrt-theme-btn" title="Theme" aria-label="Theme"></button>';
@@ -170,16 +170,150 @@
     var s=document.createElement("span"); s.className="uniwrt-ver"; s.textContent="UniWRT v"+UNIWRT_VERSION;
     f.appendChild(document.createTextNode(" ")); f.appendChild(s);
   }
+
+
+
+
+  function isSoftwarePage(){
+    var s=(location.pathname+" "+location.hash+" "+document.title).toLowerCase();
+    return /\b(opkg|software|package manager|packages|updates?)\b/.test(s) || /\/admin\/system\/(opkg|software|packages)/.test(s);
+  }
+  function decorateSoftwarePage(){
+    if(!isSoftwarePage())return false;
+    document.body.classList.add("uniwrt-software");
+    document.querySelectorAll("[id],[class]").forEach(function(el){
+      if(el.getAttribute("data-uniwrt-status-card")==="1")return;
+      var key=((el.id||"")+" "+(el.className&&typeof el.className==="string"?el.className:""));
+      if(/(opkg|package|install|upgrade|update|download|upload).*(status|output|log|progress)|(status|output|log|progress).*(opkg|package|install|upgrade|update|download|upload)/i.test(key)){
+        if(el.children.length < 18 || /^(PRE|TEXTAREA|DIV|SECTION)$/i.test(el.tagName))
+          el.setAttribute("data-uniwrt-status-card","1");
+      }
+    });
+    document.querySelectorAll("progress,.progress,.cbi-progressbar").forEach(function(el){
+      el.setAttribute("data-uniwrt-progress","1");
+    });
+    return true;
+  }
+
+  function directTabLis(menu){
+    var out=[];
+    for(var i=0;i<menu.children.length;i++){
+      var ch=menu.children[i];
+      if(ch&&String(ch.tagName).toLowerCase()==="li"&&ch.hasAttribute("data-tab"))out.push(ch);
+    }
+    return out;
+  }
+  function directTabPanes(group){
+    var out=[];
+    if(!group)return out;
+    for(var i=0;i<group.children.length;i++){
+      var ch=group.children[i];
+      if(ch&&ch.hasAttribute&&ch.hasAttribute("data-tab")&&ch.hasAttribute("data-tab-title"))out.push(ch);
+    }
+    if(!out.length){
+      for(var j=0;j<group.children.length;j++){
+        var n=group.children[j];
+        if(n&&n.hasAttribute&&n.hasAttribute("data-tab"))out.push(n);
+      }
+    }
+    return out;
+  }
+  function tabIsHidden(li){
+    return !li || li.style.display==="none" || li.hidden || li.offsetParent===null && li.style.display==="none";
+  }
+  function activateCbiTab(menu, li){
+    if(!menu||!li)return false;
+    var name=li.getAttribute("data-tab"), group=menu.nextElementSibling;
+    if(!name||!group)return false;
+    var panes=directTabPanes(group);
+    if(!panes.length)return false;
+    var matched=false, index=0;
+    directTabLis(menu).forEach(function(tab){
+      var active=tab.getAttribute("data-tab")===name;
+      if(active)matched=true;
+      tab.classList.toggle("cbi-tab",active);
+      tab.classList.toggle("cbi-tab-disabled",!active);
+    });
+    if(!matched)return false;
+    panes.forEach(function(pane){
+      var active=pane.getAttribute("data-tab")===name;
+      pane.setAttribute("data-tab-active",active?"true":"false");
+      pane.style.display=active?"":"none";
+      if(active){
+        try{pane.dispatchEvent(new CustomEvent("cbi-tab-active",{bubbles:true,detail:{tab:name}}));}catch(e){}
+        try{ if(window.L&&L.ui&&L.ui.tabs&&typeof L.ui.tabs.setActiveTabId==="function") L.ui.tabs.setActiveTabId(pane,index); }catch(e){}
+      }
+      index++;
+    });
+    try{menu.dispatchEvent(new CustomEvent("uniwrt-tab-switch",{bubbles:true,detail:{tab:name}}));}catch(e){}
+    return true;
+  }
+  function repairCbiTabs(){
+    document.querySelectorAll("ul.cbi-tabmenu").forEach(function(menu){
+      if(menu.getAttribute("data-uniwrt-tabfix")==="1")return;
+      var lis=directTabLis(menu), group=menu.nextElementSibling, panes=directTabPanes(group);
+      if(!lis.length||!panes.length)return;
+      menu.setAttribute("data-uniwrt-tabfix","1");
+
+      var active=menu.querySelector(":scope > li.cbi-tab[data-tab]");
+      if(!active || tabIsHidden(active)){
+        for(var i=0;i<lis.length;i++){
+          if(!tabIsHidden(lis[i])){active=lis[i];break;}
+        }
+      }
+      if(active)activateCbiTab(menu,active);
+
+      menu.addEventListener("click",function(ev){
+        var a=ev.target.closest&&ev.target.closest("a");
+        if(!a||!menu.contains(a))return;
+        var li=a.closest("li[data-tab]");
+        if(!li||tabIsHidden(li))return;
+        /* LuCI's own ui.tabs normally handles this. This fallback deliberately
+         * uses the same DOM contract so pages where the native handler is absent
+         * or blocked still work. */
+        ev.preventDefault();
+        activateCbiTab(menu,li);
+      });
+    });
+  }
+  function repairDropdownCheckboxes(){
+    document.querySelectorAll(".cbi-dropdown li input[type='checkbox']").forEach(function(cb){
+      if(cb.getAttribute("data-uniwrt-ddfix")==="1")return;
+      cb.setAttribute("data-uniwrt-ddfix","1");
+      cb.addEventListener("click",function(ev){
+        var li=cb.closest("li");
+        if(li){
+          /* Let LuCI's dropdown item handler receive the click even when the
+           * small checkbox glyph is hit directly. */
+          setTimeout(function(){try{li.dispatchEvent(new MouseEvent("click",{bubbles:true,cancelable:true,view:window}));}catch(e){}},0);
+        }
+      });
+    });
+  }
+  function repairPageControls(){
+    decorateSoftwarePage();
+    repairCbiTabs();
+    repairDropdownCheckboxes();
+  }
   function tryInit(){
     if(SETUP_DONE)return;
-    applyTheme(curMode()); rebrandFooter();
+    applyTheme(curMode()); rebrandFooter(); repairPageControls();
     if(decorateLogin()){SETUP_DONE=true;return;}
     var menu=findMenu();
     if(menu && buildRail(menu,false)){SETUP_DONE=true;return;}
     if(ATTEMPTS++ < MAX_ATTEMPTS){setTimeout(tryInit,90);return;}
     if(buildRail(null,true)){SETUP_DONE=true;}
   }
-  function start(){try{tryInit();}catch(e){try{console.warn("UniWRT theme init failed",e);}catch(_){}}}
+  function watchDynamicControls(){
+    if(!window.MutationObserver)return;
+    var root=document.getElementById("maincontent")||document.body;
+    var pending=false;
+    new MutationObserver(function(){
+      if(pending)return; pending=true;
+      setTimeout(function(){pending=false; repairPageControls();},80);
+    }).observe(root,{childList:true,subtree:true});
+  }
+  function start(){try{tryInit(); watchDynamicControls();}catch(e){try{console.warn("UniWRT theme init failed",e);}catch(_){}}}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true}); else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!ls(true,KEY_THEME)){applyTheme(curMode());paintTheme(curMode());}});
 })();

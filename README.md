@@ -77,11 +77,11 @@ The ucode templates cover current LuCI builds. The Lua templates are kept as a c
 
 ## How it works
 
-UniWRT Portal deliberately keeps LuCI’s stock Bootstrap theme as the base renderer. That protects the real LuCI controls: Save & Apply, modals, dropdowns, CBI forms, dynamic tables, tabs, polling widgets, and installed/custom LuCI apps.
+UniWRT Portal deliberately keeps LuCI’s stock Bootstrap theme as the base renderer and imports Bootstrap’s stock cascade before UniWRT overrides. That protects the real LuCI controls: Save & Apply, modals, dropdowns, CBI forms, dynamic tables, tabs, polling widgets, and installed/custom LuCI apps.
 
 The theme then layers its own UI safely:
 
-- `cascade.css` is the LuCI theme CSS entrypoint.
+- `cascade.css` is the LuCI theme CSS entrypoint. It imports Bootstrap first, then loads UniWRT’s controller-style overrides.
 - `css/uniwrt.css` contains the full portal visual system and mobile rules.
 - `js/uniwrt.js` reads LuCI’s real menu DOM and turns it into the UniWRT left rail. If LuCI’s menu is not exposed, it falls back to a small recovery menu instead of hiding navigation.
 - `sysauth.ut` and `sysauth.htm` are present so the login page does not depend on missing theme fallback behaviour.
@@ -136,6 +136,15 @@ Or use the helper:
 MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
 ## Changelog
+
+### v2.0.6
+
+- Imported Bootstrap’s stock `cascade.css` before UniWRT overrides so LuCI widgets keep their baseline functional CSS.
+- Reworked top tabs and CBI tabs from one bubble-shaped container into separate modern pill buttons.
+- Added a defensive CBI tab repair layer for pages where in-page tabs such as DNS, DHCP, System, Routing, Interfaces and Channel Analysis do not switch correctly.
+- Improved LuCI dropdown styling and restored native multi-select checkbox behaviour inside dropdowns such as DNS Cache RR and LED trigger mode.
+- Kept Save & Apply as a clean primary button while leaving Save and Reset as separate action buttons.
+- Removed the old sidebar footer wording “Portal for OpenWrt” and replaced it with the UniWRT version label.
 
 ### v2.0.4
 

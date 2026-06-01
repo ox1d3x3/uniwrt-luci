@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../luci-theme-uniwrt/htdocs/luci-static/uniwrt/cascade.css">
   <style>header{display:block}.brand{display:none}#topmenu{display:none}</style>
 </head>
-<body>
+<body class="uniwrt-software">
   <header>
     <ul id="topmenu">
       <li><a href="/cgi-bin/luci/admin/status/overview">Status</a><ul><li><a href="/cgi-bin/luci/admin/status/overview">Overview</a></li><li><a href="/cgi-bin/luci/admin/status/realtime">Realtime Graphs</a></li><li><a href="/cgi-bin/luci/admin/status/syslog">System Log</a></li></ul></li>
@@ -24,7 +24,17 @@
         <div class="cbi-value"><label class="cbi-value-title">Hostname</label><div class="cbi-value-field"><input type="text" value="OpenWrt"></div></div>
         <div class="cbi-value"><label class="cbi-value-title">Wireless</label><div class="cbi-value-field"><input type="checkbox" checked> Enabled <div class="cbi-value-description">Real LuCI controls remain clickable.</div></div></div>
       </div>
+      <ul class="cbi-tabmenu">
+        <li class="cbi-tab" data-tab="updates"><a href="#">Updates</a></li>
+        <li class="cbi-tab-disabled" data-tab="backups"><a href="#">Backups</a></li>
+        <li class="cbi-tab-disabled" data-tab="console"><a href="#">Console</a></li>
+      </ul>
       <table class="table"><thead><tr><th>Interface</th><th>Protocol</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr><td>lan</td><td>Static</td><td><span class="label">Up</span></td><td><button class="cbi-button cbi-button-edit">Edit</button></td></tr><tr><td>wan</td><td>DHCP</td><td><span class="label">Connected</span></td><td><button class="cbi-button cbi-button-edit">Edit</button></td></tr></tbody></table>
+      <div class="cbi-section">
+        <h3>Software Updates</h3>
+        <table class="table"><thead><tr><th>Application</th><th>Status</th><th>Version</th><th>Action</th></tr></thead><tbody><tr><td>LuCI</td><td>Up to Date</td><td>24.10</td><td><button class="cbi-button cbi-button-action">Check</button></td></tr><tr><td>Firewall</td><td>Update Available</td><td>1.0.2</td><td><button class="cbi-button cbi-button-add">Install</button></td></tr></tbody></table>
+        <div id="update_status" data-uniwrt-status-card="1">Installing packages…<progress value="64" max="100"></progress></div>
+      </div>
       <div class="cbi-page-actions"><button class="cbi-button cbi-button-save">Save</button><button class="cbi-button cbi-button-apply">Save & Apply</button><button class="cbi-button cbi-button-reset">Reset</button></div>
     </section>
   </main>
