@@ -17,7 +17,7 @@ LUCI_DESCRIPTION:=UniWRT — a clean, card-based LuCI theme: left icon rail, \
 LUCI_DEPENDS:=+luci-theme-bootstrap
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=1.6.1
+PKG_VERSION:=1.6.2
 # PKG_RELEASE is set from the CI build number when built in Actions; falls
 # back to 1 for local builds.
 PKG_RELEASE:=$(if $(THEME_RELEASE),$(THEME_RELEASE),1)

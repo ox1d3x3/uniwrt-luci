@@ -1,9 +1,9 @@
 #!/bin/sh
-# UniWRT — clean apply script (v1.6.1). Auto-detects luci-theme-uniwrt package
+# UniWRT — clean apply script (v1.6.2). Auto-detects luci-theme-uniwrt package
 # in /tmp (or .), installs via apk/opkg, writes verified CSS/JS, activates,
-# clears caches, restarts uhttpd. Safe to re-run.  Usage: sh uniwrt-apply.sh
+# clears caches & template cache, restarts uhttpd. Safe to re-run.
 D=/www/luci-static/uniwrt
-echo "==> UniWRT apply (1.6.1)"
+echo "==> UniWRT apply (1.6.2)"
 PKG=""
 for dir in /tmp .; do
   for pat in "$dir"/luci-theme-uniwrt-*.apk "$dir"/luci-theme-uniwrt_*.apk \
@@ -439,7 +439,7 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.6.1";
+  var UNIWRT_VERSION = "1.6.2";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -681,28 +681,20 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
   var SETUP_DONE=false;
 
   function init(){
+    if(SETUP_DONE)return true;
     applyTheme(curMode());
     rebrandFooter();
     if(decorateLogin()){SETUP_DONE=true;return true;}
     if(buildRail(findMenu())){SETUP_DONE=true;return true;}
     return false;
   }
-  function start(){
-    rebrandFooter();
-    if(init())return;
-    // Wait for the menu/body to be ready, but stop the moment setup succeeds
-    // (or after a bounded number of tries) so we never linger on LuCI's DOM.
-    var n=0;
-    var obs=new MutationObserver(function(){
-      if(SETUP_DONE||init()||++n>40){try{obs.disconnect();}catch(e){}}
-    });
-    try{obs.observe(document.body,{childList:true});}catch(e){}
-    var tries=0;
-    var poll=setInterval(function(){
-      if(SETUP_DONE||init()||++tries>40){clearInterval(poll);try{obs.disconnect();}catch(e){}}
-    },200);
-  }
-  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
+  // Run setup exactly once when the DOM is ready, then never touch the DOM
+  // again — LuCI's own JS (L.poll, tab/modal handlers) must run uninterrupted.
+  // Our rail uses a built-in nav, so we don't need to wait for LuCI's menu.
+  function start(){ try{ init(); }catch(e){} }
+  if(document.readyState==="loading")
+    document.addEventListener("DOMContentLoaded",start,{once:true});
+  else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){
     if(!ls(true,KEY_THEME)){applyTheme(curMode());paintTheme(curMode());}});
 })();
@@ -710,6 +702,7 @@ UNIWRT_JS_EOF
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
 rm -f /tmp/luci-indexcache; rm -rf /tmp/luci-modulecache
+rm -rf /tmp/luci-* 2>/dev/null
 /etc/init.d/uhttpd restart
 echo ""; echo "==> Done. Deployed JS version:"
 grep -o 'UNIWRT_VERSION = "[0-9.]*"' "$D/js/uniwrt.js"
