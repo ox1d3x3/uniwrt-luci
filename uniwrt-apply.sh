@@ -143,8 +143,8 @@ Commands:
   paths      Show expected install paths.
 
 Put this script in the same folder as one package file, for example:
-  luci-theme-uniwrt_2.0.7-1_all.ipk     for OpenWrt 24.10 / opkg
-  luci-theme-uniwrt-2.0.7-r1.apk        for OpenWrt 25.12+ / apk
+  luci-theme-uniwrt_2.0.9-1_all.ipk     for OpenWrt 24.10 / opkg
+  luci-theme-uniwrt-2.0.9-r1.apk        for OpenWrt 25.12+ / apk
 EOF
 }
 

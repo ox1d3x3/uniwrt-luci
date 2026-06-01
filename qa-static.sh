@@ -46,12 +46,10 @@ assert workflow['name'] == 'Build UniWRT Packages'
 css = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/css/uniwrt.css').read_text()
 js = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/js/uniwrt.js').read_text()
 assert 'UniWRT Portal v2' in css
-assert 'UNIWRT_VERSION = "2.0.7"' in js
+assert 'UNIWRT_VERSION = "2.0.9"' in js
 assert 'Author: Ox1d3x3 x UniWRT V' in js
-assert 'decorateTabSliders' in js
-assert 'uniwrt-tab-glider' in css
-assert 'footer[data-uniwrt="1"]' in css
-assert '.cbi-dropdown > div{display:none!important}' in css
+assert 'Powered by LuCI' not in js
+assert 'LuCI openwrt' not in js
 assert 'body.uniwrt-software' in css
 assert 'uniwrtProgressSweep' in css
 assert 'decorateSoftwarePage' in js

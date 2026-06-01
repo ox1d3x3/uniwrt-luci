@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.7";
+  var UNIWRT_VERSION = "2.0.9";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -145,6 +145,9 @@
     var pw=document.querySelector('input[type="password"]');
     if(!pw||findMenu())return false;
     document.body.classList.add("uniwrt-login");
+    document.querySelectorAll("#view:empty, section[hidden]").forEach(function(el){
+      el.setAttribute("data-uniwrt-login-hidden","1");
+    });
 
     /* Some LuCI builds show login through #modal_overlay but only mark the
      * body with modal-overlay-active. Make the overlay state explicit so the
@@ -245,47 +248,8 @@
       index++;
     });
     try{menu.dispatchEvent(new CustomEvent("uniwrt-tab-switch",{bubbles:true,detail:{tab:name}}));}catch(e){}
-    setTimeout(function(){moveTabGlider(menu);},20);
     return true;
   }
-  function activeTabAnchor(menu){
-    if(!menu)return null;
-    var selectors=[":scope > li.active a",":scope > li.cbi-tab a",":scope > li[data-tab-active='true'] a",":scope > li a"];
-    for(var i=0;i<selectors.length;i++){
-      var a=null; try{a=menu.querySelector(selectors[i]);}catch(e){}
-      if(a && a.offsetParent!==null)return a;
-    }
-    return null;
-  }
-  function moveTabGlider(menu){
-    if(!menu || !menu.classList || !menu.classList.contains("uniwrt-tab-slider"))return;
-    var a=activeTabAnchor(menu), g=menu.querySelector(":scope > .uniwrt-tab-glider");
-    if(!a || !g)return;
-    var mr=menu.getBoundingClientRect(), ar=a.getBoundingClientRect();
-    var x=(ar.left-mr.left)+menu.scrollLeft, y=(ar.top-mr.top)+menu.scrollTop;
-    menu.style.setProperty("--uniwrt-tab-x",Math.round(x)+"px");
-    menu.style.setProperty("--uniwrt-tab-y",Math.round(y)+"px");
-    menu.style.setProperty("--uniwrt-tab-w",Math.round(ar.width)+"px");
-    menu.style.setProperty("--uniwrt-tab-h",Math.round(ar.height)+"px");
-  }
-  function decorateTabSliders(){
-    document.querySelectorAll("#tabmenu ul.tabs, ul.tabs, ul.cbi-tabmenu").forEach(function(menu){
-      if(menu.getAttribute("data-uniwrt-slider")==="1"){
-        requestAnimationFrame(function(){moveTabGlider(menu);});
-        return;
-      }
-      menu.setAttribute("data-uniwrt-slider","1");
-      menu.classList.add("uniwrt-tab-slider");
-      var glider=document.createElement("span");
-      glider.className="uniwrt-tab-glider";
-      glider.setAttribute("aria-hidden","true");
-      menu.insertBefore(glider,menu.firstChild);
-      menu.addEventListener("click",function(){setTimeout(function(){moveTabGlider(menu);},35);});
-      menu.addEventListener("scroll",function(){moveTabGlider(menu);},{passive:true});
-      requestAnimationFrame(function(){moveTabGlider(menu);});
-    });
-  }
-
   function repairCbiTabs(){
     document.querySelectorAll("ul.cbi-tabmenu").forEach(function(menu){
       if(menu.getAttribute("data-uniwrt-tabfix")==="1")return;
@@ -331,7 +295,6 @@
   function repairPageControls(){
     decorateSoftwarePage();
     repairCbiTabs();
-    decorateTabSliders();
     repairDropdownCheckboxes();
   }
   function tryInit(){
@@ -343,11 +306,6 @@
     if(ATTEMPTS++ < MAX_ATTEMPTS){setTimeout(tryInit,90);return;}
     if(buildRail(null,true)){SETUP_DONE=true;}
   }
-  function watchTabSliderResize(){
-    window.addEventListener("resize",function(){
-      document.querySelectorAll(".uniwrt-tab-slider").forEach(moveTabGlider);
-    },{passive:true});
-  }
   function watchDynamicControls(){
     if(!window.MutationObserver)return;
     var root=document.getElementById("maincontent")||document.body;
@@ -357,7 +315,7 @@
       setTimeout(function(){pending=false; repairPageControls();},80);
     }).observe(root,{childList:true,subtree:true});
   }
-  function start(){try{tryInit(); watchTabSliderResize(); watchDynamicControls();}catch(e){try{console.warn("UniWRT theme init failed",e);}catch(_){}}}
+  function start(){try{tryInit(); watchDynamicControls();}catch(e){try{console.warn("UniWRT theme init failed",e);}catch(_){}}}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true}); else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!ls(true,KEY_THEME)){applyTheme(curMode());paintTheme(curMode());}});
 })();

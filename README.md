@@ -137,14 +137,14 @@ MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
 ## Changelog
 
-### v2.0.7
+### v2.0.9
 
-- Imported Bootstrap’s stock `cascade.css` before UniWRT overrides so LuCI widgets keep their baseline functional CSS.
-- Reworked top tabs and CBI tabs from one bubble-shaped container into separate modern pill buttons.
-- Added a defensive CBI tab repair layer for pages where in-page tabs such as DNS, DHCP, System, Routing, Interfaces and Channel Analysis do not switch correctly.
-- Improved LuCI dropdown styling and restored native multi-select checkbox behaviour inside dropdowns such as DNS Cache RR and LED trigger mode.
-- Kept Save & Apply as a clean primary button while leaving Save and Reset as separate action buttons.
-- Removed the old sidebar footer wording “Portal for OpenWrt” and replaced it with the UniWRT version label.
+- Rollback-style stability release based on the last working v2.0.6 structure, not the aggressive v2.0.7 layout pass.
+- Fixed the login page username/password layout by adding strict modal-only login alignment.
+- Removed the fake `No information available` empty `#view` card that appeared on the auth screen.
+- Replaced the default LuCI/OpenWrt footer text with `Author: Ox1d3x3 x UniWRT V2.0.9` linked to the UniWRT GitHub repository.
+- Removed the sidebar bottom version label so the left rail stays clean.
+- Kept the working CBI tab/button fixes and My-theme2-inspired software/progress styling from v2.0.6.
 
 ### v2.0.4
 
