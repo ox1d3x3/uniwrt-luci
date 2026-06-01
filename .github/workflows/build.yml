@@ -3,12 +3,12 @@ name: Build & Pre-release
 # Builds UniWRT as TWO universal, architecture-independent packages and
 # publishes them as a rolling pre-release:
 #
-#   * one .ipk  (built on the 23.05 SDK) -> install on OpenWrt 23.05 AND 24.10
+#   * one .ipk  (built on the 24.10 SDK) -> install on OpenWrt 24.10.x
 #   * one .apk  (built on the 25.12 SDK) -> install on OpenWrt 25.12+
 #
-# The theme has no compiled code (LUCI_PKGARCH:=all), so a single file per
-# package-manager family installs on EVERY OpenWrt target (mt7622, ramips,
-# x86_64, ...). Router CPU is irrelevant; only the OpenWrt version matters.
+# The theme has no compiled code (LUCI_PKGARCH:=all), so the package is
+# architecture-independent. Router CPU is irrelevant; only the OpenWrt
+# package-manager family matters.
 
 on:
   push:
@@ -30,13 +30,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ipk built on the 23.05 SDK is the most broadly compatible opkg
-          # package and installs cleanly on both 23.05 and 24.10.
-          - release: "23.05.5"
+          # OpenWrt 24.10.x still uses opkg/ipk.
+          - release: "24.10.7"
             pm: ipk
-            label: "universal .ipk (OpenWrt 23.05 + 24.10)"
+            label: "universal .ipk (OpenWrt 24.10.x)"
           # apk for the 25.12+ line.
-          - release: "25.12.2"
+          - release: "25.12.4"
             pm: apk
             label: "universal .apk (OpenWrt 25.12+)"
           # NOTE: keep these pinned to current point releases:
@@ -133,11 +132,11 @@ jobs:
 
             | Your OpenWrt | File |
             |-------------:|:-----|
-            | 23.05.x / 24.10.x | `luci-theme-uniwrt_*_all.ipk` |
+            | 24.10.x | `luci-theme-uniwrt_*_all.ipk` |
             | 25.12.x+ | `luci-theme-uniwrt-*.apk` |
 
             ```sh
-            # 23.05 / 24.10
+            # 24.10
             opkg install ./luci-theme-uniwrt_*_all.ipk
             # 25.12+
             apk add --allow-untrusted ./luci-theme-uniwrt-*.apk

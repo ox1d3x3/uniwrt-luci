@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overview - OpenWrt</title>
+<link rel="stylesheet" href="/luci-static/uniwrt/cascade.css">
+<style>
+#topmenu{display:none}.mock-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}.metric{background:var(--u-card);border:1px solid var(--u-border);border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow);padding:18px}.metric strong{font-size:26px;display:block}.bars{display:flex;gap:6px;align-items:end;height:100px}.bars span{flex:1;border-radius:6px;background:var(--u-blue);opacity:.25;animation:pulse 1.8s infinite ease-in-out}.bars span:nth-child(2n){height:65%;opacity:.45}.bars span:nth-child(3n){height:90%;opacity:.7}.bars span:nth-child(4n){height:45%;opacity:.35}@keyframes pulse{50%{opacity:.85}}@media(max-width:900px){.mock-grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.mock-grid{grid-template-columns:1fr}}
+</style>
+<script>window.L={env:{scriptname:'/cgi-bin/luci'}};</script>
+</head>
+<body>
+<header>
+<ul id="topmenu">
+<li><a href="/cgi-bin/luci/admin/status/overview">Status</a><ul>
+<li><a href="/cgi-bin/luci/admin/status/overview">Overview</a></li>
+<li><a href="/cgi-bin/luci/admin/status/routes">Routing</a></li>
+<li><a href="/cgi-bin/luci/admin/status/logs/syslog">System Log</a></li>
+<li><a href="/cgi-bin/luci/admin/status/realtime/load">Realtime Graphs</a></li>
+</ul></li>
+<li><a href="/cgi-bin/luci/admin/system/system">System</a><ul>
+<li><a href="/cgi-bin/luci/admin/system/system">System</a></li>
+<li><a href="/cgi-bin/luci/admin/system/admin">Administration</a></li>
+<li><a href="/cgi-bin/luci/admin/system/package-manager">Software</a></li>
+<li><a href="/cgi-bin/luci/admin/system/reboot">Reboot</a></li>
+</ul></li>
+<li><a href="/cgi-bin/luci/admin/network/network">Network</a><ul>
+<li><a href="/cgi-bin/luci/admin/network/network">Interfaces</a></li>
+<li><a href="/cgi-bin/luci/admin/network/wireless">Wireless</a></li>
+<li><a href="/cgi-bin/luci/admin/network/dhcp">DHCP and DNS</a></li>
+<li><a href="/cgi-bin/luci/admin/network/firewall">Firewall</a></li>
+</ul></li>
+</ul>
+</header>
+<div id="maincontent" class="container">
+<h2>Network Overview</h2>
+<p class="cbi-map-descr">Controller-style OpenWrt dashboard preview. Static mock data only.</p>
+<div class="mock-grid">
+<div class="metric"><span class="label">Gateway</span><strong>Online</strong><small>Uptime 12d 4h</small></div>
+<div class="metric"><span class="label">WAN</span><strong>936 Mbps</strong><small>Current throughput</small></div>
+<div class="metric"><span class="label">Clients</span><strong>42</strong><small>31 wired · 11 wireless</small></div>
+<div class="metric"><span class="label">Health</span><strong>98%</strong><small>No critical alerts</small></div>
+</div>
+<div class="cbi-map"><h2>Traffic</h2><div class="bars"><span style="height:45%"></span><span></span><span></span><span></span><span style="height:55%"></span><span></span><span style="height:80%"></span><span></span><span style="height:50%"></span><span></span><span style="height:75%"></span><span></span></div></div>
+<div class="cbi-section"><h3>Interfaces</h3><table class="table"><thead><tr><th>Name</th><th>Protocol</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr><td>LAN</td><td>Static</td><td>192.168.2.1/24</td><td><span class="label">Up</span></td><td><button class="cbi-button cbi-button-edit">Edit</button></td></tr><tr><td>WAN</td><td>DHCP</td><td>100.64.1.20</td><td><span class="label">Online</span></td><td><button class="cbi-button cbi-button-action">Restart</button></td></tr></tbody></table></div>
+<div class="cbi-section"><h3>Wireless</h3><div class="cbi-value"><label class="cbi-value-title">Enable radio</label><div class="cbi-value-field"><input type="checkbox" checked> <span class="cbi-value-description">Functional checkbox switch preview</span></div></div><div class="cbi-page-actions"><button class="cbi-button cbi-button-reset">Reset</button><button class="cbi-button cbi-button-save">Save</button><button class="cbi-button cbi-button-apply">Save & Apply</button></div></div>
+<footer>Powered by LuCI</footer>
+</div>
+<script src="/luci-static/uniwrt/js/uniwrt.js"></script>
+</body>
+</html>

@@ -8,8 +8,8 @@ uci -q batch <<-EOF
 	commit luci
 EOF
 
-# Clear any cached compiled templates so the new theme is picked up immediately.
-rm -f /tmp/luci-indexcache /tmp/luci-modulecache/* 2>/dev/null
+# Clear cached indexes/templates so the new theme is picked up immediately.
+rm -f /tmp/luci-indexcache 2>/dev/null
 rm -rf /tmp/luci-modulecache 2>/dev/null
 
 exit 0

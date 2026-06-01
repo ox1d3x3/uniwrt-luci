@@ -1,0 +1,2 @@
+/* UniWRT mobile compatibility entrypoint. Main responsive rules live in cascade.css. */
+@import url("cascade.css?v=1.7.0");
