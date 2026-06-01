@@ -1,5 +1,5 @@
 /*
- * luci-theme-uniwrt — shell behaviour
+ * luci-theme-uniwrt — UniWRT Portal shell behaviour
  * SPDX-License-Identifier: MIT
  *
  * Functional rules:
@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.7.0";
+  var UNIWRT_VERSION = "2.0.0";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -122,20 +122,22 @@
       return '<div class="nav-group"><div class="nav-group-label">'+esc(g.label)+'</div><ul>'+lis+'</ul></div>';
     }).join("");
     var aside=document.createElement("aside"); aside.className="uniwrt-sidebar";
-    aside.innerHTML='<div class="uniwrt-brand"><img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'"><span class="brand-text">UniWRT</span></div>'+ '<div class="uniwrt-menu-search"><input type="search" id="uniwrt-menu-filter" placeholder="Search menu" autocomplete="off" aria-label="Search menu"></div>' + '<nav class="uniwrt-nav">'+navHtml+'</nav>'+ '<div class="uniwrt-rail-foot">OpenWrt · LuCI'+(recovery?' · Recovery menu':'')+'</div>';
+    aside.innerHTML='<div class="uniwrt-brand"><img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'"><span class="brand-text">UniWRT</span></div>'+ '<div class="uniwrt-menu-search"><input type="search" id="uniwrt-menu-filter" placeholder="Search menu" autocomplete="off" aria-label="Search menu"></div>' + '<nav class="uniwrt-nav">'+navHtml+'</nav>'+ '<div class="uniwrt-rail-foot">Portal for OpenWrt'+(recovery?' · Recovery menu':'')+'</div>';
     var title=(document.title.split(" - ")[0]||document.title||"Dashboard").trim();
     var bar=document.createElement("div"); bar.className="uniwrt-topbar";
-    bar.innerHTML='<button type="button" class="uniwrt-iconbtn" id="uniwrt-collapse" title="Toggle menu" aria-label="Toggle menu">'+ICON_MENU+'</button>'+ '<span class="crumb">'+esc(title)+'</span><span class="spacer"></span>'+ '<button type="button" class="uniwrt-iconbtn" id="uniwrt-theme-btn" title="Theme" aria-label="Theme"></button>';
+    bar.innerHTML='<button type="button" class="uniwrt-iconbtn" id="uniwrt-collapse" title="Toggle menu" aria-label="Toggle menu" aria-expanded="false">'+ICON_MENU+'</button>'+ '<span class="crumb">'+esc(title)+'</span><span class="uniwrt-context">LuCI</span><span class="spacer"></span>'+ '<button type="button" class="uniwrt-iconbtn" id="uniwrt-theme-btn" title="Theme" aria-label="Theme"></button>';
     var scrim=document.createElement("div"); scrim.className="uniwrt-scrim";
     document.body.appendChild(aside); document.body.appendChild(bar); document.body.appendChild(scrim); document.body.classList.add("uniwrt-shell");
     if(ls(true,KEY_RAIL)==="collapsed")document.body.classList.add("rail-collapsed");
     var act=aside.querySelector("a.active"); if(act)setTimeout(function(){try{act.scrollIntoView({block:"center"});}catch(e){}},0);
-    var c=document.getElementById("uniwrt-collapse"); if(c)c.addEventListener("click",function(){ if(window.innerWidth<=900){document.body.classList.toggle("rail-open");} else {document.body.classList.toggle("rail-collapsed"); ls(false,KEY_RAIL,document.body.classList.contains("rail-collapsed")?"collapsed":"");} });
-    scrim.addEventListener("click",function(){document.body.classList.remove("rail-open");});
+    var c=document.getElementById("uniwrt-collapse"); if(c)c.addEventListener("click",function(){ if(window.innerWidth<=900){document.body.classList.toggle("rail-open"); c.setAttribute("aria-expanded",document.body.classList.contains("rail-open")?"true":"false");} else {document.body.classList.toggle("rail-collapsed"); ls(false,KEY_RAIL,document.body.classList.contains("rail-collapsed")?"collapsed":"");} });
+    scrim.addEventListener("click",function(){document.body.classList.remove("rail-open"); if(c)c.setAttribute("aria-expanded","false");});
+    window.addEventListener("resize",function(){if(window.innerWidth>900){document.body.classList.remove("rail-open"); if(c)c.setAttribute("aria-expanded","false");}}, {passive:true});
+    document.addEventListener("keydown",function(e){if(e.key==="Escape"){document.body.classList.remove("rail-open"); if(c)c.setAttribute("aria-expanded","false");}});
     var tb=document.getElementById("uniwrt-theme-btn"); if(tb)tb.addEventListener("click",toggleTheme); paintTheme(curMode());
     var filter=document.getElementById("uniwrt-menu-filter");
     if(filter)filter.addEventListener("input",function(){var q=this.value.trim().toLowerCase(); aside.querySelectorAll(".nav-group").forEach(function(g){var visible=0; g.querySelectorAll("li").forEach(function(li){var ok=!q || li.textContent.toLowerCase().indexOf(q)!==-1; li.classList.toggle("is-hidden",!ok); if(ok)visible++;}); g.classList.toggle("is-empty",visible===0);});});
-    aside.querySelectorAll("a[href]").forEach(function(a){a.addEventListener("click",function(){document.body.classList.remove("rail-open");});});
+    aside.querySelectorAll("a[href]").forEach(function(a){a.addEventListener("click",function(){document.body.classList.remove("rail-open"); if(c)c.setAttribute("aria-expanded","false");});});
     return true;
   }
 

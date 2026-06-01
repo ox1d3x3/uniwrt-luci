@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UniWRT Portal Preview - OpenWrt LuCI</title>
+  <link rel="stylesheet" href="../luci-theme-uniwrt/htdocs/luci-static/uniwrt/cascade.css">
+  <style>header{display:block}.brand{display:none}#topmenu{display:none}</style>
+</head>
+<body>
+  <header>
+    <ul id="topmenu">
+      <li><a href="/cgi-bin/luci/admin/status/overview">Status</a><ul><li><a href="/cgi-bin/luci/admin/status/overview">Overview</a></li><li><a href="/cgi-bin/luci/admin/status/realtime">Realtime Graphs</a></li><li><a href="/cgi-bin/luci/admin/status/syslog">System Log</a></li></ul></li>
+      <li><a href="/cgi-bin/luci/admin/network/network">Network</a><ul><li><a href="/cgi-bin/luci/admin/network/network">Interfaces</a></li><li><a href="/cgi-bin/luci/admin/network/wireless">Wireless</a></li><li><a href="/cgi-bin/luci/admin/network/firewall">Firewall</a></li></ul></li>
+      <li><a href="/cgi-bin/luci/admin/system/system">System</a><ul><li><a href="/cgi-bin/luci/admin/system/system">System</a></li><li><a href="/cgi-bin/luci/admin/system/admin">Administration</a></li><li><a href="/cgi-bin/luci/admin/system/reboot">Reboot</a></li></ul></li>
+    </ul>
+  </header>
+  <main id="maincontent" class="container">
+    <section class="cbi-map">
+      <h2>UniWRT Portal Preview</h2>
+      <div class="cbi-map-descr">Controller-style LuCI shell with original UniWRT branding.</div>
+      <div class="cbi-section">
+        <h3>Network</h3>
+        <div class="cbi-value"><label class="cbi-value-title">Hostname</label><div class="cbi-value-field"><input type="text" value="OpenWrt"></div></div>
+        <div class="cbi-value"><label class="cbi-value-title">Wireless</label><div class="cbi-value-field"><input type="checkbox" checked> Enabled <div class="cbi-value-description">Real LuCI controls remain clickable.</div></div></div>
+      </div>
+      <table class="table"><thead><tr><th>Interface</th><th>Protocol</th><th>Status</th><th>Actions</th></tr></thead><tbody><tr><td>lan</td><td>Static</td><td><span class="label">Up</span></td><td><button class="cbi-button cbi-button-edit">Edit</button></td></tr><tr><td>wan</td><td>DHCP</td><td><span class="label">Connected</span></td><td><button class="cbi-button cbi-button-edit">Edit</button></td></tr></tbody></table>
+      <div class="cbi-page-actions"><button class="cbi-button cbi-button-save">Save</button><button class="cbi-button cbi-button-apply">Save & Apply</button><button class="cbi-button cbi-button-reset">Reset</button></div>
+    </section>
+  </main>
+  <footer>OpenWrt LuCI</footer>
+  <script src="../luci-theme-uniwrt/htdocs/luci-static/uniwrt/js/uniwrt.js"></script>
+</body>
+</html>

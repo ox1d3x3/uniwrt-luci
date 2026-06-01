@@ -13,41 +13,44 @@
  */
 
 /* ----------------------------- tokens -----------------------------
- * Original UniWRT controller-style token set. It is intentionally OpenWrt-branded
- * and does not copy third-party logos, icon packs or proprietary assets. */
+ * UniWRT Portal v2 uses an original visual language derived from the My-theme2
+ * inspection: compact controller rail, calm grey canvas, blue focus colour,
+ * rounded appliance cards, and mobile-first drawer behaviour. */
 :root{
-  --u-blue:#006fff; --u-blue-600:#0e65d8; --u-blue-700:#0b4ead; --u-blue-soft:#e6f1ff;
-  --u-accent:#4797ff;
-  --u-bg:#f9fafa; --u-bg-2:#eef0f1; --u-card:#fff; --u-card-2:#f4f5f6;
-  --u-border:#dee0e3; --u-border-2:#c2c6cb;
-  --u-text:#212327; --u-text-2:#50565e; --u-muted:#808893; --u-faint:#b7bcc2;
-  --u-online:#38cc65; --u-online-soft:#e6f9ec; --u-warn:#f5a524; --u-warn-soft:#fdf3e2;
-  --u-error:#f0383b; --u-error-soft:#fdecec;
-  --u-radius:8px; --u-radius-sm:4px; --u-radius-lg:14px; --u-pill:99999px;
-  --u-shadow:0 1px 2px rgba(33,35,39,.07),0 1px 3px rgba(33,35,39,.04);
-  --u-shadow-sm:0 1px 2px rgba(33,35,39,.06);
-  --u-shadow-md:0 2px 8px rgba(33,35,39,.08);
-  --u-shadow-pop:0 12px 34px rgba(33,35,39,.12);
-  --u-ring:0 0 0 3px rgba(0,111,255,.2);
-  --u-rail:220px; --u-rail-min:60px; --u-top:56px;
+  --u-blue:#006fff; --u-blue-600:#005ed9; --u-blue-700:#004fb8; --u-blue-soft:#e8f2ff;
+  --u-accent:#2cc8ff; --u-violet:#384cff;
+  --u-bg:#f4f6f8; --u-bg-2:#eef2f6; --u-card:#ffffff; --u-card-2:#f9fafb;
+  --u-border:#dde3ea; --u-border-2:#c7d0da;
+  --u-text:#151922; --u-text-2:#485260; --u-muted:#7b8796; --u-faint:#a9b2bf;
+  --u-online:#2fc66d; --u-online-soft:#e8f8ee; --u-warn:#f5a524; --u-warn-soft:#fff4df;
+  --u-error:#ee3f46; --u-error-soft:#fff0f1;
+  --u-radius:10px; --u-radius-sm:8px; --u-radius-lg:18px; --u-pill:99999px;
+  --u-shadow:0 1px 2px rgba(15,23,42,.06),0 12px 28px rgba(15,23,42,.055);
+  --u-shadow-sm:0 1px 2px rgba(15,23,42,.055);
+  --u-shadow-md:0 10px 24px rgba(15,23,42,.085);
+  --u-shadow-pop:0 22px 54px rgba(15,23,42,.18);
+  --u-ring:0 0 0 3px rgba(0,111,255,.18);
+  --u-rail:252px; --u-rail-min:68px; --u-top:60px;
   --u-font:"Inter","UI Sans","Lato",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   --u-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 html[data-theme="dark"]{
-  --u-bg:#131416; --u-bg-2:#1c1e21; --u-card:#212327; --u-card-2:#282b2f;
-  --u-border:#34383d; --u-border-2:#42474d;
-  --u-text:#f4f5f6; --u-text-2:#c2c6cb; --u-muted:#808893; --u-faint:#676f79;
-  --u-blue-soft:#05254d; --u-online-soft:#0f2a1a; --u-warn-soft:#2c2415; --u-error-soft:#2e1717;
-  --u-shadow:0 1px 2px rgba(0,0,0,.4); --u-shadow-sm:0 1px 2px rgba(0,0,0,.35);
-  --u-shadow-md:0 2px 8px rgba(0,0,0,.45); --u-shadow-pop:0 12px 34px rgba(0,0,0,.6);
+  --u-bg:#0f1217; --u-bg-2:#171b22; --u-card:#1d222b; --u-card-2:#242a34;
+  --u-border:#303844; --u-border-2:#424c5a;
+  --u-text:#f5f7fb; --u-text-2:#c7d0dc; --u-muted:#8995a5; --u-faint:#647082;
+  --u-blue-soft:#092b5c; --u-online-soft:#0f2f1d; --u-warn-soft:#312713; --u-error-soft:#35181b;
+  --u-shadow:0 1px 2px rgba(0,0,0,.42),0 12px 32px rgba(0,0,0,.26);
+  --u-shadow-sm:0 1px 2px rgba(0,0,0,.36);
+  --u-shadow-md:0 10px 24px rgba(0,0,0,.34);
+  --u-shadow-pop:0 22px 54px rgba(0,0,0,.56);
 }
 @media (prefers-color-scheme:dark){html:not([data-theme="light"]){
-  --u-bg:#131416; --u-bg-2:#1c1e21; --u-card:#212327; --u-card-2:#282b2f;
-  --u-border:#34383d; --u-border-2:#42474d; --u-text:#f4f5f6; --u-text-2:#c2c6cb;
-  --u-muted:#808893; --u-faint:#676f79; --u-blue-soft:#05254d; --u-online-soft:#0f2a1a;
-  --u-warn-soft:#2c2415; --u-error-soft:#2e1717; --u-shadow:0 1px 2px rgba(0,0,0,.4);
-  --u-shadow-sm:0 1px 2px rgba(0,0,0,.35); --u-shadow-md:0 2px 8px rgba(0,0,0,.45);
-  --u-shadow-pop:0 12px 34px rgba(0,0,0,.6);
+  --u-bg:#0f1217; --u-bg-2:#171b22; --u-card:#1d222b; --u-card-2:#242a34;
+  --u-border:#303844; --u-border-2:#424c5a; --u-text:#f5f7fb; --u-text-2:#c7d0dc;
+  --u-muted:#8995a5; --u-faint:#647082; --u-blue-soft:#092b5c; --u-online-soft:#0f2f1d;
+  --u-warn-soft:#312713; --u-error-soft:#35181b; --u-shadow:0 1px 2px rgba(0,0,0,.42),0 12px 32px rgba(0,0,0,.26);
+  --u-shadow-sm:0 1px 2px rgba(0,0,0,.36); --u-shadow-md:0 10px 24px rgba(0,0,0,.34);
+  --u-shadow-pop:0 22px 54px rgba(0,0,0,.56);
 }}
 
 /* ----------------------------- base ------------------------------ */
@@ -70,7 +73,7 @@ body.uniwrt-shell>header{display:none!important}
 body.uniwrt-shell #maincontent,
 body.uniwrt-shell #maincontent.container{
   margin-left:var(--u-rail);
-  padding:74px 28px 48px;
+  padding:82px 30px 52px;
   max-width:none;width:auto;min-height:100vh;
   transition:margin-left .2s ease;
 }
@@ -78,14 +81,14 @@ body.uniwrt-shell.rail-collapsed #maincontent,
 body.uniwrt-shell.rail-collapsed #maincontent.container{margin-left:var(--u-rail-min)}
 
 .uniwrt-sidebar{position:fixed;inset:0 auto 0 0;z-index:1000;width:var(--u-rail);
-  display:flex;flex-direction:column;background:var(--u-card);border-right:1px solid var(--u-border);
+  display:flex;flex-direction:column;background:linear-gradient(180deg,var(--u-card),var(--u-card-2));border-right:1px solid var(--u-border);
   box-shadow:var(--u-shadow-sm);transition:width .2s ease,transform .2s ease;overflow:hidden}
 body.rail-collapsed .uniwrt-sidebar{width:var(--u-rail-min)}
 
 .uniwrt-brand{display:flex;align-items:center;gap:11px;height:var(--u-top);flex:0 0 var(--u-top);
-  padding:0 18px;border-bottom:1px solid var(--u-border);font-weight:600;font-size:15px;
+  padding:0 18px;border-bottom:1px solid var(--u-border);font-weight:700;font-size:15px;
   letter-spacing:-.01em;white-space:nowrap}
-.uniwrt-brand img,.uniwrt-brand svg{width:26px;height:26px;flex:0 0 26px;border-radius:7px}
+.uniwrt-brand img,.uniwrt-brand svg{width:32px;height:32px;flex:0 0 32px;border-radius:11px;box-shadow:0 10px 18px rgba(0,111,255,.18)}
 .uniwrt-brand .brand-text{transition:opacity .15s ease}
 body.rail-collapsed .uniwrt-brand .brand-text{opacity:0}
 
@@ -122,11 +125,11 @@ body.rail-collapsed .uniwrt-nav a{justify-content:center}
 
 .uniwrt-topbar{position:fixed;top:0;right:0;left:var(--u-rail);z-index:900;height:var(--u-top);
   display:flex;align-items:center;gap:13px;padding:0 22px;
-  background:var(--u-bg);
-  backdrop-filter:saturate(160%) blur(10px);-webkit-backdrop-filter:saturate(160%) blur(10px);
+  background:color-mix(in srgb,var(--u-bg) 82%,transparent);
+  backdrop-filter:saturate(170%) blur(14px);-webkit-backdrop-filter:saturate(160%) blur(10px);
   border-bottom:1px solid var(--u-border);transition:left .2s ease}
 body.rail-collapsed .uniwrt-topbar{left:var(--u-rail-min)}
-.uniwrt-topbar .crumb{font-weight:600;font-size:15px;color:var(--u-text)}
+.uniwrt-topbar .crumb{font-weight:700;font-size:15px;color:var(--u-text);letter-spacing:-.01em}.uniwrt-context{display:inline-flex;align-items:center;gap:7px;margin-left:8px;padding:4px 10px;border:1px solid var(--u-border);border-radius:var(--u-pill);background:var(--u-card);color:var(--u-muted);font-size:12px;font-weight:600}.uniwrt-context::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--u-online);box-shadow:0 0 0 3px var(--u-online-soft)}
 .uniwrt-topbar .spacer{flex:1 1 auto}
 .uniwrt-iconbtn{width:42px;height:42px;flex:0 0 42px;display:inline-flex;align-items:center;justify-content:center;
   border:0;border-radius:var(--u-radius-sm);background:transparent;
@@ -366,15 +369,16 @@ table .ifacebadge{padding:0}
  * The login <body> also holds <header> and <footer> as siblings of the
  * <form>, so we do NOT flex the body (that spreads them out and stretches
  * the form). Instead we hide the chrome and center the <form> as one card. */
-body.uniwrt-login{background:radial-gradient(1100px 600px at 80% -10%,rgba(0,111,255,.10),transparent 60%),
-  radial-gradient(900px 500px at -10% 110%,rgba(0,111,255,.08),transparent 55%),var(--u-bg);
+body.uniwrt-login{background:radial-gradient(900px 520px at 82% 0%,rgba(44,200,255,.15),transparent 62%),
+  radial-gradient(820px 480px at 2% 96%,rgba(0,111,255,.12),transparent 58%),
+  linear-gradient(135deg,var(--u-bg),var(--u-bg-2));
   min-height:100vh;margin:0;padding:48px 16px}
 body.uniwrt-login>header{display:none!important}
 body.uniwrt-login>footer{display:block;text-align:center;margin:18px auto 0;max-width:380px;
   color:var(--u-muted);font-size:12px;background:transparent;border:0;padding:8px 0}
-body.uniwrt-login form{width:100%;max-width:380px;margin:6vh auto 0;background:var(--u-card);
-  border:1px solid var(--u-border);border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow-pop);
-  padding:30px;box-sizing:border-box}
+body.uniwrt-login form{width:100%;max-width:408px;margin:6vh auto 0;background:var(--u-card);
+  border:1px solid var(--u-border);border-radius:22px;box-shadow:var(--u-shadow-pop);
+  padding:32px;box-sizing:border-box}
 /* flatten the inner cbi-map / cbi-section so there's no nested box */
 body.uniwrt-login .cbi-map,body.uniwrt-login .cbi-section,body.uniwrt-login .cbi-section-node{
   background:transparent;border:0;box-shadow:none;border-radius:0;padding:0;margin:0}
@@ -402,3 +406,36 @@ footer,.footer,#footer{color:var(--u-muted);font-size:12px;text-align:center;pad
 footer .uniwrt-ver{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:var(--u-pill);
   background:var(--u-bg-2);color:var(--u-muted);font-size:11px;font-weight:600}
 .spinning,.cbi-button-loading::before{border-top-color:var(--u-blue)!important}
+
+
+/* ---------------------- UniWRT Portal v2 refinements ---------------------- */
+.uniwrt-topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,111,255,.28),transparent);pointer-events:none}
+.uniwrt-nav a.active{font-weight:700;box-shadow:inset 3px 0 0 var(--u-blue)}
+body.rail-collapsed .uniwrt-nav a.active{box-shadow:none}
+.cbi-map,.cbi-section,fieldset.cbi-section,.panel{background:linear-gradient(180deg,var(--u-card),color-mix(in srgb,var(--u-card) 92%,var(--u-bg-2)));}
+.cbi-map>h2:first-child::after{content:"";display:block;width:44px;height:3px;margin-top:10px;border-radius:var(--u-pill);background:linear-gradient(90deg,var(--u-blue),var(--u-accent))}
+.cbi-section-node{min-width:0}
+.table,.cbi-section-table{box-shadow:var(--u-shadow-sm)}
+.cbi-tooltip-container{z-index:2100}
+[data-tooltip],abbr[title]{text-decoration:none}
+body.uniwrt-login .uniwrt-login-brand strong{font-size:22px;letter-spacing:-.03em}
+body.uniwrt-login .uniwrt-login-brand::after{content:"OpenWrt Portal";font-size:12px;color:var(--u-muted);font-weight:600;margin-top:-6px}
+@media (max-width:900px){
+  body.uniwrt-shell #maincontent,body.uniwrt-shell #maincontent.container{padding:76px 14px 36px!important}
+  .uniwrt-topbar{padding:0 12px;height:58px}
+  .uniwrt-topbar .crumb{font-size:14px;max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .uniwrt-context{display:none}
+  .uniwrt-iconbtn{width:40px;height:40px;flex-basis:40px}
+  .cbi-map,.cbi-section,fieldset.cbi-section,.panel{border-radius:14px;padding:16px 14px;margin-bottom:14px}
+  .cbi-page-actions{position:static;justify-content:stretch}.cbi-page-actions .cbi-button,.cbi-page-actions .btn{flex:1 1 auto}
+}
+@media (max-width:520px){
+  :root{--u-rail:min(86vw,310px)}
+  .uniwrt-sidebar{width:var(--u-rail)}
+  .uniwrt-nav{padding:8px}
+  .uniwrt-menu-search{padding:9px 9px 4px}
+  .cbi-map>h2,h2{font-size:19px}
+  .table,table.table,.cbi-section-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .th,.td,table.table th,table.table td,.cbi-section-table-cell{padding:10px 11px}
+  body.uniwrt-login{padding:28px 14px} body.uniwrt-login form{padding:24px 20px;margin-top:4vh}
+}

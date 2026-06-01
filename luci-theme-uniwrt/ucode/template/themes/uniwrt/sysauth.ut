@@ -1,2 +1,3 @@
-{# UniWRT login shim. Bootstrap sysauth loads {{ media }}/cascade.css; JS enhancement is optional. #}
+{# UniWRT Portal login shim. Bootstrap renders the real LuCI auth form; UniWRT only styles/enhances it. #}
 {% include("../bootstrap/sysauth.ut"); %}
+<script defer src="{{ media }}/js/uniwrt.js?v=2.0.0"></script>
