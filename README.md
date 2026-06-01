@@ -34,6 +34,23 @@ apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
 
 Then hard-refresh LuCI with `Ctrl+Shift+R`.
 
+## Auto install/apply helper
+
+Put `uniwrt-apply.sh` in the same folder as the generated package, then run:
+
+```sh
+chmod +x ./uniwrt-apply.sh
+./uniwrt-apply.sh
+```
+
+The script automatically detects whether the router uses `opkg`/`.ipk` or `apk`/`.apk`, installs the matching `luci-theme-uniwrt` package from the same folder, applies UniWRT as the active LuCI theme, clears LuCI cache and restarts the web services.
+
+Recovery command:
+
+```sh
+./uniwrt-apply.sh recover
+```
+
 ## Structure
 
 ```text
@@ -118,7 +135,24 @@ Or use the helper:
 
 MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
+## Changelog
 
-## v2.0.1
+### v2.0.3
+
+- Updated `uniwrt-apply.sh` so running it with no arguments now auto-detects a local UniWRT `.apk` or `.ipk`, installs it using the correct package manager, verifies theme files, applies UniWRT, clears LuCI cache and restarts LuCI web services.
+- Added `detect`, `apply`, `recover`, `bootstrap`, `paths` and `help` helper commands.
+- Added workflow trigger coverage and static QA syntax checks for `uniwrt-apply.sh`.
+
+### v2.0.2
+
+- Fixed OpenWrt 23/24 LuCI Lua/ucode bridge compatibility. The ucode shim now uses absolute LuCI template names without the `.ut` extension:
+
+```ucode
+{% include("themes/bootstrap/header"); %}
+{% include("themes/bootstrap/footer"); %}
+{% include("themes/bootstrap/sysauth"); %}
+```
+
+### v2.0.1
 
 - Fixed GitHub Actions Static QA permission failure by running `qa-static.sh` through `bash` instead of relying on executable file mode.

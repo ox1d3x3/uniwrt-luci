@@ -1,2 +1,2 @@
-{# UniWRT theme footer shim. #}
-{% include("../bootstrap/footer.ut"); %}
+{# UniWRT footer shim. Use absolute LuCI template path for ucode/Lua bridge compatibility. #}
+{% include("themes/bootstrap/footer"); %}

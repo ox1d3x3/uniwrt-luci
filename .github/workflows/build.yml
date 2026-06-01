@@ -18,6 +18,7 @@ on:
       - 'qa-static.sh'
       - 'README.md'
       - 'VERSION'
+      - 'uniwrt-apply.sh'
   pull_request:
     paths:
       - 'luci-theme-uniwrt/**'
@@ -25,6 +26,7 @@ on:
       - 'qa-static.sh'
       - 'README.md'
       - 'VERSION'
+      - 'uniwrt-apply.sh'
   workflow_dispatch:
 
 concurrency:
@@ -118,6 +120,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout release helper
+        uses: actions/checkout@v4
+
       - name: Download packages
         uses: actions/download-artifact@v4
         with:
@@ -130,6 +135,7 @@ jobs:
           set -euo pipefail
           mkdir -p release
           find artifacts -type f \( -name '*.ipk' -o -name '*.apk' \) -print -exec cp -v {} release/ \;
+          cp -v uniwrt-apply.sh release/
           test "$(find release -type f \( -name '*.ipk' -o -name '*.apk' \) | wc -l)" -ge 1 || {
             echo "::error::No package assets found"
             exit 1
@@ -185,4 +191,11 @@ jobs:
             apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
             ```
 
-            After installing, hard-refresh LuCI with Ctrl+Shift+R.
+            Optional helper install:
+
+            ```sh
+            chmod +x ./uniwrt-apply.sh
+            ./uniwrt-apply.sh
+            ```
+
+            This helper auto-detects the local `.ipk` or `.apk`, installs it, applies UniWRT, clears LuCI cache and restarts web services.

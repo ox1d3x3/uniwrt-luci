@@ -18,7 +18,7 @@ LUCI_DESCRIPTION:=UniWRT Portal — a modern OpenWrt LuCI theme with a controlle
 LUCI_DEPENDS:=+luci-base +luci-theme-bootstrap
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=2.0.0
+PKG_VERSION:=2.0.3
 # PKG_RELEASE is set from the CI build number when built in Actions; falls
 # back to 1 for local builds.
 PKG_RELEASE:=$(if $(THEME_RELEASE),$(THEME_RELEASE),1)
