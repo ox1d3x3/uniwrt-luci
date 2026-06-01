@@ -1,2 +1,2 @@
-<script type="text/javascript" src="/luci-static/uniwrt/js/uniwrt.js?v=1.6.2"></script>
-{% include("../bootstrap/footer.ut"); %}
+<script type="text/javascript" src="/luci-static/uniwrt/js/uniwrt.js?v=1.6.3"></script>
+{% include('themes/bootstrap/footer'); %}

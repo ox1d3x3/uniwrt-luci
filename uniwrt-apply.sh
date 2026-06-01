@@ -1,9 +1,13 @@
 #!/bin/sh
-# UniWRT — clean apply script (v1.6.2). Auto-detects luci-theme-uniwrt package
-# in /tmp (or .), installs via apk/opkg, writes verified CSS/JS, activates,
-# clears caches & template cache, restarts uhttpd. Safe to re-run.
+# UniWRT — clean apply + RECOVERY script (v1.6.3)
+# Fixes the 500 error by rewriting the theme templates with the known-good
+# include form, plus CSS/JS. Auto-installs the apk/ipk if present in /tmp.
+# Safe to re-run.  Usage:  sh uniwrt-apply.sh
+echo "==> UniWRT apply + recovery (1.6.3)"
 D=/www/luci-static/uniwrt
-echo "==> UniWRT apply (1.6.2)"
+UC=/usr/share/ucode/luci/template/themes/uniwrt
+LV=/usr/lib/lua/luci/view/themes/uniwrt
+
 PKG=""
 for dir in /tmp .; do
   for pat in "$dir"/luci-theme-uniwrt-*.apk "$dir"/luci-theme-uniwrt_*.apk \
@@ -13,7 +17,7 @@ for dir in /tmp .; do
   [ -n "$PKG" ] && break
 done
 if [ -n "$PKG" ]; then
-  echo "==> Found package: $PKG"
+  echo "==> Installing package: $PKG"
   if command -v apk >/dev/null 2>&1; then
     apk del luci-theme-uniwrt >/dev/null 2>&1
     [ -f /etc/apk/world ] && sed -i '/luci-theme-uniwrt/d' /etc/apk/world
@@ -23,10 +27,12 @@ if [ -n "$PKG" ]; then
     opkg install "$PKG"
   fi
 else
-  echo "==> No package found — writing embedded assets only"
+  echo "==> No package in /tmp — applying embedded files directly (full recovery)"
 fi
-echo "==> Writing verified CSS/JS"
+
+echo "==> Writing assets"
 mkdir -p "$D/css" "$D/js"
+mkdir -p "$(dirname "$D/css/uniwrt.css")"
 cat > "$D/css/uniwrt.css" <<'UNIWRT_CSS_EOF'
 /*
  * luci-theme-uniwrt — UniFi-style theme for OpenWrt LuCI
@@ -420,7 +426,7 @@ footer .uniwrt-ver{display:inline-block;margin-left:8px;padding:1px 8px;border-r
   background:var(--u-bg-2);color:var(--u-muted);font-size:11px;font-weight:600}
 .spinning,.cbi-button-loading::before{border-top-color:var(--u-blue)!important}
 UNIWRT_CSS_EOF
-
+mkdir -p "$(dirname "$D/js/uniwrt.js")"
 cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
 /*
  * luci-theme-uniwrt — shell behaviour
@@ -439,7 +445,7 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.6.2";
+  var UNIWRT_VERSION = "1.6.3";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
@@ -699,11 +705,37 @@ cat > "$D/js/uniwrt.js" <<'UNIWRT_JS_EOF'
     if(!ls(true,KEY_THEME)){applyTheme(curMode());paintTheme(curMode());}});
 })();
 UNIWRT_JS_EOF
+echo "==> Writing templates (fixes the 500)"
+mkdir -p "$(dirname "$UC/header.ut")"
+cat > "$UC/header.ut" <<'UNIWRT_HUT_EOF'
+{% include('themes/bootstrap/header'); %}
+<link rel="stylesheet" type="text/css" href="/luci-static/uniwrt/css/uniwrt.css?v=1.6.3" />
+UNIWRT_HUT_EOF
+mkdir -p "$(dirname "$UC/footer.ut")"
+cat > "$UC/footer.ut" <<'UNIWRT_FUT_EOF'
+<script type="text/javascript" src="/luci-static/uniwrt/js/uniwrt.js?v=1.6.3"></script>
+{% include('themes/bootstrap/footer'); %}
+UNIWRT_FUT_EOF
+mkdir -p "$(dirname "$LV/header.htm")"
+cat > "$LV/header.htm" <<'UNIWRT_HHTM_EOF'
+<!-- luci-theme-uniwrt: inherit stock bootstrap chrome, then layer the UniWRT look. -->
+<% include("themes/bootstrap/header") %>
+<link rel="stylesheet" type="text/css" href="/luci-static/uniwrt/css/uniwrt.css?v=1.6.3" />
+UNIWRT_HHTM_EOF
+mkdir -p "$(dirname "$LV/footer.htm")"
+cat > "$LV/footer.htm" <<'UNIWRT_FHTM_EOF'
+<!-- luci-theme-uniwrt: behaviour script, then close with stock bootstrap footer. -->
+<script type="text/javascript" src="/luci-static/uniwrt/js/uniwrt.js?v=1.6.3"></script>
+<% include("themes/bootstrap/footer") %>
+UNIWRT_FHTM_EOF
+
+echo "==> Activating + clearing caches"
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
-rm -f /tmp/luci-indexcache; rm -rf /tmp/luci-modulecache
-rm -rf /tmp/luci-* 2>/dev/null
+rm -f /tmp/luci-indexcache
+rm -rf /tmp/luci-modulecache /tmp/luci-* 2>/dev/null
 /etc/init.d/uhttpd restart
-echo ""; echo "==> Done. Deployed JS version:"
+echo ""
+echo "==> Done. Deployed JS version:"
 grep -o 'UNIWRT_VERSION = "[0-9.]*"' "$D/js/uniwrt.js"
 echo "==> Hard-refresh with cache disabled (or Incognito)."

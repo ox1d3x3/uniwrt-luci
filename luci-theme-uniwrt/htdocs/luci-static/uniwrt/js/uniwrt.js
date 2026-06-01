@@ -15,7 +15,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "1.6.2";
+  var UNIWRT_VERSION = "1.6.3";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
 
   function bsvg(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
