@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.6";
+  var UNIWRT_VERSION = "2.0.7";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -122,7 +122,7 @@
       return '<div class="nav-group"><div class="nav-group-label">'+esc(g.label)+'</div><ul>'+lis+'</ul></div>';
     }).join("");
     var aside=document.createElement("aside"); aside.className="uniwrt-sidebar";
-    aside.innerHTML='<div class="uniwrt-brand"><img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'"><span class="brand-text">UniWRT</span></div>'+ '<div class="uniwrt-menu-search"><input type="search" id="uniwrt-menu-filter" placeholder="Search menu" autocomplete="off" aria-label="Search menu"></div>' + '<nav class="uniwrt-nav">'+navHtml+'</nav>'+ '<div class="uniwrt-rail-foot">UniWRT v'+UNIWRT_VERSION+(recovery?' · Recovery menu':'')+'</div>';
+    aside.innerHTML='<div class="uniwrt-brand"><img src="/luci-static/uniwrt/logo.svg" alt="" onerror="this.style.display=\'none\'"><span class="brand-text">UniWRT</span></div>'+ '<div class="uniwrt-menu-search"><input type="search" id="uniwrt-menu-filter" placeholder="Search menu" autocomplete="off" aria-label="Search menu"></div>' + '<nav class="uniwrt-nav">'+navHtml+'</nav>'+ '<div class="uniwrt-rail-foot" aria-hidden="true"></div>';
     var title=(document.title.split(" - ")[0]||document.title||"Dashboard").trim();
     var bar=document.createElement("div"); bar.className="uniwrt-topbar";
     bar.innerHTML='<button type="button" class="uniwrt-iconbtn" id="uniwrt-collapse" title="Toggle menu" aria-label="Toggle menu" aria-expanded="false">'+ICON_MENU+'</button>'+ '<span class="crumb">'+esc(title)+'</span><span class="uniwrt-context">LuCI</span><span class="spacer"></span>'+ '<button type="button" class="uniwrt-iconbtn" id="uniwrt-theme-btn" title="Theme" aria-label="Theme"></button>';
@@ -164,11 +164,10 @@
     return true;
   }
   function rebrandFooter(){
-    var f=document.querySelector("footer")||document.getElementById("footer");
+    var f=document.querySelector("footer")||document.getElementById("footer")||document.querySelector(".footer");
     if(!f||f.getAttribute("data-uniwrt")==="1")return;
     f.setAttribute("data-uniwrt","1");
-    var s=document.createElement("span"); s.className="uniwrt-ver"; s.textContent="UniWRT v"+UNIWRT_VERSION;
-    f.appendChild(document.createTextNode(" ")); f.appendChild(s);
+    f.innerHTML='<a href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener noreferrer">Author: Ox1d3x3 x UniWRT V'+UNIWRT_VERSION+'</a>';
   }
 
 
@@ -246,8 +245,47 @@
       index++;
     });
     try{menu.dispatchEvent(new CustomEvent("uniwrt-tab-switch",{bubbles:true,detail:{tab:name}}));}catch(e){}
+    setTimeout(function(){moveTabGlider(menu);},20);
     return true;
   }
+  function activeTabAnchor(menu){
+    if(!menu)return null;
+    var selectors=[":scope > li.active a",":scope > li.cbi-tab a",":scope > li[data-tab-active='true'] a",":scope > li a"];
+    for(var i=0;i<selectors.length;i++){
+      var a=null; try{a=menu.querySelector(selectors[i]);}catch(e){}
+      if(a && a.offsetParent!==null)return a;
+    }
+    return null;
+  }
+  function moveTabGlider(menu){
+    if(!menu || !menu.classList || !menu.classList.contains("uniwrt-tab-slider"))return;
+    var a=activeTabAnchor(menu), g=menu.querySelector(":scope > .uniwrt-tab-glider");
+    if(!a || !g)return;
+    var mr=menu.getBoundingClientRect(), ar=a.getBoundingClientRect();
+    var x=(ar.left-mr.left)+menu.scrollLeft, y=(ar.top-mr.top)+menu.scrollTop;
+    menu.style.setProperty("--uniwrt-tab-x",Math.round(x)+"px");
+    menu.style.setProperty("--uniwrt-tab-y",Math.round(y)+"px");
+    menu.style.setProperty("--uniwrt-tab-w",Math.round(ar.width)+"px");
+    menu.style.setProperty("--uniwrt-tab-h",Math.round(ar.height)+"px");
+  }
+  function decorateTabSliders(){
+    document.querySelectorAll("#tabmenu ul.tabs, ul.tabs, ul.cbi-tabmenu").forEach(function(menu){
+      if(menu.getAttribute("data-uniwrt-slider")==="1"){
+        requestAnimationFrame(function(){moveTabGlider(menu);});
+        return;
+      }
+      menu.setAttribute("data-uniwrt-slider","1");
+      menu.classList.add("uniwrt-tab-slider");
+      var glider=document.createElement("span");
+      glider.className="uniwrt-tab-glider";
+      glider.setAttribute("aria-hidden","true");
+      menu.insertBefore(glider,menu.firstChild);
+      menu.addEventListener("click",function(){setTimeout(function(){moveTabGlider(menu);},35);});
+      menu.addEventListener("scroll",function(){moveTabGlider(menu);},{passive:true});
+      requestAnimationFrame(function(){moveTabGlider(menu);});
+    });
+  }
+
   function repairCbiTabs(){
     document.querySelectorAll("ul.cbi-tabmenu").forEach(function(menu){
       if(menu.getAttribute("data-uniwrt-tabfix")==="1")return;
@@ -293,6 +331,7 @@
   function repairPageControls(){
     decorateSoftwarePage();
     repairCbiTabs();
+    decorateTabSliders();
     repairDropdownCheckboxes();
   }
   function tryInit(){
@@ -304,6 +343,11 @@
     if(ATTEMPTS++ < MAX_ATTEMPTS){setTimeout(tryInit,90);return;}
     if(buildRail(null,true)){SETUP_DONE=true;}
   }
+  function watchTabSliderResize(){
+    window.addEventListener("resize",function(){
+      document.querySelectorAll(".uniwrt-tab-slider").forEach(moveTabGlider);
+    },{passive:true});
+  }
   function watchDynamicControls(){
     if(!window.MutationObserver)return;
     var root=document.getElementById("maincontent")||document.body;
@@ -313,7 +357,7 @@
       setTimeout(function(){pending=false; repairPageControls();},80);
     }).observe(root,{childList:true,subtree:true});
   }
-  function start(){try{tryInit(); watchDynamicControls();}catch(e){try{console.warn("UniWRT theme init failed",e);}catch(_){}}}
+  function start(){try{tryInit(); watchTabSliderResize(); watchDynamicControls();}catch(e){try{console.warn("UniWRT theme init failed",e);}catch(_){}}}
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true}); else start();
   if(window.matchMedia)matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!ls(true,KEY_THEME)){applyTheme(curMode());paintTheme(curMode());}});
 })();
