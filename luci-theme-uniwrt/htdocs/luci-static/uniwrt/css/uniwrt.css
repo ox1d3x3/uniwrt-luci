@@ -122,7 +122,6 @@ body.rail-collapsed .uniwrt-nav .nav-label{opacity:0}
 body.rail-collapsed .uniwrt-nav a{justify-content:center}
 .uniwrt-rail-foot{flex:0 0 auto;padding:12px 16px;border-top:1px solid var(--u-border);
   font-size:11.5px;color:var(--u-muted);white-space:nowrap}
-.uniwrt-rail-foot:empty{display:none!important}
 
 .uniwrt-topbar{position:fixed;top:0;right:0;left:var(--u-rail);z-index:900;height:var(--u-top);
   display:flex;align-items:center;gap:13px;padding:0 22px;
@@ -428,9 +427,7 @@ table .ifacebadge{padding:0}
 
 
 /* status/overview output helpers */
-/* v2.0.9: do not paint a fake "No information available" card.
- * Empty #view is normal on LuCI auth/error states and it looked like a broken top bar. */
-#view:empty::before{content:none!important;display:none!important}
+#view:empty::before{content:"No information available";display:block;background:var(--u-card);border:1px solid var(--u-border);border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow);padding:18px;color:var(--u-muted)}
 [data-tab][data-tab-active="false"]{display:none!important}
 [data-tab][data-tab-active="true"]{display:block}
 ul.cbi-tabmenu li[data-tab]{user-select:none}
@@ -474,107 +471,6 @@ body.uniwrt-login #modal_overlay .modal.login form{max-width:none;margin:0;backg
 body.uniwrt-login #modal_overlay .modal.login hr{display:none}
 body.uniwrt-login #modal_overlay .modal.login>.btn,
 body.uniwrt-login #modal_overlay .modal.login>.cbi-button{width:100%;margin-top:14px;justify-content:center}
-
-/* v2.0.9 stable login repair: keep auth screen simple and aligned.
- * This is intentionally scoped to body.uniwrt-login so normal LuCI modals remain untouched. */
-body.uniwrt-login #view:empty,
-body.uniwrt-login section[hidden]{display:none!important}
-body.uniwrt-login #modal_overlay{
-  align-items:center!important;
-  justify-content:center!important;
-  padding:24px 14px!important;
-  background:radial-gradient(900px 520px at 82% 0%,rgba(44,200,255,.16),transparent 62%),
-    radial-gradient(820px 480px at 2% 96%,rgba(0,111,255,.13),transparent 58%),
-    linear-gradient(135deg,var(--u-bg),var(--u-bg-2))!important;
-}
-body.uniwrt-login #modal_overlay .modal.login{
-  width:min(420px,calc(100vw - 28px))!important;
-  max-width:420px!important;
-  margin:0 auto!important;
-  padding:28px 28px 24px!important;
-  border-radius:24px!important;
-  background:var(--u-card)!important;
-  border:1px solid var(--u-border)!important;
-  box-shadow:var(--u-shadow-pop)!important;
-  overflow:visible!important;
-}
-body.uniwrt-login #modal_overlay .modal.login>h4{
-  text-align:center!important;
-  margin:0 0 16px!important;
-  font-size:18px!important;
-  line-height:1.25!important;
-}
-body.uniwrt-login #modal_overlay .modal.login form,
-body.uniwrt-login #modal_overlay .modal.login .cbi-map,
-body.uniwrt-login #modal_overlay .modal.login .cbi-section,
-body.uniwrt-login #modal_overlay .modal.login .cbi-section-node{
-  width:100%!important;
-  max-width:none!important;
-  margin:0!important;
-  padding:0!important;
-  background:transparent!important;
-  border:0!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-}
-body.uniwrt-login #modal_overlay .modal.login .cbi-value{
-  display:block!important;
-  width:100%!important;
-  padding:8px 0!important;
-  margin:0!important;
-  border:0!important;
-}
-body.uniwrt-login #modal_overlay .modal.login .cbi-value-title{
-  display:block!important;
-  width:100%!important;
-  max-width:none!important;
-  padding:0 0 7px!important;
-  color:var(--u-text-2)!important;
-  font-size:13px!important;
-  font-weight:650!important;
-}
-body.uniwrt-login #modal_overlay .modal.login .cbi-value-field{
-  display:block!important;
-  width:100%!important;
-  max-width:none!important;
-}
-body.uniwrt-login #modal_overlay .modal.login input[type=text],
-body.uniwrt-login #modal_overlay .modal.login input[type=password]{
-  width:100%!important;
-  min-width:0!important;
-  height:42px!important;
-  min-height:42px!important;
-  padding:0 13px!important;
-  border-radius:12px!important;
-  box-sizing:border-box!important;
-}
-body.uniwrt-login #modal_overlay .modal.login hr{display:none!important}
-body.uniwrt-login #modal_overlay .modal.login>.btn,
-body.uniwrt-login #modal_overlay .modal.login>.cbi-button,
-body.uniwrt-login #modal_overlay .modal.login button[type=submit]{
-  width:100%!important;
-  height:42px!important;
-  min-height:42px!important;
-  margin:16px 0 0!important;
-  justify-content:center!important;
-  border-radius:12px!important;
-  background:var(--u-blue)!important;
-  border-color:var(--u-blue)!important;
-  color:#fff!important;
-}
-body.uniwrt-login .uniwrt-login-brand{
-  margin:0 0 18px!important;
-}
-body.uniwrt-login .uniwrt-login-brand img,
-body.uniwrt-login .uniwrt-login-brand svg{
-  width:52px!important;
-  height:52px!important;
-  border-radius:16px!important;
-}
-@media (max-width:480px){
-  body.uniwrt-login #modal_overlay .modal.login{padding:24px 18px 20px!important;border-radius:20px!important}
-}
-
 
 /* footer */
 /* ---------------------- log / output boxes ----------------------
@@ -623,7 +519,7 @@ body.uniwrt-login .uniwrt-login-brand::after{content:"OpenWrt Portal";font-size:
 }
 
 
-/* ---------------------- UniWRT Portal v2.0.9 ----------------------
+/* ---------------------- UniWRT Portal v2.0.10 ----------------------
  * My-theme2 inspired internal controls. The saved reference used a compact
  * capsule tab switcher and a clean application/update table. These overrides
  * keep LuCI's original anchors, data-tab attributes and click handlers intact;
@@ -902,3 +798,126 @@ body.uniwrt-software .modal .cbi-section,
 body.uniwrt-software .modal .cbi-map{
   background:transparent;
 }
+
+/* ---------------------- UniWRT Portal v2.0.10 stable repair layer ----------------------
+ * Built from the working v2.0.6 structure. These overrides are intentionally
+ * targeted: no LuCI DOM replacement, no full shell rewrite, no hiding real
+ * controls. They fix login alignment, contrast, full-width content, footer
+ * branding, closed dropdown checkbox bleed-through, and add a safe animated
+ * tab/menu slider. */
+html[data-theme="light"]{
+  --u-bg:#f5f7fa; --u-bg-2:#eef3f8; --u-card:#ffffff; --u-card-2:#f8fafc;
+  --u-border:#dbe4ee; --u-border-2:#bcc9d7;
+  --u-text:#111827; --u-text-2:#374151; --u-muted:#667085; --u-faint:#98a2b3;
+  --u-blue-soft:#eaf3ff; --u-online-soft:#e8f8ee; --u-warn-soft:#fff4df; --u-error-soft:#fff0f1;
+}
+html[data-theme="dark"]{
+  --u-bg:#0d1117; --u-bg-2:#151b24; --u-card:#1b222d; --u-card-2:#222b38;
+  --u-border:#334052; --u-border-2:#4b5a6d;
+  --u-text:#f8fafc; --u-text-2:#d6dde8; --u-muted:#a7b2c2; --u-faint:#7c899a;
+  --u-blue-soft:#0b3672; --u-online-soft:#102f20; --u-warn-soft:#352913; --u-error-soft:#39191d;
+}
+
+/* Wider professional layout without the aggressive v2.0.7 overrides. */
+body.uniwrt-wide #maincontent,
+body.uniwrt-wide #maincontent.container{max-width:none!important;width:auto!important;padding-left:28px!important;padding-right:28px!important}
+body.uniwrt-wide #view,
+body.uniwrt-wide #view > *,
+body.uniwrt-wide .cbi-map,
+body.uniwrt-wide .cbi-section,
+body.uniwrt-wide fieldset.cbi-section,
+body.uniwrt-wide .panel{max-width:none!important;width:100%}
+body.uniwrt-wide .cbi-map-descr,
+body.uniwrt-wide .cbi-section-descr{max-width:1120px;color:var(--u-text-2)}
+body.uniwrt-wide .table,
+body.uniwrt-wide table.table,
+body.uniwrt-wide .cbi-section-table{width:100%!important;max-width:none!important}
+body.uniwrt-wide .td,
+body.uniwrt-wide .th,
+body.uniwrt-wide table.table td,
+body.uniwrt-wide table.table th,
+body.uniwrt-wide .cbi-section-table-cell{color:var(--u-text-2)}
+body.uniwrt-wide table.table th,
+body.uniwrt-wide .thead .th,
+body.uniwrt-wide .cbi-section-table-titles .th{color:var(--u-text);background:var(--u-bg-2)}
+
+/* Overview/status tiles: LuCI sometimes ships tiny inline max-width styles. */
+body.uniwrt-data-page .ifacebox{display:inline-flex!important;flex-direction:column;gap:6px;vertical-align:top;
+  min-width:220px!important;max-width:none!important;width:min(100%,320px)!important;margin:6px!important;
+  padding:12px 14px!important;border:1px solid var(--u-border)!important;border-radius:var(--u-radius)!important;
+  background:var(--u-card)!important;color:var(--u-text)!important;box-shadow:var(--u-shadow-sm)!important}
+body.uniwrt-data-page .ifacebox .ifacebadge,
+body.uniwrt-data-page .ifacebadge{color:var(--u-text-2)!important}
+body.uniwrt-data-page .ifacebadge.large,
+body.uniwrt-data-page .ifacebadge-active.large{max-width:none!important;min-width:220px!important;background:var(--u-card-2)!important;color:var(--u-text)!important}
+body.uniwrt-data-page .label{color:var(--u-text)!important;background:var(--u-bg-2)!important;border:1px solid var(--u-border)}
+
+/* Login page hard-fix: Bootstrap renders login as #modal_overlay .modal.login on
+ * OpenWrt 25.x. Keep labels above fields and remove the empty #view pseudo-card. */
+body.uniwrt-login{display:block!important;min-height:100vh!important;overflow:auto!important}
+body.uniwrt-login #view:empty::before{display:none!important;content:none!important}
+body.uniwrt-login section[hidden]{display:none!important}
+body.uniwrt-login #modal_overlay{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:24px 16px!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:transparent!important}
+body.uniwrt-login #modal_overlay .modal.login{width:min(100%,432px)!important;max-width:432px!important;margin:auto!important;padding:30px!important;
+  background:var(--u-card)!important;color:var(--u-text)!important;border:1px solid var(--u-border)!important;border-radius:24px!important;box-shadow:var(--u-shadow-pop)!important}
+body.uniwrt-login #modal_overlay .modal.login form,
+body.uniwrt-login #modal_overlay .modal.login .cbi-map,
+body.uniwrt-login #modal_overlay .modal.login .cbi-section,
+body.uniwrt-login #modal_overlay .modal.login .cbi-section-node{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+body.uniwrt-login #modal_overlay .modal.login .cbi-value{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:6px!important;width:100%!important;padding:9px 0!important;border:0!important;margin:0!important}
+body.uniwrt-login #modal_overlay .modal.login .cbi-value-title{display:block!important;flex:none!important;width:auto!important;max-width:none!important;min-width:0!important;padding:0!important;margin:0!important;text-align:left!important;color:var(--u-text-2)!important;font-size:13px!important;font-weight:650!important}
+body.uniwrt-login #modal_overlay .modal.login .cbi-value-field{display:block!important;flex:none!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important}
+body.uniwrt-login #modal_overlay .modal.login input[type="text"],
+body.uniwrt-login #modal_overlay .modal.login input[type="password"]{display:block!important;width:100%!important;height:42px!important;min-height:42px!important;margin:0!important;border-radius:12px!important;background:var(--u-bg-2)!important;color:var(--u-text)!important;border-color:var(--u-border-2)!important}
+body.uniwrt-login #modal_overlay .modal.login .btn,
+body.uniwrt-login #modal_overlay .modal.login .cbi-button{width:100%!important;height:42px!important;min-height:42px!important;margin-top:16px!important;border-radius:12px!important}
+
+/* Footer replacement. The JS replaces the stock LuCI/OpenWrt text with this link. */
+.uniwrt-rail-foot{display:none!important}
+footer[data-uniwrt="1"],#footer[data-uniwrt="1"],.footer[data-uniwrt="1"]{padding:22px 0 8px!important;color:var(--u-muted)!important;background:transparent!important;border:0!important;text-align:center!important}
+footer[data-uniwrt="1"] .uniwrt-author,
+#footer[data-uniwrt="1"] .uniwrt-author,
+.footer[data-uniwrt="1"] .uniwrt-author{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;background:var(--u-card);border:1px solid var(--u-border);color:var(--u-text-2);font-size:12px;font-weight:650;text-decoration:none;box-shadow:var(--u-shadow-sm)}
+footer[data-uniwrt="1"] .uniwrt-author:hover{color:var(--u-blue);border-color:var(--u-blue)}
+
+/* Closed LuCI dropdowns must not show the internal checkbox square/form. */
+.cbi-dropdown:not([open]) li form,
+.cbi-dropdown:not([open]) li input[type="checkbox"],
+.cbi-dropdown:not([open]) li .cbi-input-checkbox{display:none!important}
+.cbi-dropdown:not([open])>ul>li[selected],
+.cbi-dropdown:not([open])>ul>li[display="0"]{gap:0!important}
+.cbi-dropdown.btn{border-radius:var(--u-pill);box-shadow:var(--u-shadow-sm)}
+.cbi-dropdown.btn:not(.cbi-button-apply):not(.important){background:var(--u-card);color:var(--u-text);border-color:var(--u-border-2)}
+.cbi-dropdown.btn:not(.cbi-button-apply):not(.important):hover{background:var(--u-bg-2);color:var(--u-text)}
+
+/* Modern capsule tab/menu slider. The slider is decorative only and sits behind
+ * the original LuCI anchors, so existing click handlers remain untouched. */
+#tabmenu ul.tabs,
+ul.tabs,
+ul.cbi-tabmenu{position:relative;isolation:isolate;overflow:visible!important;background:var(--u-bg-2)!important;border-color:var(--u-border)!important}
+#tabmenu ul.tabs > li,
+ul.tabs > li,
+ul.cbi-tabmenu > li{position:relative;z-index:1}
+#tabmenu ul.tabs > li > a,
+ul.tabs > li > a,
+ul.cbi-tabmenu > li > a{position:relative;z-index:2;transition:color .18s ease,transform .08s ease!important}
+#tabmenu ul.tabs > .uniwrt-tab-slider,
+ul.tabs > .uniwrt-tab-slider,
+ul.cbi-tabmenu > .uniwrt-tab-slider{position:absolute;left:0;top:0;z-index:0;pointer-events:none;border-radius:8px;background:var(--u-card);box-shadow:0 1px 2px rgba(15,23,42,.08),0 8px 20px rgba(15,23,42,.06);opacity:0;transition:transform .26s cubic-bezier(.2,.8,.2,1),width .26s cubic-bezier(.2,.8,.2,1),height .26s cubic-bezier(.2,.8,.2,1),opacity .12s ease}
+html[data-theme="dark"] #tabmenu ul.tabs > .uniwrt-tab-slider,
+html[data-theme="dark"] ul.tabs > .uniwrt-tab-slider,
+html[data-theme="dark"] ul.cbi-tabmenu > .uniwrt-tab-slider{background:var(--u-card-2);box-shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.24)}
+#tabmenu li.active a,
+.tabs li.active a,
+#tabmenu li.cbi-tab a,
+.cbi-tabmenu li.cbi-tab a,
+.cbi-tabmenu li.active a,
+.cbi-tabmenu li[data-tab-active="true"] a{background:transparent!important;box-shadow:none!important;color:var(--u-blue)!important;font-weight:700!important}
+#tabmenu li a:hover,.tabs li a:hover,.cbi-tabmenu li a:hover{background:transparent!important;color:var(--u-blue)!important}
+
+/* Search bar sizing and mobile-safe spacing. */
+.uniwrt-menu-search{padding:8px 10px 6px!important}
+.uniwrt-menu-search input{height:30px!important;min-height:30px!important;font-size:12px!important;padding:0 11px!important}
+@media (max-width:900px){body.uniwrt-wide #maincontent,body.uniwrt-wide #maincontent.container{padding-left:14px!important;padding-right:14px!important}.cbi-page-actions{position:static!important}}
+@media (max-width:640px){body.uniwrt-login #modal_overlay .modal.login{padding:24px 20px!important;border-radius:20px!important}body.uniwrt-data-page .ifacebox{width:100%!important;min-width:0!important}}

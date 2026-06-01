@@ -137,14 +137,18 @@ MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
 ## Changelog
 
-### v2.0.9
+### v2.0.10
 
-- Rollback-style stability release based on the last working v2.0.6 structure, not the aggressive v2.0.7 layout pass.
-- Fixed the login page username/password layout by adding strict modal-only login alignment.
-- Removed the fake `No information available` empty `#view` card that appeared on the auth screen.
-- Replaced the default LuCI/OpenWrt footer text with `Author: Ox1d3x3 x UniWRT V2.0.9` linked to the UniWRT GitHub repository.
-- Removed the sidebar bottom version label so the left rail stays clean.
-- Kept the working CBI tab/button fixes and My-theme2-inspired software/progress styling from v2.0.6.
+- Rebased the release on the working v2.0.6 structure instead of the broken v2.0.7/v2.0.8 rollback path.
+- Fixed the OpenWrt 25.x modal login layout where Username/Password labels could appear beside or away from the fields.
+- Removed the fake login-page `No information available` block caused by `#view:empty::before`.
+- Replaced the default LuCI/OpenWrt footer text with `Author: Ox1d3x3 x UniWRT V2.0.10` linked to the UniWRT GitHub repository.
+- Removed the sidebar bottom theme-version/footer block.
+- Improved light and dark contrast tokens so status data, logs, cards, dropdowns and table rows do not blend into the background.
+- Expanded CBI maps, sections, tables and status tiles to use the available page width without changing LuCI’s functional DOM.
+- Added a decorative animated slider behind top tabs and CBI in-page tabs while keeping the original LuCI anchors and click handlers intact.
+- Hid closed dropdown checkbox/form internals to fix the square-box overlap around select/dropdown controls.
+- Kept the v2.0.6 working button/menu fixes and software/progress styling.
 
 ### v2.0.4
 
