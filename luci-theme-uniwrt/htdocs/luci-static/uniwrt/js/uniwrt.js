@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.10";
+  var UNIWRT_VERSION = "2.0.11";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -293,9 +293,13 @@
   function decoratePageDensity(){
     if(document.body.classList.contains("uniwrt-login"))return;
     document.body.classList.add("uniwrt-wide");
-    var title=(document.title||location.pathname||"").toLowerCase();
-    if(/overview|status|firewall|interfaces|wireless|routing|software|system log|kernel log|startup|scheduled|backup|flash|diagnostics/.test(title))
-      document.body.classList.add("uniwrt-data-page");
+    document.body.classList.add("uniwrt-data-page");
+
+    var key=((document.body.getAttribute("data-page")||"")+" "+(document.title||"")+" "+location.pathname).toLowerCase();
+    if(/firewall|zone|traffic|port/.test(key))document.body.classList.add("uniwrt-page-firewall");
+    if(/network|interface|devices|wireless|wifi|dhcp|dns|routing/.test(key))document.body.classList.add("uniwrt-page-network");
+    if(/system|admin|password|ssh|https|startup|scheduled|backup|flash|software|opkg|package/.test(key))document.body.classList.add("uniwrt-page-system");
+    if(/overview|status|load|log|realtime|diagnostics|channel/.test(key))document.body.classList.add("uniwrt-page-status");
   }
 
   function activeTabAnchor(menu){
@@ -347,8 +351,9 @@
   }
   function tryInit(){
     if(SETUP_DONE)return;
-    applyTheme(curMode()); rebrandFooter(); repairPageControls();
+    applyTheme(curMode()); rebrandFooter();
     if(decorateLogin()){SETUP_DONE=true;return;}
+    repairPageControls();
     var menu=findMenu();
     if(menu && buildRail(menu,false)){SETUP_DONE=true;return;}
     if(ATTEMPTS++ < MAX_ATTEMPTS){setTimeout(tryInit,90);return;}

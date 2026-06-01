@@ -46,7 +46,7 @@ assert workflow['name'] == 'Build UniWRT Packages'
 css = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/css/uniwrt.css').read_text()
 js = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/js/uniwrt.js').read_text()
 assert 'UniWRT Portal v2' in css
-assert 'UNIWRT_VERSION = "2.0.10"' in js
+assert 'UNIWRT_VERSION = "2.0.11"' in js
 assert 'body.uniwrt-software' in css
 assert 'uniwrtProgressSweep' in css
 assert 'decorateSoftwarePage' in js
@@ -59,6 +59,10 @@ assert 'body.uniwrt-login #view:empty::before' in css
 assert 'uniwrt-tab-slider' in css and 'decorateTabSliders' in js
 assert 'Author: Ox1d3x3 x UniWRT V' in js
 assert 'uniwrt-rail-foot' not in js
+assert 'UniWRT Portal v2.0.11 layout/control repair' in css
+assert 'width:calc(100vw - var(--u-rail))!important' in css
+assert 'cbi-dropdown:not([open]) > div' in css
+assert 'document.body.classList.add("uniwrt-data-page")' in js
 assert 'LUCI_PKGARCH:=all' in pathlib.Path('luci-theme-uniwrt/Makefile').read_text()
 for path in ['header.ut','footer.ut','sysauth.ut']:
     assert pathlib.Path('luci-theme-uniwrt/ucode/template/themes/uniwrt', path).exists()
