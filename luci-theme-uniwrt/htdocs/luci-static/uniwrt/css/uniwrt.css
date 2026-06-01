@@ -306,7 +306,7 @@ input[type=radio]:focus-visible,.cbi-input-radio:focus-visible{outline:0;box-sha
 #modal_overlay{position:fixed;inset:0;z-index:2000;display:flex;align-items:flex-start;justify-content:center;
   overflow-y:auto;padding:48px 16px;background:rgba(20,22,26,.55);
   opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease;-webkit-overflow-scrolling:touch}
-#modal_overlay.active{opacity:1;visibility:visible;pointer-events:auto}
+#modal_overlay.active,body.modal-overlay-active #modal_overlay{opacity:1;visibility:visible;pointer-events:auto}
 body.modal-overlay-active{overflow:hidden}
 .modal{background:var(--u-card);color:var(--u-text);border:1px solid var(--u-border);
   border-radius:var(--u-radius-lg);box-shadow:var(--u-shadow-pop);
@@ -393,6 +393,17 @@ body.uniwrt-login .cbi-page-actions{box-shadow:none;border:0;background:transpar
 body.uniwrt-login .cbi-page-actions .cbi-button,body.uniwrt-login input[type=submit]{width:100%}
 .uniwrt-login-brand{text-align:center;margin-bottom:14px;display:flex;flex-direction:column;align-items:center;gap:10px}
 .uniwrt-login-brand svg,.uniwrt-login-brand img{width:44px;height:44px;border-radius:11px}
+
+/* LuCI login is rendered as a modal on some OpenWrt/LuCI versions. Some
+ * versions mark only <body> with modal-overlay-active and do not add
+ * #modal_overlay.active, so keep the login modal visible in both cases. */
+body.uniwrt-login #modal_overlay{align-items:center;padding:24px 16px}
+body.uniwrt-login #modal_overlay .modal.login{max-width:432px;margin:auto;padding:28px 30px}
+body.uniwrt-login #modal_overlay .modal.login>h4{text-align:center;margin-bottom:14px}
+body.uniwrt-login #modal_overlay .modal.login form{max-width:none;margin:0;background:transparent;border:0;box-shadow:none;border-radius:0;padding:0}
+body.uniwrt-login #modal_overlay .modal.login hr{display:none}
+body.uniwrt-login #modal_overlay .modal.login>.btn,
+body.uniwrt-login #modal_overlay .modal.login>.cbi-button{width:100%;margin-top:14px;justify-content:center}
 
 /* footer */
 /* ---------------------- log / output boxes ----------------------

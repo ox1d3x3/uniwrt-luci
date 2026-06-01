@@ -137,6 +137,12 @@ MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
 ## Changelog
 
+### v2.0.4
+
+- Fixed blank login page on LuCI versions where login modal uses `body.modal-overlay-active` without `#modal_overlay.active`.
+- Removed duplicate UniWRT JS include from `sysauth` shim.
+- Updated cache-busting versions for CSS, mobile CSS and JS.
+
 ### v2.0.3
 
 - Updated `uniwrt-apply.sh` so running it with no arguments now auto-detects a local UniWRT `.apk` or `.ipk`, installs it using the correct package manager, verifies theme files, applies UniWRT, clears LuCI cache and restarts LuCI web services.

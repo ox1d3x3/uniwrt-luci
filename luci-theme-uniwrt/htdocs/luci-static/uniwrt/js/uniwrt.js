@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.3";
+  var UNIWRT_VERSION = "2.0.4";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -145,6 +145,16 @@
     var pw=document.querySelector('input[type="password"]');
     if(!pw||findMenu())return false;
     document.body.classList.add("uniwrt-login");
+
+    /* Some LuCI builds show login through #modal_overlay but only mark the
+     * body with modal-overlay-active. Make the overlay state explicit so the
+     * login dialog cannot be hidden by theme modal styling. */
+    var overlay=document.getElementById("modal_overlay");
+    if(overlay&&overlay.querySelector('input[type="password"]')){
+      overlay.classList.add("active");
+      document.body.classList.add("modal-overlay-active");
+    }
+
     var form=pw.closest("form, .cbi-map");
     if(form&&!form.querySelector(".uniwrt-login-brand")){
       var b=document.createElement("div"); b.className="uniwrt-login-brand";

@@ -1,4 +1,4 @@
 /* UniWRT LuCI media entrypoint.
  * Bootstrap-compatible themes are loaded through /luci-static/<theme>/cascade.css.
  */
-@import url("css/uniwrt.css?v=2.0.2");
+@import url("css/uniwrt.css?v=2.0.4");
