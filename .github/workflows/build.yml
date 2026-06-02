@@ -1,84 +1,201 @@
-name: Build UniWRT (IPK + APK)
+name: Build UniWRT Packages
 
-# Builds luci-theme-uniwrt with the official OpenWrt SDK across a version
-# matrix. The SDK branch decides the package format:
-#   23.05 / 24.10  ->  opkg   ->  .ipk
-#   SNAPSHOT (25.x) ->  apk    ->  .apk
-# A theme is arch-independent (LUCI_PKGARCH:=all), so one representative
-# architecture per branch is enough to produce the universal package.
+env:
+  PACKAGE: luci-theme-uniwrt
+  FEEDNAME: uniwrt
+  THEME_RELEASE: ${{ github.run_number }}
 
 on:
   push:
-    tags: ['v*']
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+    paths:
+      - 'luci-theme-uniwrt/**'
+      - '.github/workflows/build.yml'
+      - 'qa-static.sh'
+      - 'README.md'
+      - 'VERSION'
+      - 'uniwrt-apply.sh'
   pull_request:
+    paths:
+      - 'luci-theme-uniwrt/**'
+      - '.github/workflows/build.yml'
+      - 'qa-static.sh'
+      - 'README.md'
+      - 'VERSION'
+      - 'uniwrt-apply.sh'
   workflow_dispatch:
 
+concurrency:
+  group: uniwrt-build-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  contents: write   # needed by the release job to attach assets
+  contents: write
 
 jobs:
+  qa:
+    name: Static QA
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install QA dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs python3-yaml
+
+      - name: Run static QA
+        shell: bash
+        run: bash ./qa-static.sh
+
   build:
-    name: ${{ matrix.label }}
+    name: Build ${{ matrix.label }}
+    needs: qa
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - label: '23.05 (ipk)'
-            arch:  'x86_64-23.05.5'
-          - label: '24.10 (ipk)'
-            arch:  'x86_64-24.10.0'
-          - label: 'snapshot 25.x (apk)'
-            arch:  'x86_64-SNAPSHOT'
+          # OpenWrt 23.05.x and 24.10.x use opkg/ipk.
+          - release: '23.05.6'
+            arch: x86_64-23.05.6
+            extension: ipk
+            label: 'legacy .ipk for OpenWrt 23.05.x'
+          - release: '24.10.6'
+            arch: x86_64-24.10.6
+            extension: ipk
+            label: 'current .ipk for OpenWrt 24.10.x'
+          # OpenWrt 25.12.x and newer use apk.
+          - release: '25.12.4'
+            arch: x86_64-25.12.4
+            extension: apk
+            label: 'modern .apk for OpenWrt 25.12.x+'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Build package
-        uses: openwrt/gh-action-sdk@v6
+      - name: Build package with OpenWrt SDK
+        uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.arch }}
-          FEEDNAME: uniwrt_ci
-          PACKAGES: luci-theme-uniwrt
-          # Sign feeds only if the secrets are configured (optional):
-          # KEY_BUILD:   ${{ secrets.USIGN_SEC_KEY }}   # signs the opkg feed (usign / Ed25519)
-          # PRIVATE_KEY: ${{ secrets.APK_SEC_KEY }}     # signs the apk feed  (EC prime256v1 PEM)
-          # INDEX: '1'                                  # also emit a package index
+          FEEDNAME: ${{ env.FEEDNAME }}
+          PACKAGES: ${{ env.PACKAGE }}
+          THEME_RELEASE: ${{ env.THEME_RELEASE }}
+          V: s
 
-      - name: Collect artifacts
+      - name: Collect package
+        shell: bash
         run: |
-          mkdir -p out
-          find bin/ \( -name '*.ipk' -o -name '*.apk' \) -exec cp -v {} out/ \; || true
-          echo "----- collected -----"
-          ls -l out/ || true
-          test -n "$(ls -A out/ 2>/dev/null)" || { echo "No packages were produced"; exit 1; }
+          set -euo pipefail
+          mkdir -p dist
+          find "$GITHUB_WORKSPACE/bin" -type f -name "${PACKAGE}*.${{ matrix.extension }}" -print -exec cp -v {} dist/ \;
+          echo "Built package list:"
+          find dist -maxdepth 1 -type f -printf '%f\n' | sort
+          test "$(find dist -maxdepth 1 -type f -name "*.${{ matrix.extension }}" | wc -l)" -ge 1 || {
+            echo "::error::No ${PACKAGE} .${{ matrix.extension }} package was produced for OpenWrt ${{ matrix.release }}"
+            exit 1
+          }
 
-      - name: Upload artifacts
+      - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: uniwrt-${{ matrix.arch }}
-          path: out/*
+          name: ${{ env.PACKAGE }}-${{ matrix.release }}-${{ matrix.extension }}
+          path: dist/*
           if-no-files-found: error
 
   release:
-    name: Attach to GitHub Release
+    name: Publish GitHub pre-release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Download all artifacts
+      - name: Checkout release helper
+        uses: actions/checkout@v4
+
+      - name: Download packages
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: artifacts
           merge-multiple: true
 
-      - name: List
-        run: ls -lR dist
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          find artifacts -type f \( -name '*.ipk' -o -name '*.apk' \) -print -exec cp -v {} release/ \;
+          cp -v uniwrt-apply.sh release/
+          test "$(find release -type f \( -name '*.ipk' -o -name '*.apk' \) | wc -l)" -ge 1 || {
+            echo "::error::No package assets found"
+            exit 1
+          }
+          ( cd release && sha256sum * > SHA256SUMS )
+          ls -la release
+
+      - name: Choose release tag
+        id: release_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "title=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=nightly" >> "$GITHUB_OUTPUT"
+            echo "title=Nightly build #${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reset rolling nightly release
+        if: github.ref_type != 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release delete nightly --yes --cleanup-tag || true
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
-          generate_release_notes: true
+          tag_name: ${{ steps.release_tag.outputs.tag }}
+          name: ${{ steps.release_tag.outputs.title }}
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          files: release/*
+          body: |
+            Automated UniWRT Portal build from `${{ github.sha }}`.
+
+            Pick by OpenWrt version, not router CPU/architecture. The theme package is architecture-independent.
+
+            | OpenWrt version | Package manager | Asset |
+            |---:|:---:|:---|
+            | 23.05.x and older supported opkg builds | opkg | `luci-theme-uniwrt_*_all.ipk` |
+            | 24.10.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
+            | 25.12.x and newer | apk | `luci-theme-uniwrt-*.apk` |
+
+            ```sh
+            # OpenWrt 23.05 / 24.10
+            opkg install ./luci-theme-uniwrt_*_all.ipk
+
+            # OpenWrt 25.12+
+            apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
+            ```
+
+            Optional helper install:
+
+            ```sh
+            chmod +x ./uniwrt-apply.sh
+            ./uniwrt-apply.sh
+            ```
+
+            This helper auto-detects the local `.ipk` or `.apk`, installs it, applies UniWRT, clears LuCI cache and restarts web services.

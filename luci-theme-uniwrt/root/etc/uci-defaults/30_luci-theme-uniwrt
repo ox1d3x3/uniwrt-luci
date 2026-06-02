@@ -1,13 +1,14 @@
 #!/bin/sh
+# luci-theme-uniwrt — register the theme and make it the active LuCI theme.
+# Runs once on install; uci-defaults removes the script afterwards.
 
-# Always keep UniWRT in the selectable theme list.
-uci -q set luci.themes.UniWRT=/luci-static/uniwrt
+uci -q batch <<-EOF
+	set luci.themes.UniWRT=/luci-static/uniwrt
+	set luci.main.mediaurlbase=/luci-static/uniwrt
+	commit luci
+EOF
 
-# Make it the active theme only on a FRESH install — never stomp the
-# user's chosen theme on a package upgrade.
-[ "$PKG_UPGRADE" = 1 ] || uci -q set luci.main.mediaurlbase=/luci-static/uniwrt
-
-uci -q commit luci
-rm -f /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null
+# Clear cached indexes/templates so the new theme is picked up immediately.
+rm -rf /tmp/luci-* /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-templatecache 2>/dev/null
 
 exit 0
