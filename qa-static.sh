@@ -61,9 +61,16 @@ assert 'cbi-dropdown li input[type=checkbox]' in css
 assert '#modal_overlay.active,body.modal-overlay-active #modal_overlay' in css
 assert 'LUCI_PKGARCH:=all' in pathlib.Path('luci-theme-uniwrt/Makefile').read_text()
 installer = pathlib.Path('uniwrt-apply.sh').read_text()
-assert 'EXPECTED_VERSION="2.0.13"' in installer
-assert 'remove_existing_package' in installer
-assert 'Installed files verified for UniWRT v' in installer
+assert 'EXPECTED_VERSION' not in installer
+assert 'PKG_PREFIX="luci-theme-uniwrt"' in installer
+assert 'expected_format()' in installer
+assert 'find_latest_package()' in installer
+assert 'wrong_package_error' in installer
+assert 'package_version_hint()' in installer
+assert 'remove_existing_uniwrt' in installer
+assert 'apk add --force-non-repository --allow-untrusted "./$pkg_base"' in installer
+assert 'opkg install "./$pkg_base"' in installer
+assert 'Installed UniWRT files look valid.' in installer
 assert '/tmp/luci-templatecache' in installer
 for path in ['header.ut','footer.ut','sysauth.ut']:
     assert pathlib.Path('luci-theme-uniwrt/ucode/template/themes/uniwrt', path).exists()
