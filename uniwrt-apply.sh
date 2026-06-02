@@ -1,13 +1,12 @@
 #!/bin/sh
-# UniWRT universal installer/apply helper for OpenWrt.
+# UniWRT clean installer/apply helper for OpenWrt.
 #
-# Put this script in the same folder as ONE UniWRT package:
-#   - luci-theme-uniwrt*.apk  for OpenWrt 25.x+ / apk systems
-#   - luci-theme-uniwrt*.ipk  for OpenWrt 24.x and older / opkg systems
+# Put this script in the same folder as the UniWRT package:
+#   - luci-theme-uniwrt*.apk for apk-based OpenWrt builds
+#   - luci-theme-uniwrt*.ipk for opkg-based OpenWrt builds
 #
-# The script intentionally matches only the first package-name part:
-#   luci-theme-uniwrt
-# and ignores the version/revision part of the filename.
+# This script does NOT parse OpenWrt version numbers. It detects the package
+# manager available on the router, then picks the matching local package.
 
 set -eu
 
@@ -25,68 +24,8 @@ warn() { printf 'Warning: %s\n' "$*" >&2; }
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 has_cmd() { command -v "$1" >/dev/null 2>&1; }
 
-openwrt_release() {
-  if [ -r /etc/openwrt_release ]; then
-    # shellcheck disable=SC1091
-    . /etc/openwrt_release 2>/dev/null || true
-    printf '%s' "${DISTRIB_RELEASE:-unknown}"
-  else
-    printf 'unknown'
-  fi
-}
-
-openwrt_major() {
-  rel="$(openwrt_release)"
-  major="${rel%%.*}"
-  case "$major" in
-    ''|*[!0-9]*) return 1 ;;
-    *) printf '%s' "$major" ;;
-  esac
-}
-
-expected_format() {
-  # OpenWrt 25.x+ uses apk. OpenWrt 24.x and older use opkg/ipk.
-  # For SNAPSHOT/unknown releases, fall back to the package manager present.
-  major="$(openwrt_major 2>/dev/null || true)"
-
-  if [ -n "$major" ]; then
-    if [ "$major" -ge 25 ]; then
-      printf 'apk'
-      return 0
-    fi
-    printf 'ipk'
-    return 0
-  fi
-
-  if has_cmd apk && ! has_cmd opkg; then
-    printf 'apk'
-    return 0
-  fi
-
-  if has_cmd opkg && ! has_cmd apk; then
-    printf 'ipk'
-    return 0
-  fi
-
-  if has_cmd apk; then
-    printf 'apk'
-    return 0
-  fi
-
-  if has_cmd opkg; then
-    printf 'ipk'
-    return 0
-  fi
-
-  fail "neither apk nor opkg was found on this system"
-}
-
 find_latest_package() {
   ext="$1"
-  # Package filenames are expected to be normal package filenames without spaces.
-  # The glob deliberately ignores version/revision, e.g.:
-  #   luci-theme-uniwrt-2.0.13-r1.apk
-  #   luci-theme-uniwrt_2.0.13-1_all.ipk
   pkgs="$(ls -1t "$SCRIPT_DIR"/"$PKG_PREFIX"*."$ext" 2>/dev/null || true)"
   [ -n "$pkgs" ] || return 1
 
@@ -106,69 +45,70 @@ package_version_hint() {
     *.apk) file="${file%.apk}" ;;
     *.ipk) file="${file%.ipk}" ;;
   esac
-
-  # Supports both common naming styles:
-  #   luci-theme-uniwrt-2.0.13-r1
-  #   luci-theme-uniwrt_2.0.13-1_all
   hint="${file#$PKG_PREFIX}"
   hint="${hint#-}"
   hint="${hint#_}"
   [ -n "$hint" ] && [ "$hint" != "$file" ] && printf '%s' "$hint" || true
 }
 
-wrong_package_error() {
-  expected="$1"
-  wrong="$2"
-  rel="$(openwrt_release)"
+select_package() {
+  apk_pkg="$(find_latest_package apk 2>/dev/null || true)"
+  ipk_pkg="$(find_latest_package ipk 2>/dev/null || true)"
 
-  if [ "$expected" = "apk" ]; then
-    fail "this router appears to be OpenWrt $rel / apk-based. Found .ipk only: $(basename "$wrong"). .ipk is not supported on this system. Please download/copy the .apk package."
+  # Prefer the package manager actually available on the router.
+  if has_cmd apk; then
+    if [ -n "$apk_pkg" ]; then
+      printf 'apk:%s\n' "$apk_pkg"
+      return 0
+    fi
+    if [ -n "$ipk_pkg" ] && ! has_cmd opkg; then
+      fail "this router uses apk, but only an .ipk was found: $(basename "$ipk_pkg"). Please copy the .apk package."
+    fi
   fi
 
-  fail "this router appears to be OpenWrt $rel / opkg-based. Found .apk only: $(basename "$wrong"). .apk is not supported on this system. Please download/copy the .ipk package."
+  if has_cmd opkg; then
+    if [ -n "$ipk_pkg" ]; then
+      printf 'ipk:%s\n' "$ipk_pkg"
+      return 0
+    fi
+    if [ -n "$apk_pkg" ] && ! has_cmd apk; then
+      fail "this router uses opkg, but only an .apk was found: $(basename "$apk_pkg"). Please copy the .ipk package."
+    fi
+  fi
+
+  if [ -n "$apk_pkg" ] || [ -n "$ipk_pkg" ]; then
+    fail "package file found, but no matching package manager is available. Found apk: ${apk_pkg:-none}; found ipk: ${ipk_pkg:-none}"
+  fi
+
+  fail "no ${PKG_PREFIX}*.apk or ${PKG_PREFIX}*.ipk package found in: $SCRIPT_DIR"
 }
 
-detect_package() {
-  expected="$(expected_format)"
-  rel="$(openwrt_release)"
-  log "Detected OpenWrt release: $rel"
-  log "Expected UniWRT package format: .$expected"
-
-  case "$expected" in
-    apk)
-      pkg="$(find_latest_package apk 2>/dev/null || true)"
-      if [ -n "$pkg" ]; then
-        printf 'apk:%s\n' "$pkg"
-        return 0
-      fi
-      wrong="$(find_latest_package ipk 2>/dev/null || true)"
-      [ -n "$wrong" ] && wrong_package_error apk "$wrong"
-      fail "no $PKG_PREFIX*.apk package found in: $SCRIPT_DIR"
-      ;;
-    ipk)
-      pkg="$(find_latest_package ipk 2>/dev/null || true)"
-      if [ -n "$pkg" ]; then
-        printf 'ipk:%s\n' "$pkg"
-        return 0
-      fi
-      wrong="$(find_latest_package apk 2>/dev/null || true)"
-      [ -n "$wrong" ] && wrong_package_error ipk "$wrong"
-      fail "no $PKG_PREFIX*.ipk package found in: $SCRIPT_DIR"
-      ;;
-    *)
-      fail "unsupported expected package format: $expected"
-      ;;
-  esac
+package_manager_summary() {
+  if has_cmd apk && has_cmd opkg; then
+    printf 'apk and opkg found; apk will be preferred when an .apk package exists'
+  elif has_cmd apk; then
+    printf 'apk'
+  elif has_cmd opkg; then
+    printf 'opkg'
+  else
+    printf 'none'
+  fi
 }
 
 clear_luci_cache() {
-  log "Clearing LuCI cache..."
-  rm -rf \
-    /tmp/luci-* \
+  log "Clearing LuCI cache safely..."
+  # Do NOT delete /tmp/luci-* broadly. That pattern also deletes local packages
+  # such as /tmp/luci-theme-uniwrt-2.0.14-r1.apk before installation.
+  rm -f \
     /tmp/luci-indexcache \
+    /tmp/luci-indexcache.* \
     /tmp/luci-modulecache \
     /tmp/luci-templatecache \
-    /tmp/luci-sessions \
+    2>/dev/null || true
+  rm -rf \
+    /tmp/luci-modulecache/ \
+    /tmp/luci-templatecache/ \
+    /tmp/luci-sessions/ \
     2>/dev/null || true
 }
 
@@ -196,7 +136,6 @@ remove_existing_uniwrt() {
     opkg remove "$PKG_PREFIX" >/dev/null 2>&1 || true
   fi
 
-  # Safety cleanup for older broken dev installs.
   rm -rf "$THEME_DIR" "$TPL_UCODE" "$TPL_LUA" 2>/dev/null || true
   clear_luci_cache
 }
@@ -207,6 +146,7 @@ install_apk() {
   [ -f "$pkg_file" ] || fail "APK package was not found: $pkg_file"
   has_cmd apk || fail "apk command not found, but .apk package was selected"
 
+  log "Installing local APK package: $pkg_base"
   (
     cd "$SCRIPT_DIR" || exit 1
     apk add --force-non-repository --allow-untrusted "./$pkg_base"
@@ -223,6 +163,7 @@ install_ipk() {
   [ -f "$pkg_file" ] || fail "IPK package was not found: $pkg_file"
   has_cmd opkg || fail "opkg command not found, but .ipk package was selected"
 
+  log "Installing local IPK package: $pkg_base"
   (
     cd "$SCRIPT_DIR" || exit 1
     opkg install "./$pkg_base"
@@ -250,7 +191,6 @@ verify_installed_files() {
     [ -f "$TPL_LUA/sysauth.htm" ] || warn "missing Lua sysauth.htm; okay on pure ucode LuCI builds"
   fi
 
-  # Important for your layout-cache issue: direct CSS/JS links should exist.
   if [ -f "$TPL_UCODE/header.ut" ]; then
     grep -q 'css/uniwrt.css?v=' "$TPL_UCODE/header.ut" || warn "ucode header has no direct css/uniwrt.css?v= link"
     grep -q 'js/uniwrt.js?v=' "$TPL_UCODE/header.ut" || warn "ucode header has no direct js/uniwrt.js?v= link"
@@ -266,7 +206,7 @@ verify_version_hint() {
   if grep -R "$hint" "$THEME_DIR" "$TPL_UCODE" "$TPL_LUA" >/dev/null 2>&1; then
     log "Version hint found in installed files: $hint"
   else
-    warn "package version hint '$hint' was not found in installed files; install may still be valid if the theme does not embed the package version"
+    warn "package version hint '$hint' was not found in installed files; install may still be valid if the theme does not embed the package revision"
   fi
 }
 
@@ -281,7 +221,6 @@ apply_theme() {
 
   clear_luci_cache
   restart_luci_services
-
   log "Done. UniWRT is active. Open LuCI in Incognito/Private window first, or hard refresh with Ctrl+Shift+R."
 }
 
@@ -295,11 +234,12 @@ recover_bootstrap() {
 }
 
 install_flow() {
-  detected="$(detect_package)"
+  detected="$(select_package)"
   pkg_type="${detected%%:*}"
   pkg_file="${detected#*:}"
   hint="$(package_version_hint "$pkg_file")"
 
+  log "Detected package manager: $(package_manager_summary)"
   log "Selected package: $(basename "$pkg_file")"
   [ -n "$hint" ] && log "Package version hint: $hint"
 
@@ -307,8 +247,8 @@ install_flow() {
   remove_existing_uniwrt
 
   case "$pkg_type" in
-    apk) log "Installing local APK package..."; install_apk "$pkg_file" ;;
-    ipk) log "Installing local IPK package..."; install_ipk "$pkg_file" ;;
+    apk) install_apk "$pkg_file" ;;
+    ipk) install_ipk "$pkg_file" ;;
     *) fail "unsupported package type: $pkg_type" ;;
   esac
 
@@ -318,19 +258,16 @@ install_flow() {
 }
 
 show_detect() {
-  detected="$(detect_package)"
+  detected="$(select_package)"
   pkg_type="${detected%%:*}"
   pkg_file="${detected#*:}"
+  log "Detected package manager: $(package_manager_summary)"
   log "Selected .$pkg_type package: $pkg_file"
 }
 
 show_status() {
-  rel="$(openwrt_release)"
-  expected="$(expected_format)"
   active="$(uci -q get luci.main.mediaurlbase 2>/dev/null || true)"
-
-  log "OpenWrt release: $rel"
-  log "Expected package format: .$expected"
+  log "Package manager: $(package_manager_summary)"
   log "Script folder: $SCRIPT_DIR"
   log "Active LuCI mediaurlbase: ${active:-not set}"
 
@@ -340,13 +277,20 @@ show_status() {
   [ -n "$ipk_pkg" ] && log "Found IPK: $(basename "$ipk_pkg")" || log "Found IPK: none"
 }
 
+show_paths() {
+  log "Script folder: $SCRIPT_DIR"
+  log "Theme assets: $THEME_DIR"
+  log "ucode templates: $TPL_UCODE"
+  log "Lua templates: $TPL_LUA"
+}
+
 show_usage() {
   cat <<USAGE_EOF
 Usage: $0 [install|apply|recover|detect|verify|status|paths|help]
 
 Default:
-  install   Detect correct local luci-theme-uniwrt*.apk/.ipk, clean reinstall,
-            apply UniWRT, clear LuCI cache, restart services.
+  install   Detect local luci-theme-uniwrt*.apk/.ipk by package manager,
+            clean reinstall, apply UniWRT, clear LuCI cache, restart services.
 
 Commands:
   install   Full clean install and apply. Default.
@@ -354,25 +298,14 @@ Commands:
   recover   Switch back to Bootstrap and clear LuCI cache.
   detect    Show which local package would be installed.
   verify    Verify installed UniWRT files.
-  status    Show OpenWrt/package detection info.
+  status    Show package-manager and local package info.
   paths     Show important install paths.
   help      Show this help.
 
-Package format rule:
-  OpenWrt 25.x+        -> requires luci-theme-uniwrt*.apk
-  OpenWrt 24.x/23.x    -> requires luci-theme-uniwrt*.ipk
-
-The version/revision part is ignored. These are both valid examples:
-  luci-theme-uniwrt-2.0.13-r1.apk
-  luci-theme-uniwrt_2.0.13-1_all.ipk
+Examples:
+  luci-theme-uniwrt-2.0.14-r1.apk
+  luci-theme-uniwrt_2.0.14-1_all.ipk
 USAGE_EOF
-}
-
-show_paths() {
-  log "Script folder: $SCRIPT_DIR"
-  log "Theme assets: $THEME_DIR"
-  log "ucode templates: $TPL_UCODE"
-  log "Lua templates: $TPL_LUA"
 }
 
 case "${1:-install}" in

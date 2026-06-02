@@ -46,7 +46,7 @@ assert workflow['name'] == 'Build UniWRT Packages'
 css = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/css/uniwrt.css').read_text()
 js = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/js/uniwrt.js').read_text()
 assert 'UniWRT Portal v2' in css
-assert 'UNIWRT_VERSION = "2.0.13"' in js
+assert 'UNIWRT_VERSION = "2.0.14"' in js
 assert 'body.uniwrt-software' in css
 assert 'uniwrtProgressSweep' in css
 assert 'decorateSoftwarePage' in js
@@ -55,6 +55,9 @@ assert 'uniwrt-critical-style' in js
 assert 'Author: Ox1d3x3 x UniWRT V' in js
 assert 'data-uniwrt-direct' in pathlib.Path('luci-theme-uniwrt/ucode/template/themes/uniwrt/header.ut').read_text()
 assert 'uniwrt-tab-slider' in js and 'uniwrt-tab-slider' in css
+assert 'UniWRT Portal v2.0.14 real full-width form/control fix' in css
+assert 'body.uniwrt-shell .cbi-dynlist' in css
+assert 'max-width:none !important' in css and 'width:100% !important' in css
 assert '/luci-static/bootstrap/cascade.css' in pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/cascade.css').read_text()
 assert 'data-uniwrt-tabfix' in js
 assert 'cbi-dropdown li input[type=checkbox]' in css
@@ -63,15 +66,22 @@ assert 'LUCI_PKGARCH:=all' in pathlib.Path('luci-theme-uniwrt/Makefile').read_te
 installer = pathlib.Path('uniwrt-apply.sh').read_text()
 assert 'EXPECTED_VERSION' not in installer
 assert 'PKG_PREFIX="luci-theme-uniwrt"' in installer
-assert 'expected_format()' in installer
+assert 'openwrt_major()' not in installer
+assert 'expected_format()' not in installer
+assert 'select_package()' in installer
+assert 'package_manager_summary()' in installer
 assert 'find_latest_package()' in installer
-assert 'wrong_package_error' in installer
 assert 'package_version_hint()' in installer
 assert 'remove_existing_uniwrt' in installer
 assert 'apk add --force-non-repository --allow-untrusted "./$pkg_base"' in installer
 assert 'opkg install "./$pkg_base"' in installer
 assert 'Installed UniWRT files look valid.' in installer
 assert '/tmp/luci-templatecache' in installer
+assert 'luci-indexcache.*' in installer
+assert 'rm -rf \
+    /tmp/luci-*' not in installer
+assert 'luci-theme-uniwrt*.apk' in installer
+assert 'luci-theme-uniwrt*.ipk' in installer
 for path in ['header.ut','footer.ut','sysauth.ut']:
     assert pathlib.Path('luci-theme-uniwrt/ucode/template/themes/uniwrt', path).exists()
 

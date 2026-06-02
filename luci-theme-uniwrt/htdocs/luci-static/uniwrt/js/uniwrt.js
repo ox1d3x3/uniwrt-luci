@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.13";
+  var UNIWRT_VERSION = "2.0.14";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -66,10 +66,13 @@
       "body.uniwrt-shell #view>.cbi-map,body.uniwrt-shell .cbi-map,body.uniwrt-shell .cbi-section,body.uniwrt-shell fieldset.cbi-section,body.uniwrt-shell .panel,body.uniwrt-shell .cbi-page-actions{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}",
       "body.uniwrt-shell .cbi-tblsection,body.uniwrt-shell .table-wrapper,body.uniwrt-shell .table-responsive{width:100%!important;max-width:none!important;overflow-x:auto!important}",
       "body.uniwrt-shell table,body.uniwrt-shell .table,body.uniwrt-shell .cbi-section-table{width:100%!important;max-width:none!important;table-layout:auto!important}",
-      "body.uniwrt-shell .cbi-value{display:grid!important;grid-template-columns:minmax(190px,260px) minmax(0,1fr)!important;align-items:start!important;gap:12px 24px!important}",
+      "body.uniwrt-shell .cbi-value{display:grid!important;grid-template-columns:minmax(170px,230px) minmax(0,1fr)!important;align-items:start!important;gap:12px 24px!important}",
       "body.uniwrt-shell .cbi-value-title{width:auto!important;max-width:none!important;min-width:0!important;text-align:right!important;color:var(--u-text-2)!important}",
-      "body.uniwrt-shell .cbi-value-field{min-width:0!important;width:100%!important;color:var(--u-text)!important}",
-      "body.uniwrt-shell .cbi-value-field>input:not([type=checkbox]):not([type=radio]):not([type=hidden]),body.uniwrt-shell .cbi-value-field>select,body.uniwrt-shell .cbi-value-field>textarea,body.uniwrt-shell .cbi-value-field>.cbi-dropdown{width:min(100%,560px)!important;max-width:100%!important}",
+      "body.uniwrt-shell .cbi-value-field{min-width:0!important;width:100%!important;max-width:none!important;color:var(--u-text)!important}",
+      "body.uniwrt-shell .cbi-dynlist,body.uniwrt-shell .cbi-dynlist>*,body.uniwrt-shell .cbi-dynlist input:not([type=checkbox]):not([type=radio]):not([type=hidden]){width:100%!important;max-width:none!important}",
+      "body.uniwrt-shell .cbi-value-description{max-width:none!important;color:var(--u-text-2)!important}",
+      "body.uniwrt-shell .cbi-section-table .cbi-input-select,body.uniwrt-shell .cbi-section-table .cbi-dropdown{width:100%!important;max-width:none!important}",
+      "body.uniwrt-shell .cbi-value-field>input:not([type=checkbox]):not([type=radio]):not([type=hidden]),body.uniwrt-shell .cbi-value-field>select,body.uniwrt-shell .cbi-value-field>textarea,body.uniwrt-shell .cbi-value-field>.cbi-dropdown{width:100%!important;max-width:none!important}",
       "body.uniwrt-shell .cbi-page-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important;padding:14px 16px!important;border:1px solid var(--u-border)!important;border-radius:18px!important;background:var(--u-card)!important}",
       "body.uniwrt-login #view:empty:before{display:none!important;content:none!important}",
       "body.uniwrt-login #modal_overlay{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;background:transparent!important}",

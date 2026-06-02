@@ -137,7 +137,7 @@ MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
 ## Changelog
 
-### v2.0.13
+### v2.0.14
 
 - Imported Bootstrap’s stock `cascade.css` before UniWRT overrides so LuCI widgets keep their baseline functional CSS.
 - Reworked top tabs and CBI tabs from one bubble-shaped container into separate modern pill buttons.
