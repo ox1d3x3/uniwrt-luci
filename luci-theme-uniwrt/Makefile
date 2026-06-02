@@ -18,7 +18,7 @@ LUCI_DESCRIPTION:=UniWRT Portal — a modern OpenWrt LuCI theme with a controlle
 LUCI_DEPENDS:=+luci-base +luci-theme-bootstrap
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=2.0.11
+PKG_VERSION:=2.0.13
 # PKG_RELEASE is set from the CI build number when built in Actions; falls
 # back to 1 for local builds.
 PKG_RELEASE:=$(if $(THEME_RELEASE),$(THEME_RELEASE),1)
@@ -38,7 +38,7 @@ define Package/luci-theme-uniwrt/postrm
 		uci -q set luci.main.mediaurlbase="/luci-static/bootstrap"
 	fi
 	uci -q commit luci
-	rm -rf /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null
+	rm -rf /tmp/luci-* /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-templatecache 2>/dev/null
 }
 endef
 

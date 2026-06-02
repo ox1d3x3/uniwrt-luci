@@ -5,4 +5,4 @@
  * baseline behaviour, then layer UniWRT Portal styling on top.
  */
 @import url("/luci-static/bootstrap/cascade.css");
-@import url("css/uniwrt.css?v=2.0.11");
+@import url("css/uniwrt.css?v=2.0.13");

@@ -46,24 +46,25 @@ assert workflow['name'] == 'Build UniWRT Packages'
 css = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/css/uniwrt.css').read_text()
 js = pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/js/uniwrt.js').read_text()
 assert 'UniWRT Portal v2' in css
-assert 'UNIWRT_VERSION = "2.0.11"' in js
+assert 'UNIWRT_VERSION = "2.0.13"' in js
 assert 'body.uniwrt-software' in css
 assert 'uniwrtProgressSweep' in css
 assert 'decorateSoftwarePage' in js
 assert 'body.modal-overlay-active #modal_overlay' in css
+assert 'uniwrt-critical-style' in js
+assert 'Author: Ox1d3x3 x UniWRT V' in js
+assert 'data-uniwrt-direct' in pathlib.Path('luci-theme-uniwrt/ucode/template/themes/uniwrt/header.ut').read_text()
+assert 'uniwrt-tab-slider' in js and 'uniwrt-tab-slider' in css
 assert '/luci-static/bootstrap/cascade.css' in pathlib.Path('luci-theme-uniwrt/htdocs/luci-static/uniwrt/cascade.css').read_text()
 assert 'data-uniwrt-tabfix' in js
 assert 'cbi-dropdown li input[type=checkbox]' in css
 assert '#modal_overlay.active,body.modal-overlay-active #modal_overlay' in css
-assert 'body.uniwrt-login #view:empty::before' in css
-assert 'uniwrt-tab-slider' in css and 'decorateTabSliders' in js
-assert 'Author: Ox1d3x3 x UniWRT V' in js
-assert 'uniwrt-rail-foot' not in js
-assert 'UniWRT Portal v2.0.11 layout/control repair' in css
-assert 'width:calc(100vw - var(--u-rail))!important' in css
-assert 'cbi-dropdown:not([open]) > div' in css
-assert 'document.body.classList.add("uniwrt-data-page")' in js
 assert 'LUCI_PKGARCH:=all' in pathlib.Path('luci-theme-uniwrt/Makefile').read_text()
+installer = pathlib.Path('uniwrt-apply.sh').read_text()
+assert 'EXPECTED_VERSION="2.0.13"' in installer
+assert 'remove_existing_package' in installer
+assert 'Installed files verified for UniWRT v' in installer
+assert '/tmp/luci-templatecache' in installer
 for path in ['header.ut','footer.ut','sysauth.ut']:
     assert pathlib.Path('luci-theme-uniwrt/ucode/template/themes/uniwrt', path).exists()
 

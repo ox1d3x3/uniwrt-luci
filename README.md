@@ -137,18 +137,14 @@ MIT. UniWRT is an independent OpenWrt LuCI theme project.
 
 ## Changelog
 
-### v2.0.11
+### v2.0.13
 
-- Rebased the release on the working v2.0.6 structure instead of the broken v2.0.7/v2.0.8 rollback path.
-- Fixed the OpenWrt 25.x modal login layout where Username/Password labels could appear beside or away from the fields.
-- Removed the fake login-page `No information available` block caused by `#view:empty::before`.
-- Replaced the default LuCI/OpenWrt footer text with `Author: Ox1d3x3 x UniWRT V2.0.11` linked to the UniWRT GitHub repository.
-- Removed the sidebar bottom theme-version/footer block.
-- Improved light and dark contrast tokens so status data, logs, cards, dropdowns and table rows do not blend into the background.
-- Expanded CBI maps, sections, tables and status tiles to use the available page width without changing LuCI’s functional DOM.
-- Added a decorative animated slider behind top tabs and CBI in-page tabs while keeping the original LuCI anchors and click handlers intact.
-- Hid closed dropdown checkbox/form internals to fix the square-box overlap around select/dropdown controls.
-- Kept the v2.0.6 working button/menu fixes and software/progress styling.
+- Imported Bootstrap’s stock `cascade.css` before UniWRT overrides so LuCI widgets keep their baseline functional CSS.
+- Reworked top tabs and CBI tabs from one bubble-shaped container into separate modern pill buttons.
+- Added a defensive CBI tab repair layer for pages where in-page tabs such as DNS, DHCP, System, Routing, Interfaces and Channel Analysis do not switch correctly.
+- Improved LuCI dropdown styling and restored native multi-select checkbox behaviour inside dropdowns such as DNS Cache RR and LED trigger mode.
+- Kept Save & Apply as a clean primary button while leaving Save and Reset as separate action buttons.
+- Removed the old sidebar footer wording “Portal for OpenWrt” and replaced it with the UniWRT version label.
 
 ### v2.0.4
 
@@ -175,13 +171,3 @@ MIT. UniWRT is an independent OpenWrt LuCI theme project.
 ### v2.0.1
 
 - Fixed GitHub Actions Static QA permission failure by running `qa-static.sh` through `bash` instead of relying on executable file mode.
-
-### v2.0.11
-
-- Rebased from the stable v2.0.6/v2.0.10 control structure.
-- Fixed the narrow left-side content/card issue by forcing the LuCI workspace, CBI maps, sections, tables and action bars to use the full available width.
-- Fixed login username/password alignment in the modal login page.
-- Fixed closed LuCI dropdown/select widgets leaking hidden square/checkbox/value-holder elements.
-- Improved light/dark contrast for forms, logs, tables and status/data cards.
-- Replaced the stock LuCI/OpenWrt footer with `Author: Ox1d3x3 x UniWRT V2.0.11` linked to the UniWRT repository.
-- Added safer animated tab/menu slider styling while keeping the real LuCI button DOM and events intact.

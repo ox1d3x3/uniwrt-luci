@@ -519,7 +519,7 @@ body.uniwrt-login .uniwrt-login-brand::after{content:"OpenWrt Portal";font-size:
 }
 
 
-/* ---------------------- UniWRT Portal v2.0.11 ----------------------
+/* ---------------------- UniWRT Portal v2.0.13 ----------------------
  * My-theme2 inspired internal controls. The saved reference used a compact
  * capsule tab switcher and a clean application/update table. These overrides
  * keep LuCI's original anchors, data-tab attributes and click handlers intact;
@@ -799,414 +799,85 @@ body.uniwrt-software .modal .cbi-map{
   background:transparent;
 }
 
-/* ---------------------- UniWRT Portal v2.0.11 stable repair layer ----------------------
- * Built from the working v2.0.6 structure. These overrides are intentionally
- * targeted: no LuCI DOM replacement, no full shell rewrite, no hiding real
- * controls. They fix login alignment, contrast, full-width content, footer
- * branding, closed dropdown checkbox bleed-through, and add a safe animated
- * tab/menu slider. */
-html[data-theme="light"]{
-  --u-bg:#f5f7fa; --u-bg-2:#eef3f8; --u-card:#ffffff; --u-card-2:#f8fafc;
-  --u-border:#dbe4ee; --u-border-2:#bcc9d7;
-  --u-text:#111827; --u-text-2:#374151; --u-muted:#667085; --u-faint:#98a2b3;
-  --u-blue-soft:#eaf3ff; --u-online-soft:#e8f8ee; --u-warn-soft:#fff4df; --u-error-soft:#fff0f1;
-}
-html[data-theme="dark"]{
-  --u-bg:#0d1117; --u-bg-2:#151b24; --u-card:#1b222d; --u-card-2:#222b38;
-  --u-border:#334052; --u-border-2:#4b5a6d;
-  --u-text:#f8fafc; --u-text-2:#d6dde8; --u-muted:#a7b2c2; --u-faint:#7c899a;
-  --u-blue-soft:#0b3672; --u-online-soft:#102f20; --u-warn-soft:#352913; --u-error-soft:#39191d;
-}
 
-/* Wider professional layout without the aggressive v2.0.7 overrides. */
-body.uniwrt-wide #maincontent,
-body.uniwrt-wide #maincontent.container{max-width:none!important;width:auto!important;padding-left:28px!important;padding-right:28px!important}
-body.uniwrt-wide #view,
-body.uniwrt-wide #view > *,
-body.uniwrt-wide .cbi-map,
-body.uniwrt-wide .cbi-section,
-body.uniwrt-wide fieldset.cbi-section,
-body.uniwrt-wide .panel{max-width:none!important;width:100%}
-body.uniwrt-wide .cbi-map-descr,
-body.uniwrt-wide .cbi-section-descr{max-width:1120px;color:var(--u-text-2)}
-body.uniwrt-wide .table,
-body.uniwrt-wide table.table,
-body.uniwrt-wide .cbi-section-table{width:100%!important;max-width:none!important}
-body.uniwrt-wide .td,
-body.uniwrt-wide .th,
-body.uniwrt-wide table.table td,
-body.uniwrt-wide table.table th,
-body.uniwrt-wide .cbi-section-table-cell{color:var(--u-text-2)}
-body.uniwrt-wide table.table th,
-body.uniwrt-wide .thead .th,
-body.uniwrt-wide .cbi-section-table-titles .th{color:var(--u-text);background:var(--u-bg-2)}
-
-/* Overview/status tiles: LuCI sometimes ships tiny inline max-width styles. */
-body.uniwrt-data-page .ifacebox{display:inline-flex!important;flex-direction:column;gap:6px;vertical-align:top;
-  min-width:220px!important;max-width:none!important;width:min(100%,320px)!important;margin:6px!important;
-  padding:12px 14px!important;border:1px solid var(--u-border)!important;border-radius:var(--u-radius)!important;
-  background:var(--u-card)!important;color:var(--u-text)!important;box-shadow:var(--u-shadow-sm)!important}
-body.uniwrt-data-page .ifacebox .ifacebadge,
-body.uniwrt-data-page .ifacebadge{color:var(--u-text-2)!important}
-body.uniwrt-data-page .ifacebadge.large,
-body.uniwrt-data-page .ifacebadge-active.large{max-width:none!important;min-width:220px!important;background:var(--u-card-2)!important;color:var(--u-text)!important}
-body.uniwrt-data-page .label{color:var(--u-text)!important;background:var(--u-bg-2)!important;border:1px solid var(--u-border)}
-
-/* Login page hard-fix: Bootstrap renders login as #modal_overlay .modal.login on
- * OpenWrt 25.x. Keep labels above fields and remove the empty #view pseudo-card. */
-body.uniwrt-login{display:block!important;min-height:100vh!important;overflow:auto!important}
-body.uniwrt-login #view:empty::before{display:none!important;content:none!important}
-body.uniwrt-login section[hidden]{display:none!important}
-body.uniwrt-login #modal_overlay{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  padding:24px 16px!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:transparent!important}
-body.uniwrt-login #modal_overlay .modal.login{width:min(100%,432px)!important;max-width:432px!important;margin:auto!important;padding:30px!important;
-  background:var(--u-card)!important;color:var(--u-text)!important;border:1px solid var(--u-border)!important;border-radius:24px!important;box-shadow:var(--u-shadow-pop)!important}
-body.uniwrt-login #modal_overlay .modal.login form,
-body.uniwrt-login #modal_overlay .modal.login .cbi-map,
-body.uniwrt-login #modal_overlay .modal.login .cbi-section,
-body.uniwrt-login #modal_overlay .modal.login .cbi-section-node{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
-body.uniwrt-login #modal_overlay .modal.login .cbi-value{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:6px!important;width:100%!important;padding:9px 0!important;border:0!important;margin:0!important}
-body.uniwrt-login #modal_overlay .modal.login .cbi-value-title{display:block!important;flex:none!important;width:auto!important;max-width:none!important;min-width:0!important;padding:0!important;margin:0!important;text-align:left!important;color:var(--u-text-2)!important;font-size:13px!important;font-weight:650!important}
-body.uniwrt-login #modal_overlay .modal.login .cbi-value-field{display:block!important;flex:none!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important}
-body.uniwrt-login #modal_overlay .modal.login input[type="text"],
-body.uniwrt-login #modal_overlay .modal.login input[type="password"]{display:block!important;width:100%!important;height:42px!important;min-height:42px!important;margin:0!important;border-radius:12px!important;background:var(--u-bg-2)!important;color:var(--u-text)!important;border-color:var(--u-border-2)!important}
-body.uniwrt-login #modal_overlay .modal.login .btn,
-body.uniwrt-login #modal_overlay .modal.login .cbi-button{width:100%!important;height:42px!important;min-height:42px!important;margin-top:16px!important;border-radius:12px!important}
-
-/* Footer replacement. The JS replaces the stock LuCI/OpenWrt text with this link. */
-.uniwrt-rail-foot{display:none!important}
-footer[data-uniwrt="1"],#footer[data-uniwrt="1"],.footer[data-uniwrt="1"]{padding:22px 0 8px!important;color:var(--u-muted)!important;background:transparent!important;border:0!important;text-align:center!important}
-footer[data-uniwrt="1"] .uniwrt-author,
-#footer[data-uniwrt="1"] .uniwrt-author,
-.footer[data-uniwrt="1"] .uniwrt-author{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;background:var(--u-card);border:1px solid var(--u-border);color:var(--u-text-2);font-size:12px;font-weight:650;text-decoration:none;box-shadow:var(--u-shadow-sm)}
-footer[data-uniwrt="1"] .uniwrt-author:hover{color:var(--u-blue);border-color:var(--u-blue)}
-
-/* Closed LuCI dropdowns must not show the internal checkbox square/form. */
-.cbi-dropdown:not([open]) li form,
-.cbi-dropdown:not([open]) li input[type="checkbox"],
-.cbi-dropdown:not([open]) li .cbi-input-checkbox{display:none!important}
-.cbi-dropdown:not([open])>ul>li[selected],
-.cbi-dropdown:not([open])>ul>li[display="0"]{gap:0!important}
-.cbi-dropdown.btn{border-radius:var(--u-pill);box-shadow:var(--u-shadow-sm)}
-.cbi-dropdown.btn:not(.cbi-button-apply):not(.important){background:var(--u-card);color:var(--u-text);border-color:var(--u-border-2)}
-.cbi-dropdown.btn:not(.cbi-button-apply):not(.important):hover{background:var(--u-bg-2);color:var(--u-text)}
-
-/* Modern capsule tab/menu slider. The slider is decorative only and sits behind
- * the original LuCI anchors, so existing click handlers remain untouched. */
-#tabmenu ul.tabs,
-ul.tabs,
-ul.cbi-tabmenu{position:relative;isolation:isolate;overflow:visible!important;background:var(--u-bg-2)!important;border-color:var(--u-border)!important}
-#tabmenu ul.tabs > li,
-ul.tabs > li,
-ul.cbi-tabmenu > li{position:relative;z-index:1}
-#tabmenu ul.tabs > li > a,
-ul.tabs > li > a,
-ul.cbi-tabmenu > li > a{position:relative;z-index:2;transition:color .18s ease,transform .08s ease!important}
-#tabmenu ul.tabs > .uniwrt-tab-slider,
-ul.tabs > .uniwrt-tab-slider,
-ul.cbi-tabmenu > .uniwrt-tab-slider{position:absolute;left:0;top:0;z-index:0;pointer-events:none;border-radius:8px;background:var(--u-card);box-shadow:0 1px 2px rgba(15,23,42,.08),0 8px 20px rgba(15,23,42,.06);opacity:0;transition:transform .26s cubic-bezier(.2,.8,.2,1),width .26s cubic-bezier(.2,.8,.2,1),height .26s cubic-bezier(.2,.8,.2,1),opacity .12s ease}
-html[data-theme="dark"] #tabmenu ul.tabs > .uniwrt-tab-slider,
-html[data-theme="dark"] ul.tabs > .uniwrt-tab-slider,
-html[data-theme="dark"] ul.cbi-tabmenu > .uniwrt-tab-slider{background:var(--u-card-2);box-shadow:0 1px 2px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.24)}
-#tabmenu li.active a,
-.tabs li.active a,
-#tabmenu li.cbi-tab a,
-.cbi-tabmenu li.cbi-tab a,
-.cbi-tabmenu li.active a,
-.cbi-tabmenu li[data-tab-active="true"] a{background:transparent!important;box-shadow:none!important;color:var(--u-blue)!important;font-weight:700!important}
-#tabmenu li a:hover,.tabs li a:hover,.cbi-tabmenu li a:hover{background:transparent!important;color:var(--u-blue)!important}
-
-/* Search bar sizing and mobile-safe spacing. */
-.uniwrt-menu-search{padding:8px 10px 6px!important}
-.uniwrt-menu-search input{height:30px!important;min-height:30px!important;font-size:12px!important;padding:0 11px!important}
-@media (max-width:900px){body.uniwrt-wide #maincontent,body.uniwrt-wide #maincontent.container{padding-left:14px!important;padding-right:14px!important}.cbi-page-actions{position:static!important}}
-@media (max-width:640px){body.uniwrt-login #modal_overlay .modal.login{padding:24px 20px!important;border-radius:20px!important}body.uniwrt-data-page .ifacebox{width:100%!important;min-width:0!important}}
-
-
-/* ---------------------- UniWRT Portal v2.0.11 layout/control repair ----------------------
- * Directly targets the uploaded issue captures from v2.0.6/v2.0.10.
- * Goal: keep the working LuCI button behaviour, but stop the page from being
- * trapped in a narrow card, fix dropdown square bleed, improve light/dark
- * contrast and make the menu buttons feel modern without replacing LuCI DOM.
- */
-:root{--u-content-pad:28px;--u-content-gap:18px}
-html[data-theme="light"]{
-  --u-bg:#f3f6fa; --u-bg-2:#eaf0f7; --u-card:#ffffff; --u-card-2:#f7fafc;
-  --u-border:#d7e1ec; --u-border-2:#b8c7d8;
-  --u-text:#101828; --u-text-2:#344054; --u-muted:#667085; --u-faint:#98a2b3;
-  --u-blue-soft:#e7f1ff;
-}
-html[data-theme="dark"]{
-  --u-bg:#0b1017; --u-bg-2:#131a24; --u-card:#1b2430; --u-card-2:#222d3a;
-  --u-border:#344154; --u-border-2:#4b5b70;
-  --u-text:#f8fafc; --u-text-2:#d7dee9; --u-muted:#a6b1c2; --u-faint:#7d899b;
-  --u-blue-soft:#0b3878;
-}
-@media (prefers-color-scheme:dark){html:not([data-theme="light"]){
-  --u-bg:#0b1017; --u-bg-2:#131a24; --u-card:#1b2430; --u-card-2:#222d3a;
-  --u-border:#344154; --u-border-2:#4b5b70;
-  --u-text:#f8fafc; --u-text-2:#d7dee9; --u-muted:#a6b1c2; --u-faint:#7d899b;
-  --u-blue-soft:#0b3878;
-}}
-
-/* Real full-width LuCI workspace. This is stronger than Bootstrap's .container
- * and fixes the firewall/general settings screenshot where the card stayed on
- * the left with a large blank area on the right. */
+/* ---------------------- UniWRT Portal v2.0.13 stable v2.0.6 layout fix ----------------------
+ * Loaded both through cascade.css and directly from header/sysauth with ?v=2.0.13.
+ * This avoids stale cascade.css causing the same narrow-card layout after upgrades. */
+body.uniwrt-shell{overflow-x:hidden!important}
 body.uniwrt-shell #maincontent,
-body.uniwrt-shell #maincontent.container{
-  box-sizing:border-box!important;
-  display:block!important;
-  max-width:none!important;
-  width:calc(100vw - var(--u-rail))!important;
-  min-width:0!important;
-  margin-left:var(--u-rail)!important;
-  margin-right:0!important;
-  padding:82px var(--u-content-pad) 54px!important;
-}
-@supports (width:calc(100dvw - 1px)){
-  body.uniwrt-shell #maincontent,
-  body.uniwrt-shell #maincontent.container{width:calc(100dvw - var(--u-rail))!important}
-}
+body.uniwrt-shell #maincontent.container{box-sizing:border-box!important;display:block!important;max-width:none!important;width:calc(100vw - var(--u-rail,252px))!important;margin:0!important;margin-left:var(--u-rail,252px)!important;padding:82px 28px 48px!important;min-height:100vh!important}
 body.uniwrt-shell.rail-collapsed #maincontent,
-body.uniwrt-shell.rail-collapsed #maincontent.container{
-  width:calc(100vw - var(--u-rail-min))!important;
-  margin-left:var(--u-rail-min)!important;
-}
-@supports (width:calc(100dvw - 1px)){
-  body.uniwrt-shell.rail-collapsed #maincontent,
-  body.uniwrt-shell.rail-collapsed #maincontent.container{width:calc(100dvw - var(--u-rail-min))!important}
-}
-body.uniwrt-shell #view{
-  display:block!important;
-  width:100%!important;
-  max-width:none!important;
-  min-width:0!important;
-  margin:0!important;
-  padding:0!important;
-}
-body.uniwrt-shell #view > *,
+body.uniwrt-shell.rail-collapsed #maincontent.container{width:calc(100vw - var(--u-rail-min,68px))!important;margin-left:var(--u-rail-min,68px)!important}
+body.uniwrt-shell #view{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
+body.uniwrt-shell #view > .cbi-map,
 body.uniwrt-shell .cbi-map,
 body.uniwrt-shell .cbi-section,
 body.uniwrt-shell fieldset.cbi-section,
 body.uniwrt-shell .panel,
-body.uniwrt-shell .cbi-page-actions{
-  max-width:none!important;
-  width:100%!important;
-  min-width:0;
-}
-body.uniwrt-shell .cbi-map,
-body.uniwrt-shell .cbi-section,
-body.uniwrt-shell fieldset.cbi-section,
-body.uniwrt-shell .panel{
-  border-color:var(--u-border)!important;
-  background:linear-gradient(180deg,var(--u-card),color-mix(in srgb,var(--u-card) 94%,var(--u-bg-2)))!important;
-}
+body.uniwrt-shell .cbi-page-actions{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}
 body.uniwrt-shell .cbi-map{padding:22px 24px!important}
 body.uniwrt-shell .cbi-map > .cbi-section,
-body.uniwrt-shell .cbi-map fieldset.cbi-section,
-body.uniwrt-shell .cbi-section .cbi-section{padding:17px 18px!important}
+body.uniwrt-shell .cbi-map fieldset.cbi-section{padding:18px 20px!important}
 body.uniwrt-shell .cbi-map-descr,
 body.uniwrt-shell .cbi-section-descr,
 body.uniwrt-shell .cbi-value-description{color:var(--u-text-2)!important}
-
-/* Forms should breathe across the card, not sit in a compact left-side column. */
-body.uniwrt-shell .cbi-value{
-  display:grid!important;
-  grid-template-columns:minmax(170px,28%) minmax(0,1fr)!important;
-  align-items:center!important;
-  gap:10px 24px!important;
-  width:100%!important;
-}
-body.uniwrt-shell .cbi-value-title{
-  flex:none!important;
-  width:auto!important;
-  max-width:none!important;
-  min-width:0!important;
-  padding-top:0!important;
-  color:var(--u-text-2)!important;
-}
-body.uniwrt-shell .cbi-value-field{
-  flex:none!important;
-  width:100%!important;
-  max-width:none!important;
-  min-width:0!important;
-}
+html[data-theme="dark"] body.uniwrt-shell .cbi-map-descr,
+html[data-theme="dark"] body.uniwrt-shell .cbi-section-descr,
+html[data-theme="dark"] body.uniwrt-shell .cbi-value-description{color:#d1d9e6!important}
+body.uniwrt-shell .cbi-value{display:grid!important;grid-template-columns:minmax(190px,260px) minmax(0,1fr)!important;align-items:start!important;gap:12px 24px!important}
+body.uniwrt-shell .cbi-value-title{width:auto!important;max-width:none!important;min-width:0!important;text-align:right!important;color:var(--u-text-2)!important}
+body.uniwrt-shell .cbi-value-field{min-width:0!important;width:100%!important;color:var(--u-text)!important}
 body.uniwrt-shell .cbi-value-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
 body.uniwrt-shell .cbi-value-field > select,
 body.uniwrt-shell .cbi-value-field > textarea,
-body.uniwrt-shell .cbi-value-field > .cbi-dropdown{
-  width:min(100%,520px)!important;
-  max-width:100%!important;
-}
-body.uniwrt-shell textarea,
-body.uniwrt-shell #syslog,
-body.uniwrt-shell textarea#syslog,
-body.uniwrt-shell textarea[readonly],
-body.uniwrt-shell .cbi-value-field > textarea{
-  width:100%!important;
-}
-
-/* Tables: fill the card on desktop, scroll only when the viewport is too small. */
+body.uniwrt-shell .cbi-value-field > .cbi-dropdown{width:min(100%,560px)!important;max-width:100%!important}
 body.uniwrt-shell .cbi-tblsection,
 body.uniwrt-shell .table-wrapper,
-body.uniwrt-shell .table-responsive{overflow-x:auto!important}
+body.uniwrt-shell .table-responsive{width:100%!important;max-width:none!important;overflow-x:auto!important}
+body.uniwrt-shell table,
 body.uniwrt-shell .table,
-body.uniwrt-shell table.table,
-body.uniwrt-shell .cbi-section-table{
-  width:100%!important;
-  min-width:min(100%,780px);
-  max-width:none!important;
-  table-layout:auto!important;
-}
-body.uniwrt-shell table.table th,
-body.uniwrt-shell table.table td,
+body.uniwrt-shell .cbi-section-table{width:100%!important;max-width:none!important;table-layout:auto!important}
 body.uniwrt-shell .th,
 body.uniwrt-shell .td,
-body.uniwrt-shell .cbi-section-table-cell{
-  color:var(--u-text-2)!important;
-  border-color:var(--u-border)!important;
-}
-body.uniwrt-shell table.table th,
+body.uniwrt-shell table th,
+body.uniwrt-shell table td{color:var(--u-text-2)!important;border-color:var(--u-border)!important}
+body.uniwrt-shell table th,
 body.uniwrt-shell .thead .th,
-body.uniwrt-shell .cbi-section-table-titles .th,
-body.uniwrt-shell .cbi-section-table-titles{
-  color:var(--u-text)!important;
-  background:var(--u-bg-2)!important;
-}
-body.uniwrt-shell table.table select,
-body.uniwrt-shell .cbi-section-table select,
-body.uniwrt-shell table.table .cbi-dropdown,
-body.uniwrt-shell .cbi-section-table .cbi-dropdown{
-  width:100%!important;
-  min-width:108px!important;
-  max-width:100%!important;
-}
-body.uniwrt-page-firewall .zone-forwards{min-width:220px}
+body.uniwrt-shell .cbi-section-table-titles{color:var(--u-text)!important;background:var(--u-bg-2)!important}
+body.uniwrt-page-firewall .zone-forwards{min-width:240px!important}
 body.uniwrt-page-firewall .zonebadge,
-body.uniwrt-page-firewall .ifacebadge{box-shadow:none!important;color:#101828!important}
-body.uniwrt-page-firewall html[data-theme="dark"] .zonebadge,
-html[data-theme="dark"] body.uniwrt-page-firewall .zonebadge{color:#101828!important}
-
-/* LuCI rich dropdown/select repair. The square box in the issue captures is
- * the hidden value holder or option checkbox leaking into the closed button. */
-body.uniwrt-shell .cbi-dropdown{overflow:visible!important;background:var(--u-card)!important;color:var(--u-text)!important;border-color:var(--u-border-2)!important}
+body.uniwrt-page-firewall .ifacebadge{color:#101828!important;box-shadow:none!important}
 body.uniwrt-shell .cbi-dropdown:not([open]) > div,
 body.uniwrt-shell .cbi-dropdown:not([open]) li form,
 body.uniwrt-shell .cbi-dropdown:not([open]) li input[type="checkbox"],
 body.uniwrt-shell .cbi-dropdown:not([open]) li .cbi-input-checkbox{display:none!important}
-body.uniwrt-shell .cbi-dropdown:not([open]) .hide-close{display:none!important}
-body.uniwrt-shell .cbi-dropdown:not([open]) .hide-open{display:inline!important}
-body.uniwrt-shell .cbi-dropdown:not([open])>ul>li[selected],
-body.uniwrt-shell .cbi-dropdown:not([open])>ul>li[display="0"]{display:inline-flex!important;align-items:center!important;gap:0!important;max-width:100%!important}
-body.uniwrt-shell .cbi-dropdown[open]>ul{background:var(--u-card)!important;border-color:var(--u-border)!important;color:var(--u-text)!important}
-body.uniwrt-shell .cbi-dropdown[open]>ul>li{color:var(--u-text)!important}
-body.uniwrt-shell .cbi-dropdown[open] .hide-close{display:block!important}
-body.uniwrt-shell .cbi-dropdown[open] .hide-open{display:none!important}
-
-/* Full-width, modern action bar. Save & Apply, Save and Reset stay separate. */
-body.uniwrt-shell .cbi-page-actions{
-  display:flex!important;
-  justify-content:flex-end!important;
-  align-items:center!important;
-  gap:10px!important;
-  margin-top:18px!important;
-  padding:13px 16px!important;
-  border:1px solid var(--u-border)!important;
-  border-radius:var(--u-radius-lg)!important;
-  background:var(--u-card)!important;
-  box-shadow:var(--u-shadow)!important;
-}
-body.uniwrt-shell .cbi-button,
-body.uniwrt-shell .btn,
-body.uniwrt-shell button,
-body.uniwrt-shell input[type="submit"],
-body.uniwrt-shell input[type="button"],
-body.uniwrt-shell .cbi-page-actions .cbi-dropdown.btn{
-  transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease,transform .08s ease!important;
-}
-body.uniwrt-shell .cbi-button:hover,
-body.uniwrt-shell .btn:hover,
-body.uniwrt-shell button:hover{transform:translateY(-1px)}
-body.uniwrt-shell .cbi-button:active,
-body.uniwrt-shell .btn:active,
-body.uniwrt-shell button:active{transform:translateY(0)}
-
-/* In-page menu tabs: full-width capsule with a sliding active indicator.
- * Slider is decorative only; LuCI's real anchors still receive clicks. */
-body.uniwrt-shell #tabmenu,
-body.uniwrt-shell #tabmenu ul.tabs,
-body.uniwrt-shell ul.tabs,
-body.uniwrt-shell .cbi-tabmenu,
-body.uniwrt-shell ul.cbi-tabmenu{
-  width:100%!important;
-  max-width:100%!important;
-}
+body.uniwrt-shell .cbi-page-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important;padding:14px 16px!important;border:1px solid var(--u-border)!important;border-radius:18px!important;background:var(--u-card)!important;box-shadow:var(--u-shadow)!important}
+body.uniwrt-shell .cbi-page-actions .cbi-dropdown.btn,
+body.uniwrt-shell .cbi-page-actions .cbi-button{flex:0 0 auto!important}
 body.uniwrt-shell #tabmenu ul.tabs,
 body.uniwrt-shell ul.tabs,
 body.uniwrt-shell ul.cbi-tabmenu,
-body.uniwrt-shell .cbi-tabmenu{
-  position:relative!important;
-  isolation:isolate!important;
-  display:flex!important;
-  flex-wrap:wrap!important;
-  gap:6px!important;
-  padding:5px!important;
-  margin:0 0 18px!important;
-  border:1px solid var(--u-border)!important;
-  border-radius:14px!important;
-  background:var(--u-bg-2)!important;
-  overflow:visible!important;
-}
+body.uniwrt-shell .cbi-tabmenu{position:relative!important;isolation:isolate!important;display:flex!important;flex-wrap:wrap!important;gap:6px!important;width:100%!important;max-width:100%!important;padding:5px!important;margin:0 0 18px!important;border:1px solid var(--u-border)!important;border-radius:14px!important;background:var(--u-bg-2)!important;overflow:visible!important}
 body.uniwrt-shell #tabmenu li,
 body.uniwrt-shell ul.tabs li,
 body.uniwrt-shell .cbi-tabmenu li{position:relative!important;z-index:1!important;margin:0!important;padding:0!important}
 body.uniwrt-shell #tabmenu li a,
 body.uniwrt-shell ul.tabs li a,
-body.uniwrt-shell .cbi-tabmenu li a{
-  position:relative!important;
-  z-index:2!important;
-  height:34px!important;
-  padding:0 14px!important;
-  border:0!important;
-  border-radius:10px!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  color:var(--u-text-2)!important;
-  font-weight:700!important;
-}
+body.uniwrt-shell .cbi-tabmenu li a{position:relative!important;z-index:2!important;height:34px!important;padding:0 14px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:var(--u-text-2)!important;font-weight:700!important}
 body.uniwrt-shell #tabmenu li.active a,
 body.uniwrt-shell ul.tabs li.active a,
-body.uniwrt-shell #tabmenu li.cbi-tab a,
 body.uniwrt-shell .cbi-tabmenu li.cbi-tab a,
 body.uniwrt-shell .cbi-tabmenu li.active a,
 body.uniwrt-shell .cbi-tabmenu li[data-tab-active="true"] a{color:var(--u-blue)!important}
-body.uniwrt-shell #tabmenu li a:hover,
-body.uniwrt-shell ul.tabs li a:hover,
-body.uniwrt-shell .cbi-tabmenu li a:hover{color:var(--u-blue)!important;transform:translateY(-1px)}
-body.uniwrt-shell .uniwrt-tab-slider{
-  position:absolute!important;
-  left:0;top:0;z-index:0!important;
-  pointer-events:none!important;
-  border-radius:10px!important;
-  background:var(--u-card)!important;
-  box-shadow:0 1px 2px rgba(15,23,42,.08),0 10px 24px rgba(15,23,42,.07)!important;
-  opacity:0;
-  transition:transform .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1),opacity .16s ease!important;
-}
+body.uniwrt-shell .uniwrt-tab-slider{position:absolute!important;left:0;top:0;z-index:0!important;pointer-events:none!important;border-radius:10px!important;background:var(--u-card)!important;box-shadow:0 1px 2px rgba(15,23,42,.08),0 10px 24px rgba(15,23,42,.07)!important;opacity:0;transition:transform .28s cubic-bezier(.2,.8,.2,1),width .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1),opacity .16s ease!important}
 html[data-theme="dark"] body.uniwrt-shell .uniwrt-tab-slider{background:var(--u-card-2)!important;box-shadow:0 1px 2px rgba(0,0,0,.38),0 10px 24px rgba(0,0,0,.25)!important}
-
-/* Sidebar menu active state with a subtle animated pill/rail, not a flat block. */
 .uniwrt-nav a{position:relative!important;overflow:hidden!important}
 .uniwrt-nav a::before{content:"";position:absolute;left:5px;top:7px;bottom:7px;width:3px;border-radius:999px;background:var(--u-blue);transform:scaleY(0);opacity:0;transition:transform .22s ease,opacity .22s ease}
 .uniwrt-nav a.active::before{transform:scaleY(1);opacity:1}
-.uniwrt-nav a.active{background:linear-gradient(90deg,var(--u-blue-soft),color-mix(in srgb,var(--u-blue-soft) 40%,transparent))!important;color:var(--u-blue)!important}
-.uniwrt-menu-search input{height:30px!important;min-height:30px!important;border-radius:10px!important}
-
-/* Login: force proper stacked labels/fields in the modal version of LuCI auth. */
-body.uniwrt-login{display:block!important;min-height:100vh!important;background:radial-gradient(900px 520px at 82% 0%,rgba(44,200,255,.16),transparent 62%),var(--u-bg)!important}
+.uniwrt-nav a.active{background:linear-gradient(90deg,var(--u-blue-soft),transparent)!important;color:var(--u-blue)!important}
 body.uniwrt-login #view:empty::before{display:none!important;content:none!important}
 body.uniwrt-login section[hidden]{display:none!important}
-body.uniwrt-login #modal_overlay{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px 16px!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;background:transparent!important}
+body.uniwrt-login #modal_overlay{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px 16px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;background:transparent!important}
 body.uniwrt-login #modal_overlay .modal.login{width:min(100%,432px)!important;max-width:432px!important;margin:auto!important;padding:30px!important;background:var(--u-card)!important;color:var(--u-text)!important;border:1px solid var(--u-border)!important;border-radius:24px!important;box-shadow:var(--u-shadow-pop)!important}
 body.uniwrt-login #modal_overlay .modal.login form,
 body.uniwrt-login #modal_overlay .modal.login .cbi-map,
@@ -1216,36 +887,11 @@ body.uniwrt-login #modal_overlay .modal.login .cbi-value{display:block!important
 body.uniwrt-login #modal_overlay .modal.login .cbi-value-title{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0 0 6px!important;padding:0!important;text-align:left!important;color:var(--u-text-2)!important;font-size:13px!important;font-weight:700!important}
 body.uniwrt-login #modal_overlay .modal.login .cbi-value-field{display:block!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important}
 body.uniwrt-login #modal_overlay .modal.login input[type="text"],
-body.uniwrt-login #modal_overlay .modal.login input[type="password"]{display:block!important;width:100%!important;height:42px!important;min-height:42px!important;margin:0!important;border-radius:12px!important;background:var(--u-bg-2)!important;color:var(--u-text)!important;border-color:var(--u-border-2)!important}
-body.uniwrt-login #modal_overlay .modal.login .btn,
-body.uniwrt-login #modal_overlay .modal.login .cbi-button{width:100%!important;height:42px!important;min-height:42px!important;margin-top:16px!important;border-radius:12px!important}
-body.uniwrt-login .uniwrt-login-brand strong{font-size:22px!important;color:var(--u-text)!important}
-
-/* Footer is author-only; no LuCI/OpenWrt branch/build text and no theme version rail. */
-.uniwrt-rail-foot{display:none!important}
+body.uniwrt-login #modal_overlay .modal.login input[type="password"]{display:block!important;width:100%!important;height:42px!important;margin:0!important;border-radius:12px!important;background:var(--u-bg-2)!important;color:var(--u-text)!important;border-color:var(--u-border-2)!important}
+body.uniwrt-login #modal_overlay .modal.login > .btn,
+body.uniwrt-login #modal_overlay .modal.login > .cbi-button{width:100%!important;height:42px!important;margin-top:16px!important;border-radius:12px!important}
+.uniwrt-rail-foot,.uniwrt-ver{display:none!important}
 footer[data-uniwrt="1"],#footer[data-uniwrt="1"],.footer[data-uniwrt="1"]{padding:22px 0 8px!important;color:var(--u-muted)!important;background:transparent!important;border:0!important;text-align:center!important}
-footer[data-uniwrt="1"] .uniwrt-author,
-#footer[data-uniwrt="1"] .uniwrt-author,
-.footer[data-uniwrt="1"] .uniwrt-author{display:inline-flex;align-items:center;justify-content:center;padding:7px 13px;border-radius:999px;background:var(--u-card)!important;border:1px solid var(--u-border)!important;color:var(--u-text-2)!important;font-size:12px;font-weight:700;text-decoration:none!important;box-shadow:var(--u-shadow-sm)}
-footer[data-uniwrt="1"] .uniwrt-author:hover,#footer[data-uniwrt="1"] .uniwrt-author:hover{color:var(--u-blue)!important;border-color:var(--u-blue)!important}
-
-@media (max-width:900px){
-  body.uniwrt-shell #maincontent,
-  body.uniwrt-shell #maincontent.container{width:100vw!important;margin-left:0!important;padding:76px 14px 38px!important}
-  body.uniwrt-shell .cbi-page-actions{position:static!important;justify-content:stretch!important}
-  body.uniwrt-shell .cbi-page-actions .cbi-button,
-  body.uniwrt-shell .cbi-page-actions .btn,
-  body.uniwrt-shell .cbi-page-actions .cbi-dropdown.btn{flex:1 1 auto!important}
-}
-@media (max-width:700px){
-  body.uniwrt-shell .cbi-value{display:block!important}
-  body.uniwrt-shell .cbi-value-title{display:block!important;margin:0 0 6px!important}
-  body.uniwrt-shell .cbi-value-field > input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
-  body.uniwrt-shell .cbi-value-field > select,
-  body.uniwrt-shell .cbi-value-field > textarea,
-  body.uniwrt-shell .cbi-value-field > .cbi-dropdown{width:100%!important}
-  body.uniwrt-shell #tabmenu ul.tabs,
-  body.uniwrt-shell ul.tabs,
-  body.uniwrt-shell ul.cbi-tabmenu,
-  body.uniwrt-shell .cbi-tabmenu{flex-wrap:nowrap!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
-}
+footer[data-uniwrt="1"] .uniwrt-author,#footer[data-uniwrt="1"] .uniwrt-author,.footer[data-uniwrt="1"] .uniwrt-author{display:inline-flex;align-items:center;justify-content:center;padding:7px 13px;border-radius:999px;background:var(--u-card)!important;border:1px solid var(--u-border)!important;color:var(--u-text-2)!important;font-size:12px;font-weight:700;text-decoration:none!important;box-shadow:var(--u-shadow-sm)}
+@media(max-width:900px){body.uniwrt-shell #maincontent,body.uniwrt-shell #maincontent.container{width:100vw!important;margin-left:0!important;padding:76px 14px 38px!important}body.uniwrt-shell .cbi-page-actions{position:static!important;justify-content:stretch!important}}
+@media(max-width:700px){body.uniwrt-shell .cbi-value{display:block!important}body.uniwrt-shell .cbi-value-title{display:block!important;text-align:left!important;margin:0 0 6px!important}body.uniwrt-shell .cbi-value-field>input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),body.uniwrt-shell .cbi-value-field>select,body.uniwrt-shell .cbi-value-field>textarea,body.uniwrt-shell .cbi-value-field>.cbi-dropdown{width:100%!important}}

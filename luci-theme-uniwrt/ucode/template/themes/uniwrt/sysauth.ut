@@ -1,2 +1,3 @@
 {# UniWRT Portal login shim. Bootstrap renders the real LuCI auth form; UniWRT only styles/enhances it. #}
 {% include("themes/bootstrap/sysauth"); %}
+<link rel="stylesheet" href="{{ media }}/css/uniwrt.css?v=2.0.13" data-uniwrt-direct="1">

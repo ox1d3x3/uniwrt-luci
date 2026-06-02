@@ -9,7 +9,6 @@ uci -q batch <<-EOF
 EOF
 
 # Clear cached indexes/templates so the new theme is picked up immediately.
-rm -f /tmp/luci-indexcache 2>/dev/null
-rm -rf /tmp/luci-modulecache 2>/dev/null
+rm -rf /tmp/luci-* /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-templatecache 2>/dev/null
 
 exit 0

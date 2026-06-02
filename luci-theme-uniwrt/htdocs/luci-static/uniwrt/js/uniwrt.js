@@ -10,7 +10,7 @@
  */
 (function () {
   "use strict";
-  var UNIWRT_VERSION = "2.0.11";
+  var UNIWRT_VERSION = "2.0.13";
   var KEY_THEME = "uniwrt:theme", KEY_RAIL = "uniwrt:rail";
   var SETUP_DONE = false, ATTEMPTS = 0, MAX_ATTEMPTS = 45;
 
@@ -54,6 +54,40 @@
   function attr(s){return esc(s).replace(/"/g,"&quot;");}
   function pathOf(href){try{return new URL(href,location.href).pathname.replace(/\/+$/,"");}catch(e){return String(href||"").replace(/[#?].*$/,"").replace(/\/+$/,"");}}
   function scriptBase(){return (window.L&&L.env&&L.env.scriptname)||"/cgi-bin/luci";}
+
+
+  function injectCriticalStyle(){
+    if(document.getElementById("uniwrt-critical-style"))return;
+    var css = [
+      "body.uniwrt-shell{overflow-x:hidden!important}",
+      "body.uniwrt-shell #maincontent,body.uniwrt-shell #maincontent.container{box-sizing:border-box!important;display:block!important;max-width:none!important;width:calc(100vw - var(--u-rail,252px))!important;margin:0!important;margin-left:var(--u-rail,252px)!important;padding:82px 28px 48px!important;min-height:100vh!important}",
+      "body.uniwrt-shell.rail-collapsed #maincontent,body.uniwrt-shell.rail-collapsed #maincontent.container{width:calc(100vw - var(--u-rail-min,68px))!important;margin-left:var(--u-rail-min,68px)!important}",
+      "body.uniwrt-shell #view{display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}",
+      "body.uniwrt-shell #view>.cbi-map,body.uniwrt-shell .cbi-map,body.uniwrt-shell .cbi-section,body.uniwrt-shell fieldset.cbi-section,body.uniwrt-shell .panel,body.uniwrt-shell .cbi-page-actions{width:100%!important;max-width:none!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}",
+      "body.uniwrt-shell .cbi-tblsection,body.uniwrt-shell .table-wrapper,body.uniwrt-shell .table-responsive{width:100%!important;max-width:none!important;overflow-x:auto!important}",
+      "body.uniwrt-shell table,body.uniwrt-shell .table,body.uniwrt-shell .cbi-section-table{width:100%!important;max-width:none!important;table-layout:auto!important}",
+      "body.uniwrt-shell .cbi-value{display:grid!important;grid-template-columns:minmax(190px,260px) minmax(0,1fr)!important;align-items:start!important;gap:12px 24px!important}",
+      "body.uniwrt-shell .cbi-value-title{width:auto!important;max-width:none!important;min-width:0!important;text-align:right!important;color:var(--u-text-2)!important}",
+      "body.uniwrt-shell .cbi-value-field{min-width:0!important;width:100%!important;color:var(--u-text)!important}",
+      "body.uniwrt-shell .cbi-value-field>input:not([type=checkbox]):not([type=radio]):not([type=hidden]),body.uniwrt-shell .cbi-value-field>select,body.uniwrt-shell .cbi-value-field>textarea,body.uniwrt-shell .cbi-value-field>.cbi-dropdown{width:min(100%,560px)!important;max-width:100%!important}",
+      "body.uniwrt-shell .cbi-page-actions{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important;padding:14px 16px!important;border:1px solid var(--u-border)!important;border-radius:18px!important;background:var(--u-card)!important}",
+      "body.uniwrt-login #view:empty:before{display:none!important;content:none!important}",
+      "body.uniwrt-login #modal_overlay{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;background:transparent!important}",
+      "body.uniwrt-login #modal_overlay .modal.login{width:min(100%,432px)!important;max-width:432px!important;margin:auto!important;padding:30px!important;border-radius:24px!important;background:var(--u-card)!important;color:var(--u-text)!important;border:1px solid var(--u-border)!important;box-shadow:var(--u-shadow-pop)!important}",
+      "body.uniwrt-login #modal_overlay .modal.login .cbi-value{display:block!important;width:100%!important;padding:9px 0!important;border:0!important}",
+      "body.uniwrt-login #modal_overlay .modal.login .cbi-value-title{display:block!important;width:100%!important;margin:0 0 6px!important;text-align:left!important}",
+      "body.uniwrt-login #modal_overlay .modal.login .cbi-value-field{display:block!important;width:100%!important;margin:0!important;padding:0!important}",
+      "body.uniwrt-login #modal_overlay .modal.login input[type=text],body.uniwrt-login #modal_overlay .modal.login input[type=password]{display:block!important;width:100%!important;height:42px!important}",
+      "footer[data-uniwrt=\"1\"]{background:transparent!important;border:0!important;text-align:center!important;color:var(--u-muted)!important}",
+      ".uniwrt-rail-foot{display:none!important}",
+      "@media(max-width:900px){body.uniwrt-shell #maincontent,body.uniwrt-shell #maincontent.container{width:100vw!important;margin-left:0!important;padding:76px 14px 38px!important}body.uniwrt-shell .cbi-value{display:block!important}body.uniwrt-shell .cbi-value-title{text-align:left!important;margin-bottom:6px!important}}"
+    ].join("\n");
+    var style=document.createElement("style");
+    style.id="uniwrt-critical-style";
+    style.setAttribute("data-version",UNIWRT_VERSION);
+    style.appendChild(document.createTextNode(css));
+    (document.head||document.documentElement).appendChild(style);
+  }
 
   function applyTheme(m){var h=document.documentElement;(m==="dark"||m==="light")?h.setAttribute("data-theme",m):h.removeAttribute("data-theme");}
   function curMode(){var s=ls(true,KEY_THEME);if(s==="dark"||s==="light")return s;return (window.matchMedia&&matchMedia("(prefers-color-scheme:dark)").matches)?"dark":"light";}
@@ -127,8 +161,8 @@
     var bar=document.createElement("div"); bar.className="uniwrt-topbar";
     bar.innerHTML='<button type="button" class="uniwrt-iconbtn" id="uniwrt-collapse" title="Toggle menu" aria-label="Toggle menu" aria-expanded="false">'+ICON_MENU+'</button>'+ '<span class="crumb">'+esc(title)+'</span><span class="uniwrt-context">LuCI</span><span class="spacer"></span>'+ '<button type="button" class="uniwrt-iconbtn" id="uniwrt-theme-btn" title="Theme" aria-label="Theme"></button>';
     var scrim=document.createElement("div"); scrim.className="uniwrt-scrim";
-    document.body.appendChild(aside); document.body.appendChild(bar); document.body.appendChild(scrim); document.body.classList.add("uniwrt-shell");
-    if(ls(true,KEY_RAIL)==="collapsed")document.body.classList.add("rail-collapsed");
+    document.body.appendChild(aside); document.body.appendChild(bar); document.body.appendChild(scrim); document.body.classList.add("uniwrt-shell"); injectCriticalStyle();
+    document.body.classList.remove("rail-collapsed");
     var act=aside.querySelector("a.active"); if(act)setTimeout(function(){try{act.scrollIntoView({block:"center"});}catch(e){}},0);
     var c=document.getElementById("uniwrt-collapse"); if(c)c.addEventListener("click",function(){ if(window.innerWidth<=900){document.body.classList.toggle("rail-open"); c.setAttribute("aria-expanded",document.body.classList.contains("rail-open")?"true":"false");} else {document.body.classList.toggle("rail-collapsed"); ls(false,KEY_RAIL,document.body.classList.contains("rail-collapsed")?"collapsed":"");} });
     scrim.addEventListener("click",function(){document.body.classList.remove("rail-open"); if(c)c.setAttribute("aria-expanded","false");});
@@ -165,9 +199,9 @@
   }
   function rebrandFooter(){
     var f=document.querySelector("footer")||document.getElementById("footer");
-    if(!f||f.getAttribute("data-uniwrt")==="1")return;
+    if(!f)return;
     f.setAttribute("data-uniwrt","1");
-    f.innerHTML = '<a class="uniwrt-author" href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener">Author: Ox1d3x3 x UniWRT V'+UNIWRT_VERSION+'</a>';
+    f.innerHTML='<a class="uniwrt-author" href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener">Author: Ox1d3x3 x UniWRT V'+UNIWRT_VERSION+'</a>';
   }
 
 
@@ -290,42 +324,28 @@
       });
     });
   }
-  function decoratePageDensity(){
-    if(document.body.classList.contains("uniwrt-login"))return;
-    document.body.classList.add("uniwrt-wide");
-    document.body.classList.add("uniwrt-data-page");
 
-    var key=((document.body.getAttribute("data-page")||"")+" "+(document.title||"")+" "+location.pathname).toLowerCase();
-    if(/firewall|zone|traffic|port/.test(key))document.body.classList.add("uniwrt-page-firewall");
-    if(/network|interface|devices|wireless|wifi|dhcp|dns|routing/.test(key))document.body.classList.add("uniwrt-page-network");
-    if(/system|admin|password|ssh|https|startup|scheduled|backup|flash|software|opkg|package/.test(key))document.body.classList.add("uniwrt-page-system");
-    if(/overview|status|load|log|realtime|diagnostics|channel/.test(key))document.body.classList.add("uniwrt-page-status");
-  }
 
   function activeTabAnchor(menu){
     if(!menu)return null;
-    return menu.querySelector(
-      ':scope > li.cbi-tab:not(.cbi-tab-disabled) > a, :scope > li.active > a, :scope > li[data-tab-active="true"] > a, :scope > li > a.active, :scope > li > a[selected]'
-    );
+    return menu.querySelector(':scope > li.cbi-tab:not(.cbi-tab-disabled) > a, :scope > li.active > a, :scope > li[data-tab-active="true"] > a, :scope > li > a.active, :scope > li > a[selected]');
   }
   function ensureTabSlider(menu){
     if(!menu || menu.getAttribute("data-uniwrt-slider")==="1")return;
-    var lis=menu.querySelectorAll(":scope > li > a");
-    if(!lis.length)return;
+    if(!menu.querySelector(":scope > li > a"))return;
     var s=document.createElement("span");
     s.className="uniwrt-tab-slider";
     s.setAttribute("aria-hidden","true");
-    menu.insertBefore(s, menu.firstChild);
+    menu.insertBefore(s,menu.firstChild);
     menu.setAttribute("data-uniwrt-slider","1");
   }
   function updateTabSlider(menu){
     if(!menu)return;
     ensureTabSlider(menu);
-    var s=menu.querySelector(":scope > .uniwrt-tab-slider");
-    var a=activeTabAnchor(menu);
-    if(!s||!a){ if(s)s.style.opacity="0"; return; }
+    var s=menu.querySelector(":scope > .uniwrt-tab-slider"), a=activeTabAnchor(menu);
+    if(!s||!a){if(s)s.style.opacity="0";return;}
     var mr=menu.getBoundingClientRect(), ar=a.getBoundingClientRect();
-    if(!mr.width||!ar.width){ s.style.opacity="0"; return; }
+    if(!mr.width||!ar.width){s.style.opacity="0";return;}
     s.style.opacity="1";
     s.style.width=ar.width+"px";
     s.style.height=ar.height+"px";
@@ -333,8 +353,7 @@
   }
   function decorateTabSliders(){
     document.querySelectorAll("#tabmenu > ul.tabs, ul.tabs, ul.cbi-tabmenu").forEach(function(menu){
-      ensureTabSlider(menu);
-      updateTabSlider(menu);
+      ensureTabSlider(menu); updateTabSlider(menu);
       if(menu.getAttribute("data-uniwrt-slider-events")==="1")return;
       menu.setAttribute("data-uniwrt-slider-events","1");
       menu.addEventListener("click",function(){setTimeout(function(){updateTabSlider(menu);},35);});
@@ -343,7 +362,6 @@
   }
 
   function repairPageControls(){
-    decoratePageDensity();
     decorateSoftwarePage();
     repairCbiTabs();
     repairDropdownCheckboxes();
@@ -351,9 +369,8 @@
   }
   function tryInit(){
     if(SETUP_DONE)return;
-    applyTheme(curMode()); rebrandFooter();
+    injectCriticalStyle(); applyTheme(curMode()); rebrandFooter(); repairPageControls();
     if(decorateLogin()){SETUP_DONE=true;return;}
-    repairPageControls();
     var menu=findMenu();
     if(menu && buildRail(menu,false)){SETUP_DONE=true;return;}
     if(ATTEMPTS++ < MAX_ATTEMPTS){setTimeout(tryInit,90);return;}
