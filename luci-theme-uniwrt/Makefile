@@ -1,47 +1,43 @@
-# SPDX-License-Identifier: MIT
 #
-# luci-theme-uniwrt — a UniWRT-styled theme for OpenWrt LuCI
+# Copyright (C) 2025-2026 ox1d3x3 <https://github.com/ox1d3x3>
 #
-# Architecture-independent ("all"): one build works on every OpenWrt target.
-# Builds as .ipk on 23.05/24.10 (opkg) and as .apk on 25.12+ (apk) — the
-# package format is chosen automatically by whichever SDK builds it.
+# UniWRT Portal — a network-controller-style standalone LuCI theme.
+# This is free software, licensed under the Apache License 2.0.
+#
 
 include $(TOPDIR)/rules.mk
 
-LUCI_TITLE:=UniWRT Portal theme for LuCI
-LUCI_DESCRIPTION:=UniWRT Portal — a modern OpenWrt LuCI theme with a controller-style left rail, \
-  responsive mobile drawer, rounded cards, clean table/form treatment, light/dark \
-  modes and original UniWRT branding. Architecture-independent; works on any \
-  OpenWrt target.
-# We inherit the stock bootstrap chrome (menu / i18n / theme machinery) and
-# restyle it, so bootstrap must be present.
-LUCI_DEPENDS:=+luci-base +luci-theme-bootstrap
+LUCI_TITLE:=UniWRT Portal - a modern controller-style LuCI theme
+LUCI_DEPENDS:=+luci-base
 LUCI_PKGARCH:=all
 
-PKG_VERSION:=2.0.13
-# PKG_RELEASE is set from the CI build number when built in Actions; falls
-# back to 1 for local builds.
-PKG_RELEASE:=$(if $(THEME_RELEASE),$(THEME_RELEASE),1)
+PKG_NAME:=luci-theme-uniwrt
+PKG_VERSION:=$(shell cat $(CURDIR)/ucode/template/themes/uniwrt/version | tr -d '[:space:]')
+PKG_RELEASE:=1
+PKG_LICENSE:=Apache-2.0
+PKG_MAINTAINER:=ox1d3x3 <https://github.com/ox1d3x3>
 
-PKG_LICENSE:=MIT
-PKG_MAINTAINER:=Mahabub X <github.com/ox1d3x3>
-
-# Keep modern CSS untouched; LuCI csstidy can break modern selectors/variables.
-LUCI_MINIFY_CSS:=
+# csstidy is a CSS2-era minifier that mangles modern CSS (backdrop-filter,
+# multi-stop gradients, custom properties). Disable it so our committed,
+# pre-built CSS reaches the device byte-for-byte.
 CONFIG_LUCI_CSSTIDY:=
+
+include $(TOPDIR)/feeds/luci/luci.mk
+
+define Package/luci-theme-uniwrt/conffiles
+/etc/config/uniwrt
+endef
 
 define Package/luci-theme-uniwrt/postrm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] || {
-	uci -q delete luci.themes.UniWRT
-	if [ "$$(uci -q get luci.main.mediaurlbase)" = "/luci-static/uniwrt" ]; then
-		uci -q set luci.main.mediaurlbase="/luci-static/bootstrap"
-	fi
-	uci -q commit luci
-	rm -rf /tmp/luci-* /tmp/luci-indexcache /tmp/luci-modulecache /tmp/luci-templatecache 2>/dev/null
+	uci -q batch <<-EOF
+		delete luci.themes.UniWRT
+		commit luci
+	EOF
+	rm -f /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null
 }
+exit 0
 endef
-
-include $(TOPDIR)/feeds/luci/luci.mk
 
 # call BuildPackage - OpenWrt buildroot signature

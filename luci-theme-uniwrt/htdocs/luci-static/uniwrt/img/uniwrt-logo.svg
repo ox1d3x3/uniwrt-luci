@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="UniWRT">
+  <rect width="48" height="48" rx="11" fill="currentColor"/>
+  <g stroke="#fff" stroke-width="2.6" stroke-linecap="round" fill="none">
+    <path d="M24 32.5a8.5 8.5 0 0 0 8.5-8.5V14"/>
+    <path d="M15.5 14v10a8.5 8.5 0 0 0 8.5 8.5"/>
+    <path d="M11 17.5a18.5 18.5 0 0 1 26 0" opacity=".55"/>
+  </g>
+  <circle cx="24" cy="13.5" r="2.4" fill="#fff"/>
+</svg>

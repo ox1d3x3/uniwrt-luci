@@ -1,0 +1,94 @@
+/* ============================================================================
+   UniWRT Portal — dark.css
+   Injected inline by the templates and toggled via its <style media> attribute,
+   so theme switching is instant and needs no network round-trip.
+   Everything here applies ONLY when dark mode is active.
+   ========================================================================== */
+
+:root {
+  --u-bg:          #131416;
+  --u-surface:     #1c1e21;
+  --u-surface-2:   #26292e;
+  --u-rail:        #0f1113;
+  --u-rail-2:      #16181c;
+  --u-rail-hover:  #26292e;
+  --u-rail-active: rgba(71,151,255,.22);
+
+  --u-text:        #eef0f1;
+  --u-text-2:      #b7bcc2;
+  --u-text-3:      #808893;
+  --u-rail-text:   #c2c6cb;
+  --u-rail-text-2: #737c87;
+
+  --u-line:        #2a2d32;
+  --u-line-2:      #232629;
+
+  --u-accent-soft: rgba(71,151,255,.16);
+
+  --u-shadow-1:    0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
+  --u-shadow-2:    0 4px 12px rgba(0,0,0,.45), 0 2px 4px rgba(0,0,0,.3);
+  --u-shadow-pop:  0 10px 34px rgba(0,0,0,.55);
+
+  color-scheme: dark;
+}
+
+body { background: var(--u-bg); color: var(--u-text); }
+
+/* sticky topbar glass over dark */
+.u-top { background: rgba(20,22,25,.82); border-bottom-color: var(--u-line); }
+
+/* form controls */
+input[type="text"], input[type="password"], input[type="search"],
+input[type="number"], input[type="email"], input[type="url"],
+textarea, select, .cbi-input-text, .cbi-input-password, .cbi-input-select,
+.cbi-dropdown {
+  background: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text);
+}
+select, .cbi-input-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808893' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+}
+input:focus, textarea:focus, select:focus, .cbi-dropdown[open], .cbi-dropdown:focus {
+  background: #2c2f34; border-color: var(--u-accent);
+}
+.cbi-dropdown ul.dropdown { background: var(--u-surface); border-color: var(--u-line); }
+
+/* neutral buttons */
+.btn, .cbi-button, button, input[type="submit"], input[type="button"], input[type="reset"] {
+  background: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text);
+}
+.btn:hover, .cbi-button:hover, button:hover { background: #30343a; border-color: #3a3f46; }
+.cbi-button-neutral, .cbi-button-reset, .cbi-button-link { background: var(--u-surface-2); }
+
+/* tables */
+.table .tr:hover, table tbody tr:hover { background: var(--u-surface-2); }
+
+/* logs / code stay dark — nudge border only */
+pre, code, #syslog, textarea#syslog { background: #0c0e11; border-color: var(--u-line); color: #cdd2d8; }
+
+/* login */
+.u-login-body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, var(--u-accent-soft), transparent 60%),
+    var(--u-bg);
+}
+.u-theme-float { background: var(--u-surface); border-color: var(--u-line); }
+
+/* meters / lines */
+.u-meter { background: var(--u-line); }
+
+/* alerts: lift surface a touch so they read on the darker bg */
+.alert-message { background: var(--u-surface); }
+.alert-message.warning { background: rgba(245,166,35,.1); }
+.alert-message.error, .alert-message.danger { background: rgba(240,56,59,.12); }
+.alert-message.success, .alert-message.notice { background: rgba(56,204,101,.12); }
+
+/* status chips */
+.u-chip { background: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text-2); }
+
+/* scrollbars */
+* { scrollbar-color: #3a3f46 transparent; }
+*::-webkit-scrollbar-thumb { background: #3a3f46; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: #4a505800; background: #4a5058; background-clip: content-box; }
+
+/* modal */
+.modal, .cbi-modal { background: var(--u-surface); border-color: var(--u-line); }

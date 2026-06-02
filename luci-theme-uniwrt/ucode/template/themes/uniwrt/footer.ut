@@ -1,2 +1,155 @@
-{# UniWRT footer shim. Use absolute LuCI template path for ucode/Lua bridge compatibility. #}
-{% include("themes/bootstrap/footer"); %}
+{# luci-theme-uniwrt — main page footer template #}
+{%
+  import { readfile, access } from 'fs';
+  import { cursor } from 'uci';
+  const uniwrt_version = trim(readfile('/usr/share/ucode/luci/template/themes/uniwrt/version')) ?? '?';
+  let u_status_bar = '1';
+  let _cfg = cursor();
+  if (access('/etc/config/uniwrt'))
+    u_status_bar = _cfg.get_first('uniwrt', 'global', 'status_bar') ?? '1';
+%}
+{% if (!blank_page): %}
+    </div>
+  </div>
+</main>
+
+<footer class="u-footer">
+  <a class="u-credit" href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener">
+    Author: Ox1d3x3 &times; UniWRT Portal v{{ uniwrt_version }}
+  </a>
+  <span class="u-foot-sep">&middot;</span>
+  <a href="{{ version.disturl }}" target="_blank" rel="noopener">{{ version.distname }} {{ version.distversion }}</a>
+</footer>
+
+<script src="{{ resource }}/luci.js"></script>
+<script>
+  L.require('menu-uniwrt');
+{% if (u_status_bar == '1'): %}
+  L.require('status-uniwrt');
+{% endif %}
+
+  if (history.scrollRestoration) history.scrollRestoration = 'manual';
+
+  /* ---- rail open/close (mobile) + collapse/pin (desktop) ---- */
+  (function(){
+    var rail   = document.getElementById('u-rail');
+    var scrim  = document.getElementById('u-scrim');
+    var burger = document.getElementById('u-burger');
+    var pin    = document.getElementById('u-rail-pin');
+    var html   = document.documentElement;
+
+    function openRail(){ if(rail){rail.classList.add('open');} if(scrim){scrim.classList.add('show');} }
+    function closeRail(){ if(rail){rail.classList.remove('open');} if(scrim){scrim.classList.remove('show');} }
+
+    if (burger) burger.addEventListener('click', function(){
+      rail && rail.classList.contains('open') ? closeRail() : openRail();
+    });
+    if (scrim) scrim.addEventListener('click', closeRail);
+
+    if (pin) pin.addEventListener('click', function(){
+      var collapsed = html.getAttribute('data-rail') === 'collapsed';
+      html.setAttribute('data-rail', collapsed ? 'expanded' : 'collapsed');
+      try { localStorage.setItem('uniwrt-rail', collapsed ? 'expanded' : 'collapsed'); } catch(e){}
+    });
+
+    /* restore persisted rail state on desktop */
+    try {
+      var saved = localStorage.getItem('uniwrt-rail');
+      if (saved) html.setAttribute('data-rail', saved);
+    } catch(e){}
+  })();
+
+  /* ---- theme toggle: auto -> light -> dark ---- */
+  (function(){
+    var btn = document.getElementById('u-theme-toggle');
+    if (!btn) return;
+    var order = ['auto','light','dark'];
+    var labels = { auto:'Theme: Auto', light:'Theme: Light', dark:'Theme: Dark' };
+    function apply(mode){
+      var d = document.getElementById('u-dark');
+      var m = document.getElementById('u-meta-color');
+      document.documentElement.dataset.theme = mode;
+      if (d) d.media = mode==='dark' ? 'all' : (mode==='light' ? 'not all' : '(prefers-color-scheme: dark)');
+      var dark = mode==='dark' || (mode==='auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (m) m.content = dark ? '#131416' : '#ffffff';
+      btn.title = labels[mode]; btn.setAttribute('aria-label', labels[mode]);
+    }
+    apply(document.documentElement.dataset.theme || 'auto');
+    btn.addEventListener('click', function(){
+      var cur = document.documentElement.dataset.theme || 'auto';
+      var next = order[(order.indexOf(cur)+1) % 3];
+      try { localStorage.setItem('uniwrt-theme', next); } catch(e){}
+      apply(next);
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e){
+      if ((document.documentElement.dataset.theme||'auto') !== 'auto') return;
+      var m = document.getElementById('u-meta-color');
+      if (m) m.content = e.matches ? '#131416' : '#ffffff';
+    });
+  })();
+
+  /* ---- relocate in-page CBI tabmenus into the sticky sub-nav bar ----
+     menu-uniwrt.js handles dispatcher-tree tabs; this catches CBI form
+     tabs (e.g. dnsmasq, firewall) and gives them the same pill styling. */
+  (function(){
+    var subnav  = document.getElementById('u-subnav');
+    var content = document.getElementById('maincontent');
+    if (!subnav || !content) return;
+
+    function build(){
+      if (subnav._switching) return;
+      if (subnav.querySelector('.u-subnav-tab[data-tree]')) return; /* tree tabs win */
+      var menus = content.querySelectorAll('.cbi-tabmenu');
+      if (!menus.length) { return; }
+      var ul = menus[0];
+
+      subnav.innerHTML = '';
+      var slider = document.createElement('span');
+      slider.className = 'u-subnav-slider';
+      subnav.appendChild(slider);
+
+      var items = ul.querySelectorAll('li');
+      for (var i=0;i<items.length;i++){
+        var li = items[i]; if (li.style.display==='none') continue;
+        var a = li.querySelector('a'); if (!a) continue;
+        var tab = a.cloneNode(true);
+        tab.className = 'u-subnav-tab' + (li.classList.contains('cbi-tab') ? ' active' : '');
+        (function(tab, srcA){
+          tab.addEventListener('click', function(ev){
+            ev.preventDefault();
+            subnav._switching = true;
+            srcA.click();
+            setTimeout(function(){ subnav._switching = false; }, 120);
+            var tabs = subnav.querySelectorAll('.u-subnav-tab');
+            for (var k=0;k<tabs.length;k++) tabs[k].classList.remove('active');
+            tab.classList.add('active');
+            slider.style.left = tab.offsetLeft + 'px';
+            slider.style.width = tab.offsetWidth + 'px';
+            slider.style.opacity = '1';
+          });
+        })(tab, a);
+        subnav.appendChild(tab);
+      }
+      ul.style.display = 'none';
+      subnav.classList.add('active');
+      document.body.classList.add('u-has-subnav');
+      requestAnimationFrame(function(){
+        var active = subnav.querySelector('.u-subnav-tab.active');
+        if (active){
+          slider.style.transition='none';
+          slider.style.left = active.offsetLeft+'px';
+          slider.style.width = active.offsetWidth+'px';
+          slider.style.opacity='1';
+          requestAnimationFrame(function(){ slider.style.transition=''; });
+        }
+      });
+    }
+
+    build();
+    new MutationObserver(build).observe(content, { childList:true, subtree:true });
+  })();
+</script>
+{% endif %}
+{% if (js): %}<script>{{ js }}</script>{% endif %}
+</body>
+</html>
