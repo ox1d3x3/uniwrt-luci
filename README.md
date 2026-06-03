@@ -1,173 +1,216 @@
-# luci-theme-uniwrt
+# UniWRT Portal
 
-**UniWRT Portal** is a modern, mobile-ready OpenWrt LuCI theme built from the current UniWRT package architecture and visually reworked from the `My-theme2` portal inspection. It keeps the LuCI/Bootstrap rendering path for safety, then applies an original UniWRT shell: left controller rail, responsive mobile drawer, rounded appliance-style cards, clean tables/forms, light/dark modes, and a new original UniWRT logo.
+A modern, **standalone** LuCI theme for OpenWrt with a persistent dark navigation rail, a clean enterprise-style content area, live status widgets, and a config-driven settings page. Inspired by the look and feel of contemporary network-controller dashboards.
 
-No third-party product names, logos, icons, or proprietary assets are included in the theme package.
+UniWRT is **not** a restyle layered over the stock `bootstrap` theme — it ships its own full HTML shell (header/footer/login templates), builds its navigation client-side from the LuCI dispatcher tree, and polls `ubus` directly for live data. This avoids the whole class of CSS-cascade conflicts that thin restyles run into.
 
-## Which package should I install?
+* **Targets:** OpenWrt 23.05, 24.10, and 25.x (snapshot / 25.12+)
+* **Package formats:** `.ipk` (opkg, 23.05 / 24.10) and `.apk` (Alpine apk, 25.x)
+* **Architecture:** `all` (one universal package per format — no per-CPU builds)
+* **License:** Apache-2.0
 
-The theme has **no compiled code**, so it is architecture-independent. Your router CPU/target does not matter. Pick by OpenWrt version because OpenWrt changed package managers across release lines.
+---
 
-| OpenWrt version | Package manager | Download/install |
-|---:|:---:|:---|
-| 23.05.x / older opkg builds | opkg | `.ipk` |
-| 24.10.x | opkg | `.ipk` |
-| 25.12.x and newer | apk | `.apk` |
+## Features
 
-Check your router version:
+* **Dark-first navigation rail** — persistent left sidebar with icon + label entries, an expandable sub-tree with a sliding active indicator, and a collapse/pin toggle (state persists in `localStorage`).
+* **Light / Dark / Auto theming** — toggled from the top bar. `auto` follows the OS `prefers-color-scheme`. The choice is resolved *before paint* (no flash) and persists per-browser. A server-side default is set from config.
+* **Configurable accent colour** — separate accent for light and dark modes, applied through a CSS custom property.
+* **Live status bar** — CPU load, RAM usage, uptime and WAN throughput in the header, polled from `ubus` every 5 s.
+* **Live overview dashboard** — an optional dashboard page (System / CPU / Memory / Uptime tiles plus interfaces and wireless cards) that polls `ubus` live. Toggle it on/off from settings.
+* **Config-driven settings page** — under *System → UniWRT Theme*. Change mode, accent colours, base font size, rail default state, and dashboard/status toggles. All values live in `/etc/config/uniwrt` and survive upgrades.
+* **Custom login page** — a self-contained, themed `sysauth` screen with its own light/dark toggle.
 
-```sh
-cat /etc/openwrt_release
-# or
-ubus call system board
-```
+---
 
-Install:
+## Installation
 
-```sh
-# OpenWrt 23.05 / 24.10
-opkg install ./luci-theme-uniwrt_*_all.ipk
+UniWRT is architecture-independent, so the same package works on every device of a given OpenWrt release. Pick the file that matches your OpenWrt version's package manager.
 
-# OpenWrt 25.12+
-apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
-```
-
-Then hard-refresh LuCI with `Ctrl+Shift+R`.
-
-## Auto install/apply helper
-
-Put `uniwrt-apply.sh` in the same folder as the generated package, then run:
+### OpenWrt 25.x (apk)
 
 ```sh
-chmod +x ./uniwrt-apply.sh
-./uniwrt-apply.sh
+# copy the .apk to the router first, then:
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.16-r1.apk
 ```
 
-The script automatically detects whether the router uses `opkg`/`.ipk` or `apk`/`.apk`, installs the matching `luci-theme-uniwrt` package from the same folder, applies UniWRT as the active LuCI theme, clears LuCI cache and restarts the web services.
+`--allow-untrusted` is required for a manually-downloaded, unsigned package. (If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.)
 
-Recovery command:
+### OpenWrt 24.10 / 23.05 (opkg)
 
 ```sh
-./uniwrt-apply.sh recover
+# copy the .ipk to the router first, then:
+opkg install ./luci-theme-uniwrt_2.0.16-1_all.ipk
 ```
 
-## Structure
+### Activating the theme
 
-```text
-luci-theme-uniwrt/
-├── Makefile
-├── root/etc/uci-defaults/30_luci-theme-uniwrt
-├── ucode/template/themes/uniwrt/
-│   ├── header.ut
-│   ├── footer.ut
-│   └── sysauth.ut
-├── luasrc/view/themes/uniwrt/
-│   ├── header.htm
-│   ├── footer.htm
-│   └── sysauth.htm
-└── htdocs/luci-static/uniwrt/
-    ├── cascade.css
-    ├── mobile.css
-    ├── logo.svg
-    ├── css/uniwrt.css
-    └── js/uniwrt.js
+On a **fresh install** UniWRT sets itself as the active theme automatically. On an **upgrade** it will *not* override a theme you have since chosen — it only keeps itself in the selectable list. To switch manually at any time:
+
+*System → System → Language and Style → Design → UniWRT*
+
+or from the CLI:
+
+```sh
+uci set luci.main.mediaurlbase=/luci-static/uniwrt
+uci commit luci
+rm -f /tmp/luci-indexcache /tmp/luci-modulecache
 ```
 
-The ucode templates cover current LuCI builds. The Lua templates are kept as a compatibility fallback for older LuCI render paths.
+---
+
+## Configuration
+
+All settings are stored in `/etc/config/uniwrt` and editable from the GUI (*System → UniWRT Theme*) or via UCI.
+
+```
+config global 'global'
+    option mode           'auto'      # auto | light | dark
+    option accent         '#006fff'   # accent colour (light mode)
+    option dark_accent    '#4797ff'   # accent colour (dark mode)
+    option status_bar     '1'         # 1 = show live header status bar
+    option overview       '1'         # 1 = show the live overview dashboard entry
+    option font_size      '14'        # base font size in px
+    option rail_collapsed '0'         # 1 = start with the rail collapsed on desktop
+```
+
+Example — switch to a forced dark theme with a green accent from the CLI:
+
+```sh
+uci set uniwrt.global.mode='dark'
+uci set uniwrt.global.dark_accent='#38cc65'
+uci commit uniwrt
+```
+
+The file is registered as a conffile, so your settings persist across package upgrades.
+
+> **A note on fonts.** UniWRT deliberately uses the platform's native `system-ui` font stack rather than bundling a webfont. Routers are flash-constrained and frequently offline, and a remote webfont would either bloat the package or fail to load. The native stack renders instantly and looks clean on every platform.
+
+---
+
+## Building from source
+
+You do **not** need a full OpenWrt buildroot — the per-release SDK is enough. The package format is decided entirely by which SDK branch you build under:
+
+| SDK branch              | Output    |
+|-------------------------|-----------|
+| 23.05 / 24.10           | `.ipk`    |
+| SNAPSHOT (25.x)         | `.apk`    |
+
+### Option A — GitHub Actions (recommended)
+
+This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main`/`master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
+
+```sh
+git tag v2.0.16
+git push origin v2.0.16
+```
+
+The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk`/`.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
+
+> **SDK image tags:** the matrix pins `x86_64-23.05.6`, `x86_64-24.10.6`, and `x86_64-25.12.4`. If a build reports `manifest unknown`, that point-release SDK image isn't published yet — bump the tag to one that exists (or use `x86_64-SNAPSHOT` for the apk row).
+
+### Option B — local SDK build
+
+```sh
+# 1. download and extract the SDK for your target/branch, then inside it:
+echo "src-link uniwrt /path/to/uniwrt-luci" >> feeds.conf.default
+./scripts/feeds update uniwrt
+./scripts/feeds install -a -p uniwrt
+
+# 2. enable the package
+make menuconfig            # LuCI -> Themes -> luci-theme-uniwrt  (M)
+
+# 3. build
+make package/luci-theme-uniwrt/compile V=s
+
+# 4. the package lands under bin/packages/<arch>/uniwrt/
+```
+
+> The CSS minifier (`csstidy`) is intentionally disabled in the Makefile (`CONFIG_LUCI_CSSTIDY:=`). It is a CSS2-era tool that mangles modern properties such as `backdrop-filter` and multi-stop gradients, so the committed CSS ships to the device byte-for-byte.
+
+---
+
+## Project layout
+
+```
+uniwrt-luci/
+├── .github/workflows/build.yml          # QA + dual IPK/APK CI matrix
+├── qa-static.sh                         # static QA gate (run in CI and locally)
+├── uniwrt-apply.sh                      # router-side one-shot install/activate helper
+├── README.md
+├── LICENSE
+└── luci-theme-uniwrt/
+    ├── Makefile
+    ├── ucode/template/themes/uniwrt/
+    │   ├── header.ut                     # full HTML shell (head, rail, top bar)
+    │   ├── footer.ut                     # shell close + client bootstrapping
+    │   ├── sysauth.ut                    # themed login page
+    │   └── version
+    ├── htdocs/luci-static/uniwrt/
+    │   ├── css/cascade.css               # light / base layer
+    │   ├── css/dark.css                  # dark overrides (injected, media-toggled)
+    │   └── img/uniwrt-logo.svg
+    ├── htdocs/luci-static/resources/
+    │   ├── menu-uniwrt.js                # client-side rail/menu builder
+    │   ├── status-uniwrt.js              # live header status widgets
+    │   └── view/uniwrt/
+    │       ├── settings.js               # settings page (form.Map)
+    │       └── overview.js               # live overview dashboard
+    └── root/
+        ├── etc/config/uniwrt             # default settings (conffile)
+        ├── etc/uci-defaults/30_luci-theme-uniwrt
+        └── usr/share/
+            ├── luci/menu.d/luci-theme-uniwrt.json
+            └── rpcd/acl.d/luci-theme-uniwrt.json
+```
+
+---
 
 ## How it works
 
-UniWRT Portal deliberately keeps LuCI’s stock Bootstrap theme as the base renderer and imports Bootstrap’s stock cascade before UniWRT overrides. That protects the real LuCI controls: Save & Apply, modals, dropdowns, CBI forms, dynamic tables, tabs, polling widgets, and installed/custom LuCI apps.
+* **Shell** — `header.ut` reads `/etc/config/uniwrt` server-side (via the ucode `uci`/`ubus` bindings), emits the `<!DOCTYPE>`, head, navigation rail and top bar, and leaves empty containers (`#u-rail-nav`, `#u-rail-modes`, `#u-subnav`, `#u-stats`, `#u-top-title`) for the client to fill. `footer.ut` closes the shell and bootstraps the client modules via `L.require(...)`.
+* **Menu** — `menu-uniwrt.js` calls `ui.menu.load()` to fetch the dispatcher tree, then walks it with `ui.menu.getChildren()` to render the rail, the top-level category switcher, the page title and the third-level sub-nav tabs — respecting ACL visibility.
+* **Widgets** — `status-uniwrt.js` and `overview.js` use `rpc.declare()` + `L.resolveDefault()` + the `poll` API to poll `ubus` (`system info/board`, `luci-rpc getNetworkDevices`, `network.interface dump`, `luci getRealtimeStats`, `iwinfo`) on a 5 s cadence.
+* **Settings** — `settings.js` is a standard `form.Map` view registered through `menu.d` and guarded by the `acl.d` grant, writing back to `/etc/config/uniwrt`.
 
-The theme then layers its own UI safely:
+---
 
-- `cascade.css` is the LuCI theme CSS entrypoint. It imports Bootstrap first, then loads UniWRT’s controller-style overrides.
-- `css/uniwrt.css` contains the full portal visual system and mobile rules.
-- `js/uniwrt.js` reads LuCI’s real menu DOM and turns it into the UniWRT left rail. If LuCI’s menu is not exposed, it falls back to a small recovery menu instead of hiding navigation.
-- `sysauth.ut` and `sysauth.htm` are present so the login page does not depend on missing theme fallback behaviour.
-- `logo.svg` is a new original UniWRT mark.
+## Compatibility notes
 
-## GitHub Actions build
+* Requires the **ucode** template engine (OpenWrt 23.05+). It does not ship legacy Lua `.htm` templates and does not depend on `luci-compat`.
+* On 25.x the package manager is **apk**; on 23.05 / 24.10 it is **opkg**. A `.ipk` cannot be installed on an apk system and vice-versa — use the matching artifact.
 
-`.github/workflows/build.yml` performs:
-
-1. Static QA.
-2. OpenWrt 23.05.6 SDK build for legacy `.ipk`.
-3. OpenWrt 24.10.6 SDK build for current `.ipk`.
-4. OpenWrt 25.12.4 SDK build for `.apk`.
-5. A rolling `nightly` pre-release, or a tagged pre-release when pushing `v*` tags.
-
-The package itself remains universal because `LUCI_PKGARCH:=all` is set in the Makefile.
-
-## Local QA
-
-```sh
-./qa-static.sh
-```
-
-This checks required files, JavaScript syntax, the UCI defaults script, and workflow YAML parsing.
-
-## Recovery
-
-If LuCI looks broken after testing, recover from SSH:
-
-```sh
-uci set luci.main.mediaurlbase='/luci-static/bootstrap'
-uci commit luci
-rm -f /tmp/luci-indexcache
-rm -rf /tmp/luci-modulecache
-/etc/init.d/uhttpd restart
-```
-
-Or use the helper:
-
-```sh
-./uniwrt-apply.sh recover
-```
-
-## Customising
-
-- Logo: replace `htdocs/luci-static/uniwrt/logo.svg`.
-- Main colours/radius/sidebar width: edit CSS variables at the top of `css/uniwrt.css`.
-- Brand text and shell behaviour: edit `js/uniwrt.js`.
-
-## License
-
-MIT. UniWRT is an independent OpenWrt LuCI theme project.
+---
 
 ## Changelog
 
+### v2.0.16
+* Layout: content now **fills the page width** instead of sitting in a narrow centred column — tables and info panels use the whole area (addresses the "fill the whole page / empty space" feedback). Inputs keep a sensible max width.
+* Form controls: hardened native `<select>` styling and neutralised LuCI's class-less `<div id="cbid…">` wrapper so the old "square box overlapping the select" can't occur; added a min/max width and killed the legacy `::-ms-expand` arrow.
+* Light theme: code/log/`#syslog` blocks now use a light surface in light mode (dark only in dark mode) so they no longer read as a jarring black box.
+* Footer: trimmed to a single subtle "UniWRT Portal" credit; removed the OpenWrt distribution/version line.
+
+### v2.0.15
+* **CI fix:** switched `openwrt/gh-action-sdk` from the pinned `@v6` (which aborted with `sed: can't read feeds.conf.default` on current SDK images) to `@main`, and pinned per-release SDK image tags. Builds now produce real `.ipk` and `.apk` artifacts.
+* Added a static QA gate (`qa-static.sh`) that runs in CI: JS syntax, JSON/YAML validity, ucode tag balance, CSS brace balance, version validity and a trademark scan.
+* Added `uniwrt-apply.sh`, a router-side one-shot install/activate helper, bundled into releases.
+* **Bug fix:** the overview dashboard's CPU/Memory/Uptime tiles now populate on first paint instead of staying blank until the first poll (they were queried before the view was attached to the DOM).
+* Granted `/proc/cpuinfo` read in the theme ACL so CPU core-count detection also works for restricted (non-root) LuCI users.
+
 ### v2.0.14
+* Full rewrite as a **standalone** theme — replaces the earlier restyle-over-bootstrap approach with its own HTML shell, eliminating the cascade-conflict class of bugs.
+* Standalone shell (header / footer / login) on the ucode template engine.
+* Client-side navigation rail with collapse/pin, sliding indicators and sub-nav tabs.
+* Light / Dark / Auto theming with no-flash resolution and configurable per-mode accent colours.
+* Live header status bar and live overview dashboard (5 s `ubus` polling).
+* Config-driven settings page backed by `/etc/config/uniwrt`.
+* Dual `.ipk` + `.apk` CI matrix via the official OpenWrt SDK.
 
-- Imported Bootstrap’s stock `cascade.css` before UniWRT overrides so LuCI widgets keep their baseline functional CSS.
-- Reworked top tabs and CBI tabs from one bubble-shaped container into separate modern pill buttons.
-- Added a defensive CBI tab repair layer for pages where in-page tabs such as DNS, DHCP, System, Routing, Interfaces and Channel Analysis do not switch correctly.
-- Improved LuCI dropdown styling and restored native multi-select checkbox behaviour inside dropdowns such as DNS Cache RR and LED trigger mode.
-- Kept Save & Apply as a clean primary button while leaving Save and Reset as separate action buttons.
-- Removed the old sidebar footer wording “Portal for OpenWrt” and replaced it with the UniWRT version label.
+---
 
-### v2.0.4
+## Credits
 
-- Fixed blank login page on LuCI versions where login modal uses `body.modal-overlay-active` without `#modal_overlay.active`.
-- Removed duplicate UniWRT JS include from `sysauth` shim.
-- Updated cache-busting versions for CSS, mobile CSS and JS.
+Created by [ox1d3x3](https://github.com/ox1d3x3). Architecture and template conventions follow current standalone LuCI themes (notably `luci-theme-glass`) verified against the OpenWrt 25.x LuCI source.
 
-### v2.0.3
-
-- Updated `uniwrt-apply.sh` so running it with no arguments now auto-detects a local UniWRT `.apk` or `.ipk`, installs it using the correct package manager, verifies theme files, applies UniWRT, clears LuCI cache and restarts LuCI web services.
-- Added `detect`, `apply`, `recover`, `bootstrap`, `paths` and `help` helper commands.
-- Added workflow trigger coverage and static QA syntax checks for `uniwrt-apply.sh`.
-
-### v2.0.2
-
-- Fixed OpenWrt 23/24 LuCI Lua/ucode bridge compatibility. The ucode shim now uses absolute LuCI template names without the `.ut` extension:
-
-```ucode
-{% include("themes/bootstrap/header"); %}
-{% include("themes/bootstrap/footer"); %}
-{% include("themes/bootstrap/sysauth"); %}
-```
-
-### v2.0.1
-
-- Fixed GitHub Actions Static QA permission failure by running `qa-static.sh` through `bash` instead of relying on executable file mode.
+Licensed under the [Apache License 2.0](./LICENSE).

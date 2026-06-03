@@ -42,13 +42,13 @@ input[type="text"], input[type="password"], input[type="search"],
 input[type="number"], input[type="email"], input[type="url"],
 textarea, select, .cbi-input-text, .cbi-input-password, .cbi-input-select,
 .cbi-dropdown {
-  background: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text);
+  background-color: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text);
 }
-select, .cbi-input-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23808893' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-}
+/* NB: use background-color, never the `background` shorthand, on selects — the
+   shorthand resets background-repeat/position and tiles the caret SVG. The
+   caret image (gray stroke) is defined once in cascade.css and works in both modes. */
 input:focus, textarea:focus, select:focus, .cbi-dropdown[open], .cbi-dropdown:focus {
-  background: #2c2f34; border-color: var(--u-accent);
+  background-color: #2c2f34; border-color: var(--u-accent);
 }
 .cbi-dropdown ul.dropdown { background: var(--u-surface); border-color: var(--u-line); }
 

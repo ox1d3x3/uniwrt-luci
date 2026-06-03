@@ -1,5 +1,18 @@
 name: Build UniWRT Packages
 
+# Why this works where the previous version failed:
+#   The earlier workflow pinned openwrt/gh-action-sdk@v6, whose entrypoint
+#   mishandled the directory layout of the current SDK images and aborted with
+#   "sed: can't read feeds.conf.default" before it could register the repo as a
+#   feed. Using @main (current entrypoint) plus SDK image tags that are actually
+#   published for each release fixes it.
+#
+# Package format follows the SDK branch:
+#   23.05 / 24.10  -> opkg -> .ipk
+#   25.12+         -> apk  -> .apk
+# The theme is arch-independent (LUCI_PKGARCH:=all), so one arch per release
+# produces the universal package.
+
 env:
   PACKAGE: luci-theme-uniwrt
   FEEDNAME: uniwrt
@@ -7,25 +20,19 @@ env:
 
 on:
   push:
-    branches:
-      - main
-      - master
-    tags:
-      - 'v*'
+    branches: [main, master]
+    tags: ['v*']
     paths:
       - 'luci-theme-uniwrt/**'
       - '.github/workflows/build.yml'
       - 'qa-static.sh'
-      - 'README.md'
-      - 'VERSION'
       - 'uniwrt-apply.sh'
+      - 'README.md'
   pull_request:
     paths:
       - 'luci-theme-uniwrt/**'
       - '.github/workflows/build.yml'
       - 'qa-static.sh'
-      - 'README.md'
-      - 'VERSION'
       - 'uniwrt-apply.sh'
   workflow_dispatch:
 
@@ -52,7 +59,6 @@ jobs:
           sudo apt-get install -y nodejs python3-yaml
 
       - name: Run static QA
-        shell: bash
         run: bash ./qa-static.sh
 
   build:
@@ -63,7 +69,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # OpenWrt 23.05.x and 24.10.x use opkg/ipk.
           - release: '23.05.6'
             arch: x86_64-23.05.6
             extension: ipk
@@ -72,7 +77,6 @@ jobs:
             arch: x86_64-24.10.6
             extension: ipk
             label: 'current .ipk for OpenWrt 24.10.x'
-          # OpenWrt 25.12.x and newer use apk.
           - release: '25.12.4'
             arch: x86_64-25.12.4
             extension: apk
@@ -113,14 +117,14 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: Publish GitHub pre-release
+    name: Publish GitHub release
     needs: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout release helper
+      - name: Checkout (for release helper)
         uses: actions/checkout@v4
 
       - name: Download packages
@@ -137,9 +141,7 @@ jobs:
           find artifacts -type f \( -name '*.ipk' -o -name '*.apk' \) -print -exec cp -v {} release/ \;
           cp -v uniwrt-apply.sh release/
           test "$(find release -type f \( -name '*.ipk' -o -name '*.apk' \) | wc -l)" -ge 1 || {
-            echo "::error::No package assets found"
-            exit 1
-          }
+            echo "::error::No package assets found"; exit 1; }
           ( cd release && sha256sum * > SHA256SUMS )
           ls -la release
 
@@ -149,11 +151,13 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-            echo "title=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF_NAME}"                   >> "$GITHUB_OUTPUT"
+            echo "title=${GITHUB_REF_NAME}"                 >> "$GITHUB_OUTPUT"
+            echo "prerelease=false"                          >> "$GITHUB_OUTPUT"
           else
-            echo "tag=nightly" >> "$GITHUB_OUTPUT"
+            echo "tag=nightly"                               >> "$GITHUB_OUTPUT"
             echo "title=Nightly build #${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true"                           >> "$GITHUB_OUTPUT"
           fi
 
       - name: Reset rolling nightly release
@@ -168,18 +172,18 @@ jobs:
         with:
           tag_name: ${{ steps.release_tag.outputs.tag }}
           name: ${{ steps.release_tag.outputs.title }}
-          prerelease: true
-          make_latest: false
+          prerelease: ${{ steps.release_tag.outputs.prerelease }}
+          make_latest: ${{ github.ref_type == 'tag' }}
           fail_on_unmatched_files: true
           files: release/*
           body: |
             Automated UniWRT Portal build from `${{ github.sha }}`.
 
-            Pick by OpenWrt version, not router CPU/architecture. The theme package is architecture-independent.
+            Pick by **OpenWrt version**, not router CPU — the theme package is architecture-independent.
 
             | OpenWrt version | Package manager | Asset |
             |---:|:---:|:---|
-            | 23.05.x and older supported opkg builds | opkg | `luci-theme-uniwrt_*_all.ipk` |
+            | 23.05.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
             | 24.10.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
             | 25.12.x and newer | apk | `luci-theme-uniwrt-*.apk` |
 
@@ -191,11 +195,9 @@ jobs:
             apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
             ```
 
-            Optional helper install:
+            Optional one-shot helper (auto-detects the local package, installs it,
+            activates UniWRT, clears the LuCI cache and restarts the web UI):
 
             ```sh
-            chmod +x ./uniwrt-apply.sh
-            ./uniwrt-apply.sh
+            chmod +x ./uniwrt-apply.sh && ./uniwrt-apply.sh
             ```
-
-            This helper auto-detects the local `.ipk` or `.apk`, installs it, applies UniWRT, clears LuCI cache and restarts web services.

@@ -1,6 +1,22 @@
-/dist/
+# Build output
 /bin/
+/dist/
+/out/
 /build_dir/
 /staging_dir/
 *.ipk
 *.apk
+*.tar.gz
+
+# Editor / OS cruft
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Local keys (never commit signing keys)
+*.sec
+*.rsa
+*-apk.rsa
+key-build*

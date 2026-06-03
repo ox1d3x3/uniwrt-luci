@@ -2,13 +2,17 @@
 'require view';
 'require rpc';
 'require poll';
-'require network';
+'require fs';
 
 var callBoard = rpc.declare({ object: 'system', method: 'board' });
 var callInfo  = rpc.declare({ object: 'system', method: 'info' });
 var callIfDump = rpc.declare({ object: 'network.interface', method: 'dump', expect: { 'interface': [] } });
 var callWifi  = rpc.declare({ object: 'luci-rpc', method: 'getWirelessDevices', expect: { '': {} } });
 
+function svgNode(markup) {
+	var doc = new DOMParser().parseFromString(markup, 'image/svg+xml');
+	return document.importNode(doc.documentElement, true);
+}
 function fmtBytes(b) {
 	if (!b && b !== 0) return '–';
 	if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
@@ -30,7 +34,7 @@ function level(pct) { return pct < 60 ? 'ok' : pct < 85 ? 'warn' : 'crit'; }
 function metricCard(icon, title, valueId, subId, withMeter) {
 	var body = [
 		E('div', { 'class': 'u-card-head' }, [
-			E('div', { 'class': 'u-card-ico' }, [ E('span', { 'innerHTML': icon }) ]),
+			E('div', { 'class': 'u-card-ico' }, [ svgNode(icon) ]),
 			E('div', { 'class': 'u-card-title' }, [ title ])
 		]),
 		E('div', { 'class': 'u-card-metric', 'id': valueId }, [ '–' ])
@@ -51,13 +55,20 @@ var ICO = {
 };
 
 return view.extend({
-	prevTotal: 0, prevIdle: 0,
+	cores: 1,
 
 	load: function() {
+		var self = this;
 		return Promise.all([
 			L.resolveDefault(callBoard(), {}),
-			L.resolveDefault(callInfo(), {})
-		]);
+			L.resolveDefault(callInfo(), {}),
+			L.resolveDefault(fs.read('/proc/cpuinfo'), '')
+		]).then(function(d) {
+			/* core count comes from the ROUTER, never the browser */
+			var m = String(d[2] || '').match(/^processor\s*:/gm);
+			self.cores = (m && m.length) || 1;
+			return d;
+		});
 	},
 
 	render: function(data) {
@@ -73,7 +84,7 @@ return view.extend({
 
 		var ifaceCard = E('div', { 'class': 'u-card' }, [
 			E('div', { 'class': 'u-card-head' }, [
-				E('div', { 'class': 'u-card-ico' }, [ E('span', { 'innerHTML': ICO.globe }) ]),
+				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.globe) ]),
 				E('div', { 'class': 'u-card-title' }, [ _('Network Interfaces') ])
 			]),
 			E('div', { 'id': 'u-ov-ifaces' }, [ E('div', { 'class': 'u-card-sub' }, [ _('Loading…') ]) ])
@@ -81,7 +92,7 @@ return view.extend({
 
 		var wifiCard = E('div', { 'class': 'u-card' }, [
 			E('div', { 'class': 'u-card-head' }, [
-				E('div', { 'class': 'u-card-ico' }, [ E('span', { 'innerHTML': ICO.wifi }) ]),
+				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.wifi) ]),
 				E('div', { 'class': 'u-card-title' }, [ _('Wireless') ])
 			]),
 			E('div', { 'id': 'u-ov-wifi' }, [ E('div', { 'class': 'u-card-sub' }, [ _('Loading…') ]) ])
@@ -92,6 +103,11 @@ return view.extend({
 			grid,
 			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fill,minmax(320px,1fr))' }, [ ifaceCard, wifiCard ])
 		]);
+
+		/* keep a handle so updates can resolve tiles even before LuCI
+		   attaches this node to the document (otherwise the first paint
+		   would no-op and tiles stay blank until the first poll) */
+		this.root = root;
 
 		/* static system card */
 		var sysVal = board.model || board.board_name || '–';
@@ -123,23 +139,24 @@ return view.extend({
 
 	update: function(info) {
 		if (!info) return;
-		var $ = function(id) { return document.getElementById(id); };
+		var root = this.root;
+		var $ = function(id) { return root ? root.querySelector('#' + id) : document.getElementById(id); };
+		var cores = this.cores || 1;
 
 		if (info.load && $('u-ov-cpu')) {
 			var load1 = info.load[0] / 65536;
-			var cores = (navigator.hardwareConcurrency || 1);
 			var pct = Math.min(load1 / cores, 1) * 100;
 			$('u-ov-cpu').textContent = pct.toFixed(0) + '%';
 			var meter = $('u-ov-cpu-meter');
 			if (meter) { meter.className = 'u-meter ' + level(pct); meter.firstElementChild.style.width = pct.toFixed(0) + '%'; }
-			$('u-ov-cpu-sub').textContent = _('Load average') + ': ' + load1.toFixed(2);
+			$('u-ov-cpu-sub').textContent = _('Load average') + ': ' + load1.toFixed(2) + ' (' + cores + (cores === 1 ? ' core)' : ' cores)');
 		}
 		if (info.memory && $('u-ov-ram')) {
 			var total = info.memory.total, avail = info.memory.available || info.memory.free, used = total - avail;
-			var pct = used / total * 100;
-			$('u-ov-ram').textContent = pct.toFixed(0) + '%';
-			var meter = $('u-ov-ram-meter');
-			if (meter) { meter.className = 'u-meter ' + level(pct); meter.firstElementChild.style.width = pct.toFixed(0) + '%'; }
+			var pctR = used / total * 100;
+			$('u-ov-ram').textContent = pctR.toFixed(0) + '%';
+			var mr = $('u-ov-ram-meter');
+			if (mr) { mr.className = 'u-meter ' + level(pctR); mr.firstElementChild.style.width = pctR.toFixed(0) + '%'; }
 			$('u-ov-ram-sub').textContent = fmtBytes(used) + ' / ' + fmtBytes(total);
 		}
 		if (info.uptime && $('u-ov-up')) {
@@ -150,7 +167,7 @@ return view.extend({
 	},
 
 	updateIfaces: function(ifaces) {
-		var box = document.getElementById('u-ov-ifaces');
+		var box = (this.root || document).querySelector('#u-ov-ifaces');
 		if (!box || !Array.isArray(ifaces)) return;
 		var rows = [];
 		ifaces.forEach(function(iface) {
@@ -168,7 +185,7 @@ return view.extend({
 	},
 
 	updateWifi: function(wifi) {
-		var box = document.getElementById('u-ov-wifi');
+		var box = (this.root || document).querySelector('#u-ov-wifi');
 		if (!box || !wifi) return;
 		var rows = [];
 		Object.keys(wifi).forEach(function(dev) {
@@ -177,9 +194,10 @@ return view.extend({
 				var cfg = i.config || {}, iw = i.iwinfo || {};
 				var ssid = cfg.ssid || iw.ssid || '–';
 				var up = !!i.up;
+				var meta = (iw.channel ? ('ch ' + iw.channel) : '') + (iw.signal ? ('  ' + iw.signal + ' dBm') : '');
 				rows.push(E('div', { 'class': 'u-kv' }, [
 					E('span', { 'class': 'k' }, [ E('span', { 'class': 'u-dot ' + (up ? 'up' : 'down') }), ssid ]),
-					E('span', { 'class': 'v' }, [ (iw.channel ? ('ch ' + iw.channel) : '') + (iw.signal ? ('  ' + iw.signal + ' dBm') : '') || dev ])
+					E('span', { 'class': 'v' }, [ meta || dev ])
 				]));
 			});
 		});
