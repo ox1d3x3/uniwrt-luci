@@ -533,10 +533,40 @@ thead .tr, thead tr, .tr.cbi-section-table-titles {
 .cbi-section-table .th.cbi-section-table-cell { white-space: nowrap; }
 
 /* -------------------------------------------------------------- tab content */
-.cbi-tabmenu { display: none; } /* moved into the sub-nav by footer.ut/menu */
+/* ---------------------------------------------------------- in-page tabs
+   CBI form tab bar (System -> General/Logging/Time Sync, etc). LuCI toggles
+   data-tab-active + the cbi-tab/cbi-tab-disabled classes via its own JS; the
+   theme styles the bar in place and hides inactive panels. The panel hide rule
+   must match BOTH [data-tab] and [data-tab-title] so it never hits individual
+   form fields (which can carry data-tab-title alone). No !important: LuCI's
+   dependency engine needs to read fields across all tabs during page load. */
+.cbi-tabmenu {
+  display: flex; flex-wrap: wrap; gap: 4px; list-style: none;
+  margin: 0 0 18px; padding: 5px;
+  background: var(--u-surface-2); border: 1px solid var(--u-line);
+  border-radius: var(--u-radius); overflow-x: auto;
+}
+.cbi-tabmenu li { margin: 0; list-style: none; flex: 0 0 auto; }
+.cbi-tabmenu li a {
+  display: block; padding: 8px 16px; border-radius: var(--u-radius-sm);
+  font-size: .85rem; font-weight: 600; line-height: 1.1; white-space: nowrap;
+  color: var(--u-text-2); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.cbi-tabmenu li a:hover { color: var(--u-text); background: rgba(0,111,255,.08); text-decoration: none; }
+.cbi-tabmenu li.cbi-tab a {            /* active tab */
+  background: var(--u-accent); color: #fff;
+  box-shadow: 0 1px 3px rgba(0,111,255,.35);
+}
+.cbi-tabmenu li.cbi-tab-disabled a { color: var(--u-text-3); }   /* inactive */
+.cbi-tabmenu li[data-errors] a { box-shadow: inset 0 0 0 1.5px var(--u-danger); }
+
+.cbi-section-node-tabbed { margin-top: 4px; }
 .cbi-tabcontainer { padding: 0; }
-.cbi-tab, .cbi-tab-disabled { display: block; }
-.cbi-tabcontainer[data-hidden="true"] { display: none; }
+
+/* Hide inactive tab panels (LuCI uses data-tab-active, not data-hidden). */
+[data-tab][data-tab-title]:not([data-tab-active="true"]) { display: none; }
+[data-tab][data-tab-title][data-tab-active="true"] { display: block; animation: u-fade .2s var(--u-ease); }
 
 /* ------------------------------------------------------------------ alerts */
 .alert-message {

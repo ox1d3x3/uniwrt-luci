@@ -31,7 +31,7 @@ UniWRT is architecture-independent, so the same package works on every device of
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.16-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.17-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. (If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.)
@@ -40,7 +40,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.16-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.16-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.17-1_all.ipk
 ```
 
 ### Activating the theme
@@ -102,8 +102,8 @@ You do **not** need a full OpenWrt buildroot — the per-release SDK is enough. 
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main`/`master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.16
-git push origin v2.0.16
+git tag v2.0.17
+git push origin v2.0.17
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk`/`.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -184,6 +184,12 @@ uniwrt-luci/
 ---
 
 ## Changelog
+
+### v2.0.17
+* **Fixed in-page form tabs** (System -> General Settings / Logging / Time Synchronization / Language and Style, and the same pattern on DHCP, Wireless, Firewall, Interfaces, etc.). Two bugs were compounding:
+  * the theme hid the whole `.cbi-tabmenu` bar and tried to relocate it with custom JS, which broke nested tab groups and click forwarding;
+  * the inactive-panel hide rule used the wrong selector (`.cbi-tabcontainer[data-hidden]`) while LuCI marks panels with `data-tab-active`, so every tab's content rendered stacked and clicking did nothing.
+  The tab bar is now styled in place as a pill bar and LuCI's native switching drives it; inactive panels are hidden with `[data-tab][data-tab-title]:not([data-tab-active="true"])` (no `!important`, so cross-tab field dependencies still evaluate at load).
 
 ### v2.0.16
 * Layout: content now **fills the page width** instead of sitting in a narrow centred column — tables and info panels use the whole area (addresses the "fill the whole page / empty space" feedback). Inputs keep a sensible max width.

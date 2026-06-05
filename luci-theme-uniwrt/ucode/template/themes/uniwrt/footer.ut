@@ -84,66 +84,13 @@
     });
   })();
 
-  /* ---- relocate in-page CBI tabmenus into the sticky sub-nav bar ----
-     menu-uniwrt.js handles dispatcher-tree tabs; this catches CBI form
-     tabs (e.g. dnsmasq, firewall) and gives them the same pill styling. */
-  (function(){
-    var subnav  = document.getElementById('u-subnav');
-    var content = document.getElementById('maincontent');
-    if (!subnav || !content) return;
+  /* In-page CBI form tabs (System -> General/Logging/Time Sync, etc.) are left
+     in place and styled by cascade.css as a tab bar. LuCI's own ui.tabs JS
+     handles switching by toggling data-tab-active; the theme only needs the
+     correct hide rule, so no JS relocation happens here (relocating broke
+     nested tab groups and tab switching). Dispatcher-tree tabs are still
+     rendered into #u-subnav by menu-uniwrt.js. */
 
-    function build(){
-      if (subnav._switching) return;
-      if (subnav.querySelector('.u-subnav-tab[data-tree]')) return; /* tree tabs win */
-      var menus = content.querySelectorAll('.cbi-tabmenu');
-      if (!menus.length) { return; }
-      var ul = menus[0];
-
-      subnav.innerHTML = '';
-      var slider = document.createElement('span');
-      slider.className = 'u-subnav-slider';
-      subnav.appendChild(slider);
-
-      var items = ul.querySelectorAll('li');
-      for (var i=0;i<items.length;i++){
-        var li = items[i]; if (li.style.display==='none') continue;
-        var a = li.querySelector('a'); if (!a) continue;
-        var tab = a.cloneNode(true);
-        tab.className = 'u-subnav-tab' + (li.classList.contains('cbi-tab') ? ' active' : '');
-        (function(tab, srcA){
-          tab.addEventListener('click', function(ev){
-            ev.preventDefault();
-            subnav._switching = true;
-            srcA.click();
-            setTimeout(function(){ subnav._switching = false; }, 120);
-            var tabs = subnav.querySelectorAll('.u-subnav-tab');
-            for (var k=0;k<tabs.length;k++) tabs[k].classList.remove('active');
-            tab.classList.add('active');
-            slider.style.left = tab.offsetLeft + 'px';
-            slider.style.width = tab.offsetWidth + 'px';
-            slider.style.opacity = '1';
-          });
-        })(tab, a);
-        subnav.appendChild(tab);
-      }
-      ul.style.display = 'none';
-      subnav.classList.add('active');
-      document.body.classList.add('u-has-subnav');
-      requestAnimationFrame(function(){
-        var active = subnav.querySelector('.u-subnav-tab.active');
-        if (active){
-          slider.style.transition='none';
-          slider.style.left = active.offsetLeft+'px';
-          slider.style.width = active.offsetWidth+'px';
-          slider.style.opacity='1';
-          requestAnimationFrame(function(){ slider.style.transition=''; });
-        }
-      });
-    }
-
-    build();
-    new MutationObserver(build).observe(content, { childList:true, subtree:true });
-  })();
 </script>
 {% endif %}
 {% if (js): %}<script>{{ js }}</script>{% endif %}
