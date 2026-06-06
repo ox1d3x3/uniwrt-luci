@@ -31,7 +31,7 @@ UniWRT is architecture-independent, so the same package works on every device of
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.17-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.18-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. (If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.)
@@ -40,7 +40,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.17-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.17-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.18-1_all.ipk
 ```
 
 ### Activating the theme
@@ -102,8 +102,8 @@ You do **not** need a full OpenWrt buildroot — the per-release SDK is enough. 
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main`/`master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.17
-git push origin v2.0.17
+git tag v2.0.18
+git push origin v2.0.18
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk`/`.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -184,6 +184,10 @@ uniwrt-luci/
 ---
 
 ## Changelog
+
+### v2.0.18
+* Verified the menu/tab implementation against the OpenWrt reference themes (glass, x1wrt): the option/menu link building (`L.url(url, child.name, sub[0].name)` for parents, `L.url(url, child.name)` for leaves and tabs) and active-path detection match line-for-line, and every element id `menu-uniwrt.js` targets is present in the shell. The in-page CBI tab handling matches x1wrt (bar left in place, LuCI's native JS drives switching). Confirmed working by rendering the real captured LuCI System DOM with this theme's CSS and switching tabs.
+* Hardened the inactive-panel hide rule to also cover the `.cbi-tabcontainer` class form (in addition to the `[data-tab][data-tab-title]` attribute form), so in-page tabs are correct across LuCI builds.
 
 ### v2.0.17
 * **Fixed in-page form tabs** (System -> General Settings / Logging / Time Synchronization / Language and Style, and the same pattern on DHCP, Wireless, Firewall, Interfaces, etc.). Two bugs were compounding:

@@ -564,9 +564,15 @@ thead .tr, thead tr, .tr.cbi-section-table-titles {
 .cbi-section-node-tabbed { margin-top: 4px; }
 .cbi-tabcontainer { padding: 0; }
 
-/* Hide inactive tab panels (LuCI uses data-tab-active, not data-hidden). */
-[data-tab][data-tab-title]:not([data-tab-active="true"]) { display: none; }
-[data-tab][data-tab-title][data-tab-active="true"] { display: block; animation: u-fade .2s var(--u-ease); }
+/* Hide inactive tab panels. LuCI marks the active panel with data-tab-active.
+   Match both the attribute form (panels carry data-tab + data-tab-title) and
+   the .cbi-tabcontainer class form used by some LuCI builds. Require both
+   [data-tab] and [data-tab-title] on the attribute form so individual form
+   fields (which can carry data-tab-title alone) are never hidden. */
+[data-tab][data-tab-title]:not([data-tab-active="true"]),
+.cbi-tabcontainer:not([data-tab-active="true"]) { display: none; }
+[data-tab][data-tab-title][data-tab-active="true"],
+.cbi-tabcontainer[data-tab-active="true"] { display: block; animation: u-fade .2s var(--u-ease); }
 
 /* ------------------------------------------------------------------ alerts */
 .alert-message {
