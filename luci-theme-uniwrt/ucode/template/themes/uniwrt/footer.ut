@@ -14,7 +14,7 @@
 </main>
 
 <footer class="u-footer">
-  <a class="u-credit" href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener">UniWRT Portal v{{ uniwrt_version }}</a>
+  <a class="u-credit" href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener">OX1d3x3 X UniWRT V{{ uniwrt_version }}</a>
 </footer>
 
 <script src="{{ resource }}/luci.js"></script>

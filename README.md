@@ -31,7 +31,7 @@ UniWRT is architecture-independent, so the same package works on every device of
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.19-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.20-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. (If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.)
@@ -40,7 +40,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.19-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.19-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.20-1_all.ipk
 ```
 
 ### Activating the theme
@@ -102,8 +102,8 @@ You do **not** need a full OpenWrt buildroot — the per-release SDK is enough. 
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main`/`master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.19
-git push origin v2.0.19
+git tag v2.0.20
+git push origin v2.0.20
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk`/`.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -184,6 +184,12 @@ uniwrt-luci/
 ---
 
 ## Changelog
+
+### v2.0.20
+* **Overview card icons fixed.** The dashboard tile icons (System/CPU/Memory/Uptime/Interfaces/Wireless) were blank because their inline SVGs lacked an `xmlns`, so `DOMParser` produced non-rendering nodes. `svgNode()` now injects the SVG namespace; all icons render.
+* **Overview page sorted & filled.** The metric row and the lower row now stretch to fill the full width (auto-fit grids) instead of clustering at the left, and a new live **Clients** card (known hosts -> hostname + IP, via `luci-rpc getHostHints`, already in the ACL) fills the bottom row.
+* **Throughput shown in Mbps.** The header throughput chip previously printed a value with its own K/M/G suffix and then appended " Mbps" (e.g. "51.1K Mbps"). It now converts bytes/s to Mbps consistently and shows e.g. "down 0.05 up 0.07 Mbps".
+* **Footer credit** now reads "OX1d3x3 X UniWRT V<version>" linking to the project repo (hyperlink unchanged).
 
 ### v2.0.19
 * **Checkboxes are now iOS-style slide on/off switches.** Every `input[type=checkbox]` (including the `.cbi-checkbox` FlagValue widget) renders as an animated toggle: grey/knob-left when off, accent/knob-right when on, with disabled and focus states. Radios stay radios, and multi-select dropdown checkboxes stay compact so the list isn't broken.

@@ -152,7 +152,7 @@ return baseclass.extend({
 			if (dt > 0) {
 				var rxS = Math.max((rx - this.prevStats.rx) / dt, 0);
 				var txS = Math.max((tx - this.prevStats.tx) / dt, 0);
-				var txt = '\u2193' + this.fmtSpeed(rxS) + ' \u2191' + this.fmtSpeed(txS);
+				var txt = '\u2193' + this.fmtMbps(rxS) + ' \u2191' + this.fmtMbps(txS) + ' Mbps';
 				this.netEl.querySelector('.indicator-value').textContent = txt;
 				try { sessionStorage.setItem('uniwrt-stat-net', txt); } catch(e) {}
 				this.netEl.title = (this.netLabel || this.netDevice) + ': \u2193 ' + this.fmtSpeedFull(rxS) + ' / \u2191 ' + this.fmtSpeedFull(txS);
@@ -179,6 +179,12 @@ return baseclass.extend({
 		if (bits >= 1e6) return (bits / 1e6).toFixed(1) + 'M';
 		if (bits >= 1e3) return (bits / 1e3).toFixed(1) + 'K';
 		return Math.round(bits) + 'b';
+	},
+	fmtMbps: function(bps) {
+		var mbps = bps * 8 / 1e6;            /* bytes/s -> Mbps */
+		if (mbps >= 100) return mbps.toFixed(0);
+		if (mbps >= 10)  return mbps.toFixed(1);
+		return mbps.toFixed(2);
 	},
 	fmtSpeedFull: function(bps) {
 		var bits = bps * 8;
