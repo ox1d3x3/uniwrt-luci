@@ -92,3 +92,14 @@ pre, code, #syslog, textarea#syslog { background: #0c0e11; border-color: var(--u
 
 /* modal */
 .modal, .cbi-modal { background: var(--u-surface); border-color: var(--u-line); }
+
+/* slide-toggle: visible off-state on dark surfaces (on-state inherits --u-accent) */
+input[type="checkbox"] { background: #3a3f46; }
+.cbi-dropdown ul input[type="checkbox"] { background: none; }
+
+/* modal overlay backdrop a touch darker on dark theme */
+#modal_overlay { background: rgba(0,0,0,.6); }
+
+/* tooltip / progressbar / badges follow the dark tokens already, just nudge fills */
+.cbi-progressbar { background: var(--u-surface-2); border-color: var(--u-line); }
+.ifacebadge, .zonebadge { background: var(--u-surface-2); border-color: var(--u-line); }

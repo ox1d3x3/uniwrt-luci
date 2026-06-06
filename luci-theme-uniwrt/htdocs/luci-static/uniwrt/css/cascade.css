@@ -453,11 +453,37 @@ select::-ms-expand { display: none; }   /* kill the legacy IE/Edge arrow box */
 .cbi-dropdown ul.dropdown li.focus, .cbi-dropdown ul.dropdown li:hover { background: var(--u-accent-soft); }
 .cbi-dropdown ul.dropdown li.selected { background: var(--u-accent); color: #fff; }
 
-/* checkboxes & radios */
-input[type="checkbox"], input[type="radio"] {
-  width: 17px; height: 17px; accent-color: var(--u-accent); cursor: pointer; vertical-align: -3px;
+/* checkboxes rendered as iOS-style slide on/off switches */
+input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  position: relative; flex: 0 0 auto; box-sizing: border-box;
+  width: 40px; height: 22px; margin: 0; padding: 0; border: 0;
+  border-radius: 999px; background: #cdd2d8; cursor: pointer; vertical-align: middle;
+  transition: background .22s var(--u-ease);
 }
+input[type="checkbox"]::before {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 18px; height: 18px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .22s var(--u-ease);
+}
+input[type="checkbox"]:checked { background: var(--u-accent); }
+input[type="checkbox"]:checked::before { transform: translateX(18px); }
+input[type="checkbox"]:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--u-accent-soft); }
+input[type="checkbox"]:disabled { opacity: .5; cursor: not-allowed; }
+
+/* keep radios as radios */
+input[type="radio"] { width: 17px; height: 17px; accent-color: var(--u-accent); cursor: pointer; vertical-align: -3px; }
+
+/* multi-select dropdown list checkboxes stay compact (a toggle would break the list) */
+.cbi-dropdown ul input[type="checkbox"] {
+  appearance: auto; -webkit-appearance: auto; -moz-appearance: auto;
+  width: 16px; height: 16px; border-radius: 4px; background: none;
+  accent-color: var(--u-accent);
+}
+.cbi-dropdown ul input[type="checkbox"]::before { content: none; }
+
 .cbi-checkbox, .cbi-radio { display: inline-flex; align-items: center; gap: 6px; }
+.cbi-checkbox > label:empty { display: none; }   /* hide the empty FlagValue label so it doesn't add a gap */
 
 /* dynamic lists */
 .cbi-dynlist { display: flex; flex-direction: column; gap: 6px; max-width: 560px; }
@@ -609,21 +635,136 @@ code { padding: 1px 6px; border-radius: 4px; }
 }
 @keyframes u-spin { to { transform: rotate(360deg); } }
 
-/* modals / overlays */
+/* ---------------------------------------------------------------- modals
+   LuCI shows package-manager output, attended-sysupgrade, Save & Apply review,
+   reboot, and most app dialogs via ui.showModal() -> #modal_overlay (a direct
+   child of <body>). It MUST be a fixed, full-viewport, centered overlay above
+   the rail (z-index 60); otherwise it renders in normal flow at the bottom-left
+   behind the rail and is unreadable. */
+#modal_overlay {
+  position: fixed; inset: 0; display: none; overflow: auto;
+  z-index: 1000; background: rgba(8,10,14,.5);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+body.modal-overlay-active { overflow: hidden; }
+body.modal-overlay-active #modal_overlay {
+  display: grid; place-items: center; padding: 28px 16px;
+}
+#modal_overlay > .modal,
 .modal, .cbi-modal {
+  width: 100%; max-width: 680px; margin: auto; box-sizing: border-box;
+  max-height: calc(100vh - 56px); overflow: auto;
   background: var(--u-surface); color: var(--u-text);
   border-radius: var(--u-radius); box-shadow: var(--u-shadow-pop);
-  border: 1px solid var(--u-line); padding: 22px 24px; max-width: 680px;
+  border: 1px solid var(--u-line); padding: 22px 24px;
 }
-body.modal-overlay-active::before, #modal_overlay {
-  background: rgba(8,10,14,.5);
+#modal_overlay > .modal.cbi-modal-large { max-width: 920px; }
+.modal h4, .modal h5 { margin: 0 0 12px; }
+.modal pre {
+  max-height: 60vh; overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+.modal .button-row, .modal .right, .modal .left {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;
+  padding-top: 14px; border-top: 1px solid var(--u-line);
+}
+.modal .right { justify-content: flex-end; }
+
+/* -------------------------------------------------- previously-missing bits */
+
+/* tooltips (cbi-tooltip popup + dotted-underline trigger) */
+.cbi-tooltip-container, [data-tooltip] { position: relative; cursor: help; }
+.cbi-tooltip {
+  position: absolute; z-index: 1100; left: 0; top: 100%; margin-top: 6px;
+  max-width: 360px; padding: 8px 11px; border-radius: var(--u-radius-sm);
+  background: var(--u-surface); color: var(--u-text); border: 1px solid var(--u-line);
+  box-shadow: var(--u-shadow-2); font-size: .8rem; line-height: 1.4;
+  white-space: normal; opacity: 0; visibility: hidden; transition: opacity .15s var(--u-ease);
+}
+.cbi-tooltip-container:hover > .cbi-tooltip,
+[data-tooltip]:hover > .cbi-tooltip { opacity: 1; visibility: visible; }
+[data-tooltip] { text-decoration: underline dotted; text-underline-offset: 2px; }
+
+/* progress bars (memory / flash on overview, attended-sysupgrade) */
+.cbi-progressbar {
+  position: relative; height: 20px; border-radius: 999px; overflow: hidden;
+  background: var(--u-surface-2); border: 1px solid var(--u-line);
+}
+.cbi-progressbar > div {
+  height: 100%; background: var(--u-accent);
+  transition: width .4s var(--u-ease);
+}
+.cbi-progressbar::after {
+  content: attr(title); position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 600; color: var(--u-text);
 }
 
-/* badges / labels */
-.label, .badge {
-  display: inline-block; padding: 2px 9px; border-radius: 999px;
-  font-size: .72rem; font-weight: 600; background: var(--u-accent-soft); color: var(--u-accent);
+/* interface badges (Network / Status pages) */
+.ifacebadge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border-radius: var(--u-radius-sm);
+  background: var(--u-surface-2); border: 1px solid var(--u-line);
+  font-size: .8rem; color: var(--u-text-2);
 }
+.ifacebadge img { width: 16px; height: 16px; opacity: .8; }
+.ifacebadge.large { padding: 6px 10px; }
+
+/* firewall zone badges */
+.zonebadge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border-radius: 999px; font-size: .78rem; font-weight: 600;
+  border: 1px solid var(--u-line); color: var(--u-text);
+}
+.zonebadge strong { font-weight: 700; }
+.zonebadge > em { font-style: normal; color: var(--u-text-3); }
+
+/* validation: invalid inputs + value/section errors */
+.cbi-input-invalid, .cbi-value-error input, input.cbi-input-invalid,
+.cbi-value-error select, .cbi-value-error textarea {
+  border-color: var(--u-crit) !important;
+  box-shadow: 0 0 0 3px rgba(240,56,59,.14) !important;
+}
+.cbi-value-description.error, .cbi-section-error, .cbi-value-error .cbi-value-description {
+  color: var(--u-crit);
+}
+.cbi-section-error {
+  margin: 10px 0; padding: 10px 14px; border-radius: var(--u-radius-sm);
+  background: rgba(240,56,59,.08); border: 1px solid rgba(240,56,59,.35); color: var(--u-crit);
+}
+.cbi-section-error ul { margin: 4px 0 0 18px; }
+
+/* control groups (diagnostics ping/traceroute/nslookup rows, button rows) */
+.control-group {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0;
+}
+.control-group > * { margin: 0; }
+
+/* interface status boxes (Network -> Interfaces) */
+.network-status-table {
+  display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;
+}
+.ifacebox {
+  display: inline-flex; flex-direction: column; min-width: 220px; flex: 1 1 220px;
+  border: 1px solid var(--u-line); border-radius: var(--u-radius);
+  background: var(--u-surface); box-shadow: var(--u-shadow-1); overflow: hidden;
+}
+.ifacebox .ifacebox-head {
+  padding: 8px 12px; font-weight: 600; text-align: center;
+  background: var(--u-surface-2); border-bottom: 1px solid var(--u-line); color: var(--u-text);
+}
+.ifacebox .ifacebox-head.active { background: var(--u-accent); color: #fff; }
+.ifacebox .ifacebox-body { padding: 12px; font-size: .82rem; color: var(--u-text-2); }
+
+/* file browser widget */
+.cbi-filebrowser {
+  border: 1px solid var(--u-line); border-radius: var(--u-radius-sm);
+  background: var(--u-surface); box-shadow: var(--u-shadow-1);
+}
+.cbi-filebrowser ul { list-style: none; margin: 0; padding: 6px; }
+.cbi-filebrowser li > a { display: block; padding: 6px 10px; border-radius: var(--u-radius-xs); }
+.cbi-filebrowser li > a:hover { background: var(--u-surface-2); text-decoration: none; }
+
+/* badges / labels */
 
 /* generic spacing helpers LuCI uses */
 .right { text-align: right; margin-left: auto; }
