@@ -127,77 +127,6 @@ The file is registered as a conffile, so your settings persist across package up
 
 ---
 
-## Building from source
-
-### Option A — GitHub Actions (recommended)
-
-This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
-
-```sh
-git tag v2.0.20
-git push origin v2.0.20
-```
-
-The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
-
-> **SDK image tags:** the matrix pins `x86_64-23.05.6`, `x86_64-24.10.6`, and `x86_64-25.12.4`. If a build reports `manifest unknown`, that point-release SDK image isn't published yet — bump the tag to one that exists (or use `x86_64-SNAPSHOT` for the apk row).
-
-### Option B — local SDK build
-
-```sh
-# 1. download and extract the SDK for your target/branch, then inside it:
-echo "src-link uniwrt /path/to/uniwrt-luci" >> feeds.conf.default
-./scripts/feeds update uniwrt
-./scripts/feeds install -a -p uniwrt
-
-# 2. enable the package
-make menuconfig            # LuCI -> Themes -> luci-theme-uniwrt  (M)
-
-# 3. build
-make package/luci-theme-uniwrt/compile V=s
-
-# 4. the package lands under bin/packages/<arch>/uniwrt/
-```
-
-> The CSS minifier (`csstidy`) is intentionally disabled in the Makefile (`CONFIG_LUCI_CSSTIDY:=`). It is a CSS2-era tool that mangles modern properties such as `backdrop-filter` and multi-stop gradients, so the committed CSS ships to the device byte-for-byte.
-
----
-
-## Project layout
-
-```
-uniwrt-luci/
-├── .github/workflows/build.yml          # QA + dual IPK/APK CI matrix
-├── qa-static.sh                         # static QA gate (run in CI and locally)
-├── uniwrt-apply.sh                      # router-side one-shot install/activate helper
-├── docs/screenshots/                    # README preview images
-├── README.md
-├── LICENSE
-└── luci-theme-uniwrt/
-    ├── Makefile
-    ├── ucode/template/themes/uniwrt/
-    │   ├── header.ut                     # full HTML shell (head, rail, top bar)
-    │   ├── footer.ut                     # shell close + client bootstrapping
-    │   ├── sysauth.ut                    # themed login page
-    │   └── version
-    ├── htdocs/luci-static/uniwrt/
-    │   ├── css/cascade.css               # light / base layer
-    │   ├── css/dark.css                  # dark overrides (injected, media-toggled)
-    │   └── img/uniwrt-logo.svg
-    ├── htdocs/luci-static/resources/
-    │   ├── menu-uniwrt.js                # client-side rail/menu builder
-    │   ├── status-uniwrt.js              # live header status widgets
-    │   └── view/uniwrt/
-    │       ├── settings.js               # settings page (form.Map)
-    │       └── overview.js               # live overview dashboard
-    └── root/
-        ├── etc/config/uniwrt             # default settings (conffile)
-        ├── etc/uci-defaults/30_luci-theme-uniwrt
-        └── usr/share/
-            ├── luci/menu.d/luci-theme-uniwrt.json
-            └── rpcd/acl.d/luci-theme-uniwrt.json
-```
-
 ---
 
 ## How it works
@@ -227,38 +156,8 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 
 ---
 
-## Changelog
-
-### v2.0.20
-* **Overview card icons fixed.** Dashboard tile icons were blank because their inline SVGs lacked an `xmlns`, so `DOMParser` produced non-rendering nodes; `svgNode()` now injects the SVG namespace.
-* **Overview page sorted & filled.** Both card rows stretch to fill the full width, and a new live **Clients** card (known hosts &rarr; hostname + IP, via `luci-rpc getHostHints`) fills the bottom row.
-* **Throughput shown in Mbps.** The header throughput chip now converts bytes/s to Mbps consistently (e.g. "&darr;0.05 &uarr;0.07 Mbps") instead of the previous mismatched-unit output.
-* **Footer credit** reads "OX1d3x3 X UniWRT V&lt;version&gt;", linking to the project repo.
-
-### v2.0.19
-* Checkboxes render as iOS-style slide on/off switches (radios and multi-select dropdown checkboxes are left as-is).
-* **Fixed the output box hiding behind the menu** — package-manager / attended-sysupgrade output, Save & Apply review, reboot and other `ui.showModal()` dialogs were dropping to the bottom-left behind the rail. `#modal_overlay` is now a fixed, centred, full-viewport overlay above the rail with a dimmed backdrop and a scrollable card.
-* Added previously-missing component styles (tooltip, progress bar, interface / zone badges, validation states, section errors, diagnostics control groups, file browser) plus their dark-mode overrides.
-
-### v2.0.18
-* Verified menu/tab link-building and active-path detection against the reference themes (glass, x1wrt); hardened the inactive tab-panel hide rule to cover the `.cbi-tabcontainer` class form across LuCI builds.
-
-### v2.0.17
-* **Fixed in-page form tabs** (System &rarr; General / Logging / Time Sync / Language, and the same pattern elsewhere). The tab bar is now styled in place and LuCI's native switching drives it; inactive panels hide via `[data-tab][data-tab-title]:not([data-tab-active="true"])`.
-
-### v2.0.16
-* Content fills the page width; hardened `<select>` styling; light-mode code/log blocks use a light surface; trimmed the footer.
-
-### v2.0.15
-* CI fix (switched `gh-action-sdk` to `@main` with pinned SDK image tags) so builds produce real `.ipk` / `.apk` artifacts; added the `qa-static.sh` gate and `uniwrt-apply.sh`; overview tiles paint on first load; granted `/proc/cpuinfo` read in the ACL.
-
-### v2.0.14
-* Full rewrite as a **standalone** theme — own HTML shell on the ucode template engine, client-side navigation rail, light / dark / auto theming, live status bar and overview dashboard, config-driven settings, and the dual `.ipk` + `.apk` CI matrix.
-
----
-
 ## Credits
 
-Created by [ox1d3x3](https://github.com/ox1d3x3). Architecture and template conventions follow current standalone LuCI themes (notably `luci-theme-glass`), verified against the OpenWrt 25.x LuCI source.
+Created by [ox1d3x3](https://github.com/ox1d3x3)
 
 Licensed under the [Apache License 2.0](./LICENSE).
