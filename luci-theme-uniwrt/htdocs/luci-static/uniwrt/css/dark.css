@@ -103,3 +103,12 @@ input[type="checkbox"] { background: #3a3f46; }
 /* tooltip / progressbar / badges follow the dark tokens already, just nudge fills */
 .cbi-progressbar { background: var(--u-surface-2); border-color: var(--u-line); }
 .ifacebadge, .zonebadge { background: var(--u-surface-2); border-color: var(--u-line); }
+
+/* system indicators + UCI change review on dark */
+.u-indicators [data-indicator] { background: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text-2); }
+.u-indicators [data-indicator][data-style="active"] { background: var(--u-accent); border-color: var(--u-accent); color: #fff; }
+.u-indicators [data-indicator="uci-changes"] { background: var(--u-warn); border-color: var(--u-warn); color: #1c1e21; }
+.uci-change-list { background: var(--u-surface-2); border-color: var(--u-line); }
+.uci-change-list ins { background: rgba(56,204,101,.16); }
+.uci-change-list del { background: rgba(240,56,59,.18); }
+.uci-change-list var { background: var(--u-surface); }

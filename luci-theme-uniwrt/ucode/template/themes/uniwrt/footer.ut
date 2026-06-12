@@ -48,11 +48,7 @@
       try { localStorage.setItem('uniwrt-rail', collapsed ? 'expanded' : 'collapsed'); } catch(e){}
     });
 
-    /* restore persisted rail state on desktop */
-    try {
-      var saved = localStorage.getItem('uniwrt-rail');
-      if (saved) html.setAttribute('data-rail', saved);
-    } catch(e){}
+    /* (rail state is restored pre-paint by the header script) */
   })();
 
   /* ---- theme toggle: auto -> light -> dark ---- */

@@ -74,7 +74,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.20-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.21-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -83,7 +83,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.20-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.20-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.21-1_all.ipk
 ```
 
 ### Activating the theme
@@ -134,8 +134,8 @@ The file is registered as a conffile, so your settings persist across package up
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.20
-git push origin v2.0.20
+git tag v2.0.21
+git push origin v2.0.21
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -228,6 +228,13 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.21
+* **Restored LuCI system indicators.** The theme was missing the `#indicators` element that LuCI core injects into via `ui.showIndicator()` — so the clickable **"Unsaved Changes"** badge (review/apply pending UCI changes) and the poll **Refreshing/Paused** state never appeared. Every reference theme provides this hook; it is now in the header, styled to match the status chips (amber for pending changes, accent for active states).
+* **Styled the UCI change-review dialog** (`uci-change-list` / `uci-change-legend`): monospace diff with green additions, red removals and neutral modifications, in both light and dark.
+* **Killed the rail flash on load.** The collapsed/expanded rail state stored in the browser was restored by the footer script after first paint, so a collapsed rail flashed expanded and shifted the layout on every page load. The state is now restored pre-paint in the head, alongside the theme resolution.
+* **New logo.** Redesigned brand mark: blue gradient tile with a rounded "U" and a signal-beacon dot, legible from 128 px down to the 16 px favicon, in light and dark.
+* Polish & robustness: open dropdown lists now layer above the sticky bars (`z-index`), added `cbi-section-create` row styling, sortable-table header affordance (pointer + sort-direction arrow), `prefers-reduced-motion` support (disables animations for users who request it), thin scrollbar + overscroll containment on the rail, and unified the rail-foot credit with the footer branding.
 
 ### v2.0.20
 * **Overview card icons fixed.** Dashboard tile icons were blank because their inline SVGs lacked an `xmlns`, so `DOMParser` produced non-rendering nodes; `svgNode()` now injects the SVG namespace.

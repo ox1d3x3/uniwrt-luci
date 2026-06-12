@@ -139,7 +139,7 @@ img { max-width: 100%; }
 .u-mode-tab:hover { background: var(--u-rail-hover); color: #fff; text-decoration: none; }
 .u-mode-tab.active { background: var(--u-rail-active); color: #fff; }
 
-.u-rail-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 6px 12px 14px; }
+.u-rail-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 6px 12px 14px; overscroll-behavior: contain; scrollbar-width: thin; }
 
 .u-nav-group { display: flex; flex-direction: column; gap: 2px; }
 
@@ -240,6 +240,27 @@ html[data-theme="dark"]  .u-ico-dark { display: block; }
 .u-chip[data-level="crit"]   { color: var(--u-crit); }
 .u-chip[data-level="active"] { color: var(--u-accent); }
 .u-chip[data-level="busy"]   { color: var(--u-accent); }
+
+/* LuCI system indicators (ui.showIndicator -> #indicators): the clickable
+   "Unsaved Changes" badge, poll Refreshing/Paused, etc. Styled to match the
+   status chips. data-style is set by LuCI core; data-clickable gets a hand. */
+.u-indicators { display: inline-flex; align-items: center; gap: 6px; }
+.u-indicators:empty { display: none; }
+.u-indicators [data-indicator] {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 999px; font-size: .76rem; font-weight: 600;
+  background: var(--u-surface-2); color: var(--u-text-2); border: 1px solid var(--u-line);
+  white-space: nowrap;
+}
+.u-indicators [data-indicator][data-style="active"] {
+  background: var(--u-accent); border-color: var(--u-accent); color: #fff;
+}
+.u-indicators [data-indicator="uci-changes"] {
+  background: var(--u-warn); border-color: var(--u-warn); color: #fff;
+}
+.u-indicators [data-indicator][data-style="inactive"] { opacity: .65; }
+.u-indicators [data-indicator][data-clickable] { cursor: pointer; }
+.u-indicators [data-indicator][data-clickable]:hover { filter: brightness(1.08); }
 
 /* ============================================================= SHELL: subnav */
 .u-subnav {
@@ -668,6 +689,60 @@ body.modal-overlay-active #modal_overlay {
   padding-top: 14px; border-top: 1px solid var(--u-line);
 }
 .modal .right { justify-content: flex-end; }
+
+/* UCI changes review (opened from the "Unsaved Changes" badge / Save & Apply):
+   LuCI renders a monospace change list with <ins> additions, <del> removals
+   and <var> modifications, plus a colour legend. */
+.uci-change-list, #changes .uci-change-list {
+  display: block; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .8rem; line-height: 1.55; padding: 12px 14px; margin: 8px 0;
+  background: var(--u-surface-2); border: 1px solid var(--u-line);
+  border-radius: var(--u-radius-sm); overflow: auto; max-height: 50vh; white-space: pre-wrap;
+}
+.uci-change-list ins, .uci-change-legend-label ins {
+  display: block; text-decoration: none; padding: 0 6px; border-radius: 4px;
+  background: rgba(56,204,101,.14); color: var(--u-ok);
+  border-left: 3px solid var(--u-ok);
+}
+.uci-change-list del, .uci-change-legend-label del {
+  display: block; text-decoration: none; padding: 0 6px; border-radius: 4px;
+  background: rgba(240,56,59,.12); color: var(--u-crit);
+  border-left: 3px solid var(--u-crit);
+}
+.uci-change-list var, .uci-change-legend-label var {
+  display: block; font-style: normal; padding: 0 6px; border-radius: 4px;
+  background: var(--u-surface); border-left: 3px solid var(--u-text-3);
+}
+.uci-change-list var ins, .uci-change-list var del { border-left: 0; display: inline; padding: 0 3px; }
+.uci-change-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 2px; font-size: .78rem; }
+.uci-change-legend-label { display: inline-flex; align-items: center; gap: 6px; color: var(--u-text-2); }
+.uci-change-legend-label > ins, .uci-change-legend-label > del, .uci-change-legend-label > var {
+  display: inline-block; width: 16px; height: 16px; padding: 0; text-align: center; line-height: 16px;
+}
+
+/* open dropdown list must float above the sticky top bar / sub-nav */
+.cbi-dropdown[open] > ul.dropdown { z-index: 1100; }
+
+/* "Add section" row on map pages */
+.cbi-section-create {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 12px 0 2px; margin-top: 6px; border-top: 1px solid var(--u-line);
+}
+.cbi-section-create > * { margin: 0; }
+
+/* sortable table headers: pointer + direction arrow (set by LuCI's table.js) */
+.th[data-sortable-row], th[data-sortable-row],
+.th[data-sortable], th[data-sortable] { cursor: pointer; user-select: none; }
+.th[data-sort-direction="asc"]::after  { content: " \2191"; color: var(--u-accent); }
+.th[data-sort-direction="desc"]::after { content: " \2193"; color: var(--u-accent); }
+
+/* accessibility / speed: honour the user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+}
 
 /* -------------------------------------------------- previously-missing bits */
 

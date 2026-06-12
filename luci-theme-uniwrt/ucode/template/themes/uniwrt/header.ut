@@ -73,6 +73,10 @@
     if(d){ d.media = mode==='dark' ? 'all' : (mode==='light' ? 'not all' : '(prefers-color-scheme: dark)'); }
     document.documentElement.dataset.theme=mode;
     if(m) m.content=isDark()?'#131416':'#ffffff';
+    /* restore the persisted rail state BEFORE first paint too, so a locally
+       collapsed rail doesn't flash expanded and shift the layout on load */
+    try{ var r=localStorage.getItem('uniwrt-rail');
+         if(r==='collapsed'||r==='expanded') document.documentElement.setAttribute('data-rail', r); }catch(e){}
   })();
   </script>
   {% if (node?.css): %}<link rel="stylesheet" href="{{ resource }}/{{ node.css }}">{% endif %}
@@ -103,7 +107,7 @@
   <nav class="u-rail-nav" id="u-rail-nav"></nav>
 
   <div class="u-rail-foot">
-    <span class="u-rail-version">UniWRT Portal v{{ uniwrt_version }}</span>
+    <span class="u-rail-version">OX1d3x3 X UniWRT V{{ uniwrt_version }}</span>
   </div>
 </aside>
 
@@ -117,6 +121,11 @@
   <div class="u-top-spacer"></div>
 
   {% if (u_status_bar == '1'): %}<div class="u-stats" id="u-stats"></div>{% endif %}
+
+  {# LuCI core (ui.showIndicator) injects system badges here: the clickable
+     "Unsaved Changes" badge, the poll Refreshing/Paused state, etc. The id
+     MUST be "indicators" — every reference theme provides it. #}
+  <div class="u-indicators" id="indicators"></div>
 
   <button class="u-iconbtn u-theme-toggle" id="u-theme-toggle" type="button" title="{{ _('Toggle theme') }}" aria-label="{{ _('Toggle theme') }}">
     <svg class="u-ico-auto"  viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="7.25"/><path d="M9 1.75A7.25 7.25 0 019 16.25Z" fill="currentColor" stroke="none"/></svg>
