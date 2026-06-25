@@ -74,7 +74,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.21-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.22-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -83,7 +83,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.21-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.21-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.22-1_all.ipk
 ```
 
 ### Activating the theme
@@ -134,8 +134,8 @@ The file is registered as a conffile, so your settings persist across package up
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.21
-git push origin v2.0.21
+git tag v2.0.22
+git push origin v2.0.22
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -228,6 +228,13 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.22
+* **Filled out the overview dashboard** with three useful new sections below the existing cards, so the previously empty lower area now carries real information:
+  * **Storage** — root filesystem, RAM (tmp) and swap usage as labelled bars with used/total and percentage (from `ubus system info`).
+  * **Live Throughput** — real-time WAN download/upload in Mbps, computed from interface counter deltas across the poll, with cumulative totals (uses `network.device status`, already in the ACL).
+  * **Quick Actions** — a launchpad of one-tap tiles to the most-used pages (Interfaces, Wireless, DHCP Leases, Firewall, System Log, Software, Backup/Flash, Reboot).
+* All three refresh on the existing 5-second poll and use only data the theme was already permitted to read (no ACL change).
 
 ### v2.0.21
 * **Restored LuCI system indicators.** The theme was missing the `#indicators` element that LuCI core injects into via `ui.showIndicator()` — so the clickable **"Unsaved Changes"** badge (review/apply pending UCI changes) and the poll **Refreshing/Paused** state never appeared. Every reference theme provides this hook; it is now in the header, styled to match the status chips (amber for pending changes, accent for active states).

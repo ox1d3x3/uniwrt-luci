@@ -8,7 +8,6 @@
   import { cursor } from 'uci';
   import { getuid, getspnam } from 'luci.core';
 
-  const uniwrt_version = trim(readfile('/usr/share/ucode/luci/template/themes/uniwrt/version')) ?? '?';
   const boardinfo = ubus.call('system', 'board');
   const hostname = striptags(boardinfo?.hostname ?? 'OpenWrt');
 
@@ -105,10 +104,6 @@
 
   <div class="u-rail-modes" id="u-rail-modes"></div>
   <nav class="u-rail-nav" id="u-rail-nav"></nav>
-
-  <div class="u-rail-foot">
-    <span class="u-rail-version">OX1d3x3 X UniWRT V{{ uniwrt_version }}</span>
-  </div>
 </aside>
 
 <header class="u-top" id="u-top">

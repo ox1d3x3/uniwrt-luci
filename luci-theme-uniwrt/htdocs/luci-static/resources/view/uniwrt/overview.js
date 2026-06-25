@@ -9,6 +9,7 @@ var callInfo  = rpc.declare({ object: 'system', method: 'info' });
 var callIfDump = rpc.declare({ object: 'network.interface', method: 'dump', expect: { 'interface': [] } });
 var callWifi  = rpc.declare({ object: 'luci-rpc', method: 'getWirelessDevices', expect: { '': {} } });
 var callHints = rpc.declare({ object: 'luci-rpc', method: 'getHostHints', expect: { '': {} } });
+var callNetDevs = rpc.declare({ object: 'network.device', method: 'status', expect: { '': {} } });
 
 function svgNode(markup) {
 	if (markup.indexOf('xmlns') < 0)
@@ -55,8 +56,22 @@ var ICO = {
 	box:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
 	globe:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 014 9 15 15 0 01-4 9 15 15 0 01-4-9 15 15 0 014-9z"/></svg>',
 	wifi:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0114 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
-	users:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>'
+	users:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>',
+	disk:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>',
+	bolt:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+	grid:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
+	down:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>',
+	up:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="4"/><polyline points="6 10 12 4 18 10"/></svg>'
 };
+
+/* shared route helper (degrades gracefully if L.url is unavailable) */
+function url(path) { try { return L.url(path); } catch (e) { return '/cgi-bin/luci/' + path; } }
+function fmtRate(bps) {
+	var mbps = (bps || 0) * 8 / 1e6;        /* bytes/s -> Mbps */
+	if (mbps >= 100) return mbps.toFixed(0);
+	if (mbps >= 10)  return mbps.toFixed(1);
+	return mbps.toFixed(2);
+}
 
 return view.extend({
 	cores: 1,
@@ -110,10 +125,67 @@ return view.extend({
 			E('div', { 'id': 'u-ov-clients' }, [ E('div', { 'class': 'u-card-sub' }, [ _('Loading…') ]) ])
 		]);
 
+		/* ---- Storage card: root + RAM filesystem usage with bars ---- */
+		var storageCard = E('div', { 'class': 'u-card' }, [
+			E('div', { 'class': 'u-card-head' }, [
+				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.disk) ]),
+				E('div', { 'class': 'u-card-title' }, [ _('Storage') ])
+			]),
+			E('div', { 'id': 'u-ov-storage' }, [ E('div', { 'class': 'u-card-sub' }, [ _('Loading…') ]) ])
+		]);
+
+		/* ---- Live throughput card: WAN down/up in Mbps (counter deltas) ---- */
+		var thruCard = E('div', { 'class': 'u-card' }, [
+			E('div', { 'class': 'u-card-head' }, [
+				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.bolt) ]),
+				E('div', { 'class': 'u-card-title' }, [ _('Live Throughput') ])
+			]),
+			E('div', { 'class': 'u-thru' }, [
+				E('div', { 'class': 'u-thru-col' }, [
+					E('div', { 'class': 'u-thru-head' }, [ svgNode(ICO.down), _('Download') ]),
+					E('div', { 'class': 'u-thru-val', 'id': 'u-ov-rx' }, [ '0.00' ]),
+					E('div', { 'class': 'u-thru-unit' }, [ 'Mbps' ])
+				]),
+				E('div', { 'class': 'u-thru-col' }, [
+					E('div', { 'class': 'u-thru-head' }, [ svgNode(ICO.up), _('Upload') ]),
+					E('div', { 'class': 'u-thru-val', 'id': 'u-ov-tx' }, [ '0.00' ]),
+					E('div', { 'class': 'u-thru-unit' }, [ 'Mbps' ])
+				])
+			]),
+			E('div', { 'class': 'u-card-sub', 'id': 'u-ov-thru-sub', 'style': 'margin-top:10px' }, [ _('Measuring…') ])
+		]);
+
+		/* ---- Quick Actions launchpad ---- */
+		var actions = [
+			{ t: _('Interfaces'),    p: 'admin/network/network',          i: ICO.globe },
+			{ t: _('Wireless'),      p: 'admin/network/wireless',         i: ICO.wifi },
+			{ t: _('DHCP Leases'),   p: 'admin/network/dhcp',             i: ICO.users },
+			{ t: _('Firewall'),      p: 'admin/network/firewall',         i: ICO.box },
+			{ t: _('System Log'),    p: 'admin/status/syslog',            i: ICO.clock },
+			{ t: _('Software'),      p: 'admin/system/package-manager',   i: ICO.disk },
+			{ t: _('Backup / Flash'),p: 'admin/system/flash',             i: ICO.bolt },
+			{ t: _('Reboot'),        p: 'admin/system/reboot',            i: ICO.chip }
+		];
+		var actionGrid = E('div', { 'class': 'u-actions' }, actions.map(function(a) {
+			return E('a', { 'class': 'u-action', 'href': url(a.p) }, [
+				E('span', { 'class': 'u-action-ico' }, [ svgNode(a.i) ]),
+				E('span', { 'class': 'u-action-label' }, [ a.t ])
+			]);
+		}));
+		var actionsCard = E('div', { 'class': 'u-card' }, [
+			E('div', { 'class': 'u-card-head' }, [
+				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.grid) ]),
+				E('div', { 'class': 'u-card-title' }, [ _('Quick Actions') ])
+			]),
+			actionGrid
+		]);
+
 		var root = E('div', {}, [
 			E('p', { 'class': 'cbi-map-descr' }, [ _('Live overview of this device. Figures refresh automatically.') ]),
 			grid,
-			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ ifaceCard, wifiCard, clientsCard ])
+			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ ifaceCard, wifiCard, clientsCard ]),
+			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ storageCard, thruCard ]),
+			actionsCard
 		]);
 
 		/* keep a handle so updates can resolve tiles even before LuCI
@@ -135,18 +207,20 @@ return view.extend({
 				L.resolveDefault(callInfo(), {}),
 				L.resolveDefault(callIfDump(), []),
 				L.resolveDefault(callWifi(), {}),
-				L.resolveDefault(callHints(), {})
+				L.resolveDefault(callHints(), {}),
+				L.resolveDefault(callNetDevs(), {})
 			]).then(function(d) {
 				self.update(d[0]);
 				self.updateIfaces(d[1]);
 				self.updateWifi(d[2]);
 				self.updateClients(d[3]);
+				self.updateThroughput(d[4], d[1]);
 			});
 		}, 5);
 
-		/* first interface/wifi/clients paint */
-		Promise.all([ L.resolveDefault(callIfDump(), []), L.resolveDefault(callWifi(), {}), L.resolveDefault(callHints(), {}) ])
-			.then(function(d) { self.updateIfaces(d[0]); self.updateWifi(d[1]); self.updateClients(d[2]); });
+		/* first interface/wifi/clients/throughput paint */
+		Promise.all([ L.resolveDefault(callIfDump(), []), L.resolveDefault(callWifi(), {}), L.resolveDefault(callHints(), {}), L.resolveDefault(callNetDevs(), {}) ])
+			.then(function(d) { self.updateIfaces(d[0]); self.updateWifi(d[1]); self.updateClients(d[2]); self.updateThroughput(d[3], d[0]); });
 
 		return root;
 	},
@@ -178,6 +252,67 @@ return view.extend({
 			$('u-ov-up').style.fontSize = '1.4rem';
 			if (info.localtime) $('u-ov-up-sub').textContent = new Date(info.localtime * 1000).toLocaleString();
 		}
+		this.updateStorage(info);
+	},
+
+	updateStorage: function(info) {
+		var box = (this.root || document).querySelector('#u-ov-storage');
+		if (!box || !info) return;
+		function bar(label, used, total) {
+			if (!total) return null;
+			var pct = Math.round(used / total * 100);
+			return E('div', { 'class': 'u-store-row' }, [
+				E('div', { 'class': 'u-store-top' }, [
+					E('span', {}, [ label ]),
+					E('span', { 'class': 'u-store-num' }, [ fmtBytes(used) + ' / ' + fmtBytes(total) + ' (' + pct + '%)' ])
+				]),
+				E('div', { 'class': 'u-meter ' + level(pct) }, [ E('i', { 'style': 'width:' + pct + '%' }) ])
+			]);
+		}
+		var rows = [];
+		if (info.root && info.root.total) rows.push(bar(_('Disk (root)'), (info.root.used != null ? info.root.used : info.root.total - info.root.free), info.root.total));
+		if (info.tmp  && info.tmp.total)  rows.push(bar(_('RAM (tmp)'),  (info.tmp.used  != null ? info.tmp.used  : info.tmp.total  - info.tmp.free),  info.tmp.total));
+		if (info.swap && info.swap.total) rows.push(bar(_('Swap'),       (info.swap.total - info.swap.free), info.swap.total));
+		rows = rows.filter(Boolean);
+		box.innerHTML = '';
+		rows.length ? rows.forEach(function(r) { box.appendChild(r); })
+		            : box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('Storage info unavailable') ]));
+	},
+
+	/* live WAN throughput from interface counter deltas */
+	updateThroughput: function(devs, ifaces) {
+		var rxEl = (this.root || document).querySelector('#u-ov-rx');
+		var txEl = (this.root || document).querySelector('#u-ov-tx');
+		var subEl = (this.root || document).querySelector('#u-ov-thru-sub');
+		if (!rxEl || !txEl) return;
+
+		/* resolve the L3 device behind the 'wan' interface (fallback: first up wan-ish) */
+		if (!this._wanDev && Array.isArray(ifaces)) {
+			var wan = ifaces.filter(function(i){ return i.interface === 'wan' && i.up; })[0]
+			       || ifaces.filter(function(i){ return /wan/i.test(i.interface) && i.up; })[0]
+			       || ifaces.filter(function(i){ return i.up && i.interface !== 'loopback' && i.l3_device; })[0];
+			this._wanDev = wan && (wan.l3_device || wan.device);
+			this._wanName = wan && wan.interface;
+		}
+		var dev = this._wanDev;
+		var st = dev && devs && devs[dev] && devs[dev].statistics;
+		if (!st) { if (subEl) subEl.textContent = _('Waiting for WAN device…'); return; }
+
+		var now = Date.now();
+		var rx = st.rx_bytes, tx = st.tx_bytes;
+		if (this._lastRx != null && this._lastT) {
+			var dt = (now - this._lastT) / 1000;
+			if (dt > 0) {
+				var rxRate = Math.max(0, (rx - this._lastRx) / dt);
+				var txRate = Math.max(0, (tx - this._lastTx) / dt);
+				rxEl.textContent = fmtRate(rxRate);
+				txEl.textContent = fmtRate(txRate);
+				if (subEl) subEl.textContent = (this._wanName || dev) + ' · ' + fmtBytes(rx) + ' ' + _('down') + ' / ' + fmtBytes(tx) + ' ' + _('up') + ' ' + _('total');
+			}
+		} else if (subEl) {
+			subEl.textContent = (this._wanName || dev) + ' · ' + _('measuring…');
+		}
+		this._lastRx = rx; this._lastTx = tx; this._lastT = now;
 	},
 
 	updateIfaces: function(ifaces) {

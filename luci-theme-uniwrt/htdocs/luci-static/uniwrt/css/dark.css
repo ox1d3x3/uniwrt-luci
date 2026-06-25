@@ -112,3 +112,8 @@ input[type="checkbox"] { background: #3a3f46; }
 .uci-change-list ins { background: rgba(56,204,101,.16); }
 .uci-change-list del { background: rgba(240,56,59,.18); }
 .uci-change-list var { background: var(--u-surface); }
+
+/* overview: throughput + quick actions on dark */
+.u-thru-col { background: var(--u-surface-2); border-color: var(--u-line); }
+.u-action { background: var(--u-surface-2); border-color: var(--u-line); }
+.u-action-ico { background: var(--u-surface); border-color: var(--u-line); }
