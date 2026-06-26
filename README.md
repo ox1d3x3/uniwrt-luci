@@ -74,7 +74,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.22-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.23-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -83,7 +83,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.22-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.22-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.23-1_all.ipk
 ```
 
 ### Activating the theme
@@ -134,8 +134,8 @@ The file is registered as a conffile, so your settings persist across package up
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.22
-git push origin v2.0.22
+git tag v2.0.23
+git push origin v2.0.23
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -228,6 +228,13 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.23
+Code audit pass — bug fixes, performance and hardening (no visual changes):
+* **Fixed an undefined CSS variable.** `.cbi-tabmenu li[data-errors]` referenced `var(--u-danger)`, which doesn't exist (the palette uses `--u-crit`), so a form tab containing invalid fields never got its red error outline. Audited every `var(--u-*)` against its definition — all resolve now.
+* **Status bar now uses LuCI's `poll` API instead of `setInterval`.** The raw timer kept hitting ubus every 5s even when the browser tab was hidden; the poll loop automatically pauses while the page isn't visible, reducing background CPU/network/battery use.
+* **Tightened the ACL to least privilege.** Removed five granted-but-unused read scopes (`getBoardJSON`, `getNetworkDevices`, `network get_proto_handlers`, `iwinfo`, `luci getRealtimeStats`); the theme now requests only the six ubus methods it actually calls plus `/proc/cpuinfo`.
+* Removed dead code (`fmtSpeed` after the Mbps refactor) and three unused CSS tokens; added a guard so the memory chip can never display "NaN%" if a reading is incomplete.
 
 ### v2.0.22
 * **Filled out the overview dashboard** with three useful new sections below the existing cards, so the previously empty lower area now carries real information:

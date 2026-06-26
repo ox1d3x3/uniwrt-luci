@@ -1,6 +1,7 @@
 'use strict';
 'require baseclass';
 'require rpc';
+'require poll';
 'require fs';
 
 var callSystemInfo = rpc.declare({ object: 'system', method: 'info' });
@@ -62,7 +63,11 @@ return baseclass.extend({
 		this.box.appendChild(this.ramEl);
 		this.box.appendChild(this.uptimeEl);
 		this.tick();
-		setInterval(L.bind(this.tick, this), 5000);
+		/* use LuCI's poll loop instead of setInterval: it batches with the
+		   framework's polling and automatically pauses while the browser tab
+		   is hidden, so the status bar stops hitting ubus in the background */
+		poll.add(L.bind(this.tick, this), 5);
+		poll.start();
 	},
 
 	tick: function() {
@@ -126,7 +131,7 @@ return baseclass.extend({
 			this.cpuEl.title = 'CPU: ' + s + ' (load ' + load1.toFixed(2) + ' on ' + this.numCores + (this.numCores === 1 ? ' core)' : ' cores)');
 			this.setLevel(this.cpuEl, pct < 60 ? 'ok' : pct < 85 ? 'warn' : 'crit');
 		}
-		if (info.memory) {
+		if (info.memory && info.memory.total) {
 			var total = info.memory.total;
 			var avail = info.memory.available || info.memory.free;
 			var pct = ((total - avail) / total * 100).toFixed(0);
@@ -172,13 +177,6 @@ return baseclass.extend({
 		if (b >= 1073741824) return (b / 1073741824).toFixed(1) + ' GB';
 		if (b >= 1048576) return (b / 1048576).toFixed(0) + ' MB';
 		return (b / 1024).toFixed(0) + ' KB';
-	},
-	fmtSpeed: function(bps) {
-		var bits = bps * 8;
-		if (bits >= 1e9) return (bits / 1e9).toFixed(1) + 'G';
-		if (bits >= 1e6) return (bits / 1e6).toFixed(1) + 'M';
-		if (bits >= 1e3) return (bits / 1e3).toFixed(1) + 'K';
-		return Math.round(bits) + 'b';
 	},
 	fmtMbps: function(bps) {
 		var mbps = bps * 8 / 1e6;            /* bytes/s -> Mbps */

@@ -9,7 +9,6 @@
 :root {
   /* brand / accent (overridden inline from UCI config) */
   --u-accent:        #006fff;
-  --u-accent-700:    #0e65d8;
   --u-accent-soft:   rgba(0,111,255,.12);
 
   /* surfaces (light) */
@@ -17,7 +16,6 @@
   --u-surface:       #ffffff;
   --u-surface-2:     #f9fafa;
   --u-rail:          #16181c;
-  --u-rail-2:        #1c1e21;
   --u-rail-hover:    #26292e;
   --u-rail-active:   rgba(0,111,255,.18);
 
@@ -36,7 +34,6 @@
   --u-ok:            #38cc65;
   --u-warn:          #f5a623;
   --u-crit:          #f0383b;
-  --u-info:          var(--u-accent);
 
   /* geometry */
   --u-radius:        12px;
@@ -603,7 +600,7 @@ thead .tr, thead tr, .tr.cbi-section-table-titles {
   box-shadow: 0 1px 3px rgba(0,111,255,.35);
 }
 .cbi-tabmenu li.cbi-tab-disabled a { color: var(--u-text-3); }   /* inactive */
-.cbi-tabmenu li[data-errors] a { box-shadow: inset 0 0 0 1.5px var(--u-danger); }
+.cbi-tabmenu li[data-errors] a { box-shadow: inset 0 0 0 1.5px var(--u-crit); }
 
 .cbi-section-node-tabbed { margin-top: 4px; }
 .cbi-tabcontainer { padding: 0; }

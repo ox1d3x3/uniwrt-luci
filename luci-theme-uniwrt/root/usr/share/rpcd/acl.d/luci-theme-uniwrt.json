@@ -2,48 +2,19 @@
 	"luci-theme-uniwrt": {
 		"description": "Grant access to UniWRT theme settings and overview widgets",
 		"read": {
-			"uci": [
-				"uniwrt",
-				"luci"
-			],
+			"uci": [ "uniwrt", "luci" ],
 			"ubus": {
-				"system": [
-					"board",
-					"info"
-				],
-				"luci-rpc": [
-					"getBoardJSON",
-					"getHostHints",
-					"getNetworkDevices",
-					"getWirelessDevices"
-				],
-				"network.interface": [
-					"dump"
-				],
-				"network.device": [
-					"status"
-				],
-				"network": [
-					"get_proto_handlers"
-				],
-				"iwinfo": [
-					"assoclist",
-					"info"
-				],
-				"luci": [
-					"getRealtimeStats"
-				]
+				"system": [ "board", "info" ],
+				"luci-rpc": [ "getHostHints", "getWirelessDevices" ],
+				"network.interface": [ "dump" ],
+				"network.device": [ "status" ]
 			},
 			"file": {
-				"/proc/cpuinfo": [
-					"read"
-				]
+				"/proc/cpuinfo": [ "read" ]
 			}
 		},
 		"write": {
-			"uci": [
-				"uniwrt"
-			]
+			"uci": [ "uniwrt" ]
 		}
 	}
 }

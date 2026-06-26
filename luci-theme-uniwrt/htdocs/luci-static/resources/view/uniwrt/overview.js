@@ -239,7 +239,7 @@ return view.extend({
 			if (meter) { meter.className = 'u-meter ' + level(pct); meter.firstElementChild.style.width = pct.toFixed(0) + '%'; }
 			$('u-ov-cpu-sub').textContent = _('Load average') + ': ' + load1.toFixed(2) + ' (' + cores + (cores === 1 ? ' core)' : ' cores)');
 		}
-		if (info.memory && $('u-ov-ram')) {
+		if (info.memory && info.memory.total && $('u-ov-ram')) {
 			var total = info.memory.total, avail = info.memory.available || info.memory.free, used = total - avail;
 			var pctR = used / total * 100;
 			$('u-ov-ram').textContent = pctR.toFixed(0) + '%';
