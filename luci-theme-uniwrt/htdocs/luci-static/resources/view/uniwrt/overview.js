@@ -2,6 +2,7 @@
 'require view';
 'require rpc';
 'require poll';
+'require ui';
 'require fs';
 
 var callBoard = rpc.declare({ object: 'system', method: 'board' });
@@ -66,6 +67,42 @@ var ICO = {
 
 /* shared route helper (degrades gracefully if L.url is unavailable) */
 function url(path) { try { return L.url(path); } catch (e) { return '/cgi-bin/luci/' + path; } }
+
+/* resolve a quick-action target against the LIVE menu tree so links can never
+   404: dispatcher paths differ between LuCI builds, so we (1) try known
+   candidate paths in order and (2) fall back to searching the tree for a leaf
+   whose node name matches a keyword under a hint branch. Returns a real path
+   that exists for THIS device, or null (in which case the tile is hidden). */
+function nodeAt(tree, path) {
+	var parts = path.split('/'), node = tree;
+	for (var i = 0; i < parts.length; i++) {
+		var kids = (node && node.children) || {};
+		if (!kids[parts[i]]) return null;
+		node = kids[parts[i]];
+	}
+	return node;
+}
+function searchTree(tree, re, hint) {
+	var found = null;
+	(function walk(node, path) {
+		if (found) return;
+		var kids = (node && node.children) || {};
+		Object.keys(kids).forEach(function(name) {
+			if (found) return;
+			var p = path.concat(name);
+			if (re.test(name) && (!hint || p.indexOf(hint) >= 0)) { found = p.join('/'); return; }
+			walk(kids[name], p);
+		});
+	})(tree, []);
+	return found;
+}
+function resolvePath(tree, candidates, re, hint) {
+	if (!tree) return candidates && candidates[0] || null;   /* tree missing: best-effort */
+	for (var i = 0; i < (candidates || []).length; i++)
+		if (nodeAt(tree, candidates[i])) return candidates[i];
+	return re ? searchTree(tree, re, hint) : null;
+}
+
 function fmtRate(bps) {
 	var mbps = (bps || 0) * 8 / 1e6;        /* bytes/s -> Mbps */
 	if (mbps >= 100) return mbps.toFixed(0);
@@ -81,11 +118,13 @@ return view.extend({
 		return Promise.all([
 			L.resolveDefault(callBoard(), {}),
 			L.resolveDefault(callInfo(), {}),
-			L.resolveDefault(fs.read('/proc/cpuinfo'), '')
+			L.resolveDefault(fs.read('/proc/cpuinfo'), ''),
+			L.resolveDefault(ui.menu.load(), {})
 		]).then(function(d) {
 			/* core count comes from the ROUTER, never the browser */
 			var m = String(d[2] || '').match(/^processor\s*:/gm);
 			self.cores = (m && m.length) || 1;
+			self.menuTree = d[3] || {};
 			return d;
 		});
 	},
@@ -155,30 +194,36 @@ return view.extend({
 			E('div', { 'class': 'u-card-sub', 'id': 'u-ov-thru-sub', 'style': 'margin-top:10px' }, [ _('Measuring…') ])
 		]);
 
-		/* ---- Quick Actions launchpad ---- */
-		var actions = [
-			{ t: _('Interfaces'),    p: 'admin/network/network',          i: ICO.globe },
-			{ t: _('Wireless'),      p: 'admin/network/wireless',         i: ICO.wifi },
-			{ t: _('DHCP Leases'),   p: 'admin/network/dhcp',             i: ICO.users },
-			{ t: _('Firewall'),      p: 'admin/network/firewall',         i: ICO.box },
-			{ t: _('System Log'),    p: 'admin/status/syslog',            i: ICO.clock },
-			{ t: _('Software'),      p: 'admin/system/package-manager',   i: ICO.disk },
-			{ t: _('Backup / Flash'),p: 'admin/system/flash',             i: ICO.bolt },
-			{ t: _('Reboot'),        p: 'admin/system/reboot',            i: ICO.chip }
+		/* ---- Quick Actions launchpad ----
+		   Each entry lists candidate dispatcher paths plus a keyword fallback;
+		   resolvePath() picks the one that exists on THIS device. Tiles whose
+		   target isn't registered are omitted, so a click can never 404. */
+		var actionDefs = [
+			{ t: _('Interfaces'),     i: ICO.globe, c: ['admin/network/network'],                                              re: /^(network|interfaces?)$/, h: 'network' },
+			{ t: _('Wireless'),       i: ICO.wifi,  c: ['admin/network/wireless'],                                             re: /^(wireless|wifi)$/,       h: 'network' },
+			{ t: _('DHCP & DNS'),     i: ICO.users, c: ['admin/network/dhcp'],                                                  re: /^(dhcp|dnsmasq)$/,        h: 'network' },
+			{ t: _('Firewall'),       i: ICO.box,   c: ['admin/network/firewall'],                                             re: /^firewall$/,              h: 'network' },
+			{ t: _('System Log'),     i: ICO.clock, c: ['admin/status/syslog', 'admin/status/logs/syslog', 'admin/status/logread', 'admin/status/logs'], re: /^(syslog|logread|logs|log)$/, h: 'status' },
+			{ t: _('Software'),       i: ICO.disk,  c: ['admin/system/package-manager', 'admin/system/opkg', 'admin/system/software'], re: /^(package-manager|opkg|software)$/, h: 'system' },
+			{ t: _('Backup / Flash'), i: ICO.bolt,  c: ['admin/system/flash', 'admin/system/flashops'],                        re: /^(flash|flashops)$/,      h: 'system' },
+			{ t: _('Reboot'),         i: ICO.chip,  c: ['admin/system/reboot'],                                                re: /^reboot$/,                h: 'system' }
 		];
-		var actionGrid = E('div', { 'class': 'u-actions' }, actions.map(function(a) {
-			return E('a', { 'class': 'u-action', 'href': url(a.p) }, [
+		var actionTiles = [];
+		actionDefs.forEach(function(a) {
+			var path = resolvePath(self.menuTree, a.c, a.re, a.h);
+			if (!path) return;   /* not present on this build -> skip (never 404) */
+			actionTiles.push(E('a', { 'class': 'u-action', 'href': url(path) }, [
 				E('span', { 'class': 'u-action-ico' }, [ svgNode(a.i) ]),
 				E('span', { 'class': 'u-action-label' }, [ a.t ])
-			]);
-		}));
-		var actionsCard = E('div', { 'class': 'u-card' }, [
+			]));
+		});
+		var actionsCard = actionTiles.length ? E('div', { 'class': 'u-card' }, [
 			E('div', { 'class': 'u-card-head' }, [
 				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.grid) ]),
 				E('div', { 'class': 'u-card-title' }, [ _('Quick Actions') ])
 			]),
-			actionGrid
-		]);
+			E('div', { 'class': 'u-actions' }, actionTiles)
+		]) : null;
 
 		var root = E('div', {}, [
 			E('p', { 'class': 'cbi-map-descr' }, [ _('Live overview of this device. Figures refresh automatically.') ]),
@@ -186,7 +231,7 @@ return view.extend({
 			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ ifaceCard, wifiCard, clientsCard ]),
 			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ storageCard, thruCard ]),
 			actionsCard
-		]);
+		].filter(Boolean));
 
 		/* keep a handle so updates can resolve tiles even before LuCI
 		   attaches this node to the document (otherwise the first paint
@@ -231,7 +276,7 @@ return view.extend({
 		var $ = function(id) { return root ? root.querySelector('#' + id) : document.getElementById(id); };
 		var cores = this.cores || 1;
 
-		if (info.load && $('u-ov-cpu')) {
+		if (info.load && info.load.length && $('u-ov-cpu')) {
 			var load1 = info.load[0] / 65536;
 			var pct = Math.min(load1 / cores, 1) * 100;
 			$('u-ov-cpu').textContent = pct.toFixed(0) + '%';

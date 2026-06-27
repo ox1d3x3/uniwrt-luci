@@ -122,7 +122,7 @@ return baseclass.extend({
 
 	updateSystem: function(info) {
 		if (!info) return;
-		if (info.load) {
+		if (info.load && info.load.length) {
 			var load1 = info.load[0] / 65536;
 			var pct = Math.min(load1 / this.numCores, 1) * 100;
 			var s = pct.toFixed(0) + '%';
