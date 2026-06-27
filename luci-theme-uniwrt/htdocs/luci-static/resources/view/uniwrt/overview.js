@@ -110,6 +110,31 @@ function fmtRate(bps) {
 	return mbps.toFixed(2);
 }
 
+/* Resolve the device whose counters actually reflect WAN throughput. On DSA
+   switches (e.g. MT7622) with hardware flow offload the wan PORT's software
+   byte counter stays near zero, so we must follow the bridge member and then
+   the DSA 'conduit' device — the same resolution the header status bar uses.
+   Works entirely from the full `network.device status` map (no extra calls). */
+function resolveWanDev(ifaces, devs) {
+	if (!Array.isArray(ifaces)) return null;
+	var wan = ifaces.filter(function(i){ return i.interface === 'wan'  && i.up; })[0]
+	       || ifaces.filter(function(i){ return i.interface === 'wan6' && i.up; })[0]
+	       || ifaces.filter(function(i){ return /wan/i.test(i.interface) && i.up; })[0]
+	       || ifaces.filter(function(i){ return i.up && i.interface !== 'loopback' && (i.l3_device || i.device); })[0];
+	if (!wan) return null;
+	var dev = wan.l3_device || wan.device, name = wan.interface;
+	var d = devs && devs[dev];
+	if (d) {
+		if (d.type === 'bridge' && Array.isArray(d['bridge-members']) && d['bridge-members'].length) {
+			dev = d['bridge-members'][0];
+			d = (devs && devs[dev]) || d;
+		}
+		if (d && d.devtype === 'dsa' && d['hw-tc-offload'] && d.conduit && devs[d.conduit])
+			dev = d.conduit;
+	}
+	return { dev: dev, name: name };
+}
+
 return view.extend({
 	cores: 1,
 
@@ -173,7 +198,14 @@ return view.extend({
 			E('div', { 'id': 'u-ov-storage' }, [ E('div', { 'class': 'u-card-sub' }, [ _('Loading…') ]) ])
 		]);
 
-		/* ---- Live throughput card: WAN down/up in Mbps (counter deltas) ---- */
+		/* ---- Live throughput card: WAN down/up + peak, 24h and since-restart ---- */
+		function tpRow(label, downId, upId) {
+			return E('div', { 'class': 'u-tp-row' }, [
+				E('span', { 'class': 'u-tp-label' }, [ label ]),
+				E('span', { 'class': 'u-tp-down', 'id': downId }, [ '–' ]),
+				E('span', { 'class': 'u-tp-up', 'id': upId }, [ '–' ])
+			]);
+		}
 		var thruCard = E('div', { 'class': 'u-card' }, [
 			E('div', { 'class': 'u-card-head' }, [
 				E('div', { 'class': 'u-card-ico' }, [ svgNode(ICO.bolt) ]),
@@ -190,6 +222,16 @@ return view.extend({
 					E('div', { 'class': 'u-thru-val', 'id': 'u-ov-tx' }, [ '0.00' ]),
 					E('div', { 'class': 'u-thru-unit' }, [ 'Mbps' ])
 				])
+			]),
+			E('div', { 'class': 'u-tp-stats' }, [
+				E('div', { 'class': 'u-tp-row u-tp-headrow' }, [
+					E('span', { 'class': 'u-tp-label' }, [ '' ]),
+					E('span', { 'class': 'u-tp-down' }, [ '\u2193 ' + _('Down') ]),
+					E('span', { 'class': 'u-tp-up' }, [ '\u2191 ' + _('Up') ])
+				]),
+				tpRow(_('Peak'),          'u-ov-peak-rx', 'u-ov-peak-tx'),
+				tpRow(_('Last 24 h'),     'u-ov-24h-rx',  'u-ov-24h-tx'),
+				tpRow(_('Since restart'), 'u-ov-tot-rx',  'u-ov-tot-tx')
 			]),
 			E('div', { 'class': 'u-card-sub', 'id': 'u-ov-thru-sub', 'style': 'margin-top:10px' }, [ _('Measuring…') ])
 		]);
@@ -325,39 +367,88 @@ return view.extend({
 	},
 
 	/* live WAN throughput from interface counter deltas */
+	/* live WAN throughput + peak / 24h / since-restart, from interface counters.
+	   Byte counters accumulate on the device even when this page is closed, so
+	   sparse persisted snapshots let us compute true totals over a time window. */
 	updateThroughput: function(devs, ifaces) {
-		var rxEl = (this.root || document).querySelector('#u-ov-rx');
-		var txEl = (this.root || document).querySelector('#u-ov-tx');
-		var subEl = (this.root || document).querySelector('#u-ov-thru-sub');
+		var q = this.root || document;
+		var rxEl = q.querySelector('#u-ov-rx'), txEl = q.querySelector('#u-ov-tx');
+		var subEl = q.querySelector('#u-ov-thru-sub');
 		if (!rxEl || !txEl) return;
+		function set(sel, val) { var el = q.querySelector(sel); if (el) el.textContent = val; }
 
-		/* resolve the L3 device behind the 'wan' interface (fallback: first up wan-ish) */
-		if (!this._wanDev && Array.isArray(ifaces)) {
-			var wan = ifaces.filter(function(i){ return i.interface === 'wan' && i.up; })[0]
-			       || ifaces.filter(function(i){ return /wan/i.test(i.interface) && i.up; })[0]
-			       || ifaces.filter(function(i){ return i.up && i.interface !== 'loopback' && i.l3_device; })[0];
-			this._wanDev = wan && (wan.l3_device || wan.device);
-			this._wanName = wan && wan.interface;
+		/* resolve the counter-bearing device once (conduit-aware) */
+		if (!this._wan) {
+			var r = resolveWanDev(ifaces, devs);
+			if (r) { this._wan = r.dev; this._wanName = r.name; }
 		}
-		var dev = this._wanDev;
+		var dev = this._wan;
 		var st = dev && devs && devs[dev] && devs[dev].statistics;
 		if (!st) { if (subEl) subEl.textContent = _('Waiting for WAN device…'); return; }
 
-		var now = Date.now();
-		var rx = st.rx_bytes, tx = st.tx_bytes;
-		if (this._lastRx != null && this._lastT) {
+		var now = Date.now(), nowS = Math.floor(now / 1000);
+		var rx = st.rx_bytes || 0, tx = st.tx_bytes || 0;
+
+		/* load persisted record for this device */
+		var key = 'uniwrt-tp-' + dev, rec = null;
+		try { rec = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+		if (!rec || typeof rec !== 'object') rec = { peakRx: 0, peakTx: 0, s: [] };
+		if (!Array.isArray(rec.s)) rec.s = [];
+		/* counter reset (reboot/iface bounce) -> drop stale history & peaks */
+		if (rec.s.length && rx < rec.s[rec.s.length - 1][1]) rec = { peakRx: 0, peakTx: 0, s: [] };
+
+		/* live rate from the in-memory previous sample */
+		if (this._lastT) {
 			var dt = (now - this._lastT) / 1000;
 			if (dt > 0) {
 				var rxRate = Math.max(0, (rx - this._lastRx) / dt);
 				var txRate = Math.max(0, (tx - this._lastTx) / dt);
 				rxEl.textContent = fmtRate(rxRate);
 				txEl.textContent = fmtRate(txRate);
-				if (subEl) subEl.textContent = (this._wanName || dev) + ' · ' + fmtBytes(rx) + ' ' + _('down') + ' / ' + fmtBytes(tx) + ' ' + _('up') + ' ' + _('total');
+				if (rxRate > rec.peakRx) rec.peakRx = rxRate;
+				if (txRate > rec.peakTx) rec.peakTx = txRate;
 			}
-		} else if (subEl) {
-			subEl.textContent = (this._wanName || dev) + ' · ' + _('measuring…');
 		}
 		this._lastRx = rx; this._lastTx = tx; this._lastT = now;
+
+		/* append a sparse snapshot (~every 5 min), keep ~25h */
+		var last = rec.s[rec.s.length - 1];
+		if (!last || (nowS - last[0]) >= 300) {
+			rec.s.push([nowS, rx, tx]);
+			var cutoff = nowS - 90000;
+			rec.s = rec.s.filter(function(x) { return x[0] >= cutoff; });
+		}
+
+		/* 24h window: delta from the oldest snapshot within 24h (else oldest we have) */
+		var since = nowS - 86400, base = null;
+		for (var i = 0; i < rec.s.length; i++) { if (rec.s[i][0] >= since) { base = rec.s[i]; break; } }
+		if (!base && rec.s.length) base = rec.s[0];
+		var winH = base ? Math.max(0, (nowS - base[0]) / 3600) : 0;
+		var d24rx = base ? Math.max(0, rx - base[1]) : 0;
+		var d24tx = base ? Math.max(0, tx - base[2]) : 0;
+
+		try { localStorage.setItem(key, JSON.stringify(rec)); } catch (e) {}
+
+		/* paint the stat rows */
+		set('#u-ov-peak-rx', rec.peakRx > 0 ? fmtRate(rec.peakRx) + ' Mbps' : '–');
+		set('#u-ov-peak-tx', rec.peakTx > 0 ? fmtRate(rec.peakTx) + ' Mbps' : '–');
+		set('#u-ov-24h-rx', base ? fmtBytes(d24rx) : '–');
+		set('#u-ov-24h-tx', base ? fmtBytes(d24tx) : '–');
+		set('#u-ov-tot-rx', fmtBytes(rx));
+		set('#u-ov-tot-tx', fmtBytes(tx));
+
+		/* annotate the 24h row with the real window length until it reaches 24h */
+		var row24 = q.querySelector('#u-ov-24h-rx');
+		row24 = row24 && row24.parentNode;
+		if (row24) {
+			var lbl = row24.querySelector('.u-tp-label');
+			if (lbl) lbl.textContent = (winH >= 23.5) ? _('Last 24 h')
+				: (winH >= 1) ? _('Last') + ' ' + Math.round(winH) + ' h'
+				: _('Last 24 h');
+			row24.title = base ? _('Measured over the last') + ' ' + winH.toFixed(1) + ' h of history' : '';
+		}
+
+		if (subEl) subEl.textContent = (this._wanName || dev) + (dev !== this._wanName ? ' \u00b7 ' + dev : '');
 	},
 
 	updateIfaces: function(ifaces) {

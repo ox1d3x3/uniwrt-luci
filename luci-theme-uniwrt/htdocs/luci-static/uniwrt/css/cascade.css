@@ -884,6 +884,18 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 .u-thru-val { font-size: 1.6rem; font-weight: 700; line-height: 1.2; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .u-thru-unit { font-size: .72rem; color: var(--u-text-3); }
 
+/* throughput stats table (peak / 24h / since restart) */
+.u-tp-stats { margin-top: 14px; border-top: 1px solid var(--u-line); padding-top: 4px; }
+.u-tp-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 6px 0; font-size: .82rem; }
+.u-tp-row + .u-tp-row { border-top: 1px solid var(--u-line); }
+.u-tp-label { color: var(--u-text-2); font-weight: 600; }
+.u-tp-down, .u-tp-up { font-variant-numeric: tabular-nums; text-align: right; min-width: 86px; color: var(--u-text); }
+.u-tp-headrow { padding-bottom: 2px; }
+.u-tp-headrow .u-tp-down, .u-tp-headrow .u-tp-up { color: var(--u-text-3); font-size: .72rem; font-weight: 600; }
+.u-tp-headrow .u-tp-down { color: var(--u-ok); }
+.u-tp-headrow .u-tp-up { color: var(--u-accent); }
+.u-tp-row + .u-tp-headrow { border-top: 0; }
+
 /* quick actions launchpad */
 .u-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 4px; }
 .u-action {

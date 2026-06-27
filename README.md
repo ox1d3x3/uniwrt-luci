@@ -74,7 +74,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.24-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.25-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -83,7 +83,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.24-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.24-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.25-1_all.ipk
 ```
 
 ### Activating the theme
@@ -134,8 +134,8 @@ The file is registered as a conffile, so your settings persist across package up
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.24
-git push origin v2.0.24
+git tag v2.0.25
+git push origin v2.0.25
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -228,6 +228,10 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.25
+* **Fixed the Live Throughput card reading near-zero.** On DSA switches (e.g. the MT7622 in the Redmi AX6S) the `wan` port's software byte counter stays near zero under hardware flow offload, so the card showed ~0 Mbps while the header chip (which already followed the switch conduit) showed the real rate. The card now uses the same conduit-aware resolution — following the bridge member and the DSA `conduit` device — so its numbers match the header.
+* **Added throughput statistics** to the card: **Peak** down/up (highest rate measured, persisted), **Last 24 h** down/up, and **Since restart** total down/up. These are derived from the interface byte counters, which keep accumulating on the device even while the dashboard is closed, so sparse snapshots stored in the browser let the 24 h figure reflect true traffic over the window (it shows the actual window length, e.g. "Last 6 h", until ~24 h of reference history has built up; a router reboot resets the counters and the stored history).
 
 ### v2.0.24
 * **Fixed the Quick Actions 404.** The dashboard's Quick Actions tiles hardcoded dispatcher paths (e.g. `admin/status/syslog`), but those paths differ between LuCI builds — so on some firmwares a tile 404'd even though the sidebar link worked. Quick Actions now resolve each target against the **live menu tree** (the same source the sidebar uses): they try known candidate paths, fall back to a keyword search of the tree, and **omit any tile whose page isn't registered on the device** — so a Quick Action can never 404 again.
