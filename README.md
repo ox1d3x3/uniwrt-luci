@@ -8,6 +8,7 @@
 
 [![Build](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml/badge.svg)](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/ox1d3x3/uniwrt-luci?include_prereleases&color=006fff)](https://github.com/ox1d3x3/uniwrt-luci/releases)
+[![Downloads](https://img.shields.io/github/downloads/ox1d3x3/uniwrt-luci/total?color=006fff&label=downloads)](https://github.com/ox1d3x3/uniwrt-luci/releases)
 [![License](https://img.shields.io/github/license/ox1d3x3/uniwrt-luci?color=blue)](./LICENSE)
 ![OpenWrt](https://img.shields.io/badge/OpenWrt-23.05%20%7C%2024.10%20%7C%2025.x-orange)
 ![Packages](https://img.shields.io/badge/packages-.ipk%20%2B%20.apk-success)
