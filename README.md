@@ -75,7 +75,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.29-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.30-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -84,7 +84,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.29-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.29-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.30-1_all.ipk
 ```
 
 ### Activating the theme
@@ -153,8 +153,8 @@ This is expected for *any* sideloaded package — it is not a bug in the theme o
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.29
-git push origin v2.0.29
+git tag v2.0.30
+git push origin v2.0.30
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -247,6 +247,11 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.30
+* **Collapsed rail: visible expand arrow restored (no overlap).** The collapsed head now stacks the logo on top with the expand chevron in its own row directly beneath it, followed by the category icons — nothing overlaps and the affordance is always visible. Clicking anywhere in the collapsed rail (logo, arrow or icon) still expands the full menu.
+* **Static assets are now cache-busted.** `cascade.css`, the favicon and the brand logo are served with a `?v=<theme version>` token, so browsers can never keep using a stale stylesheet after an upgrade. A stale cached stylesheet from an older version is the most likely cause of a collapsed rail rendering blank (older CSS hid the icon column entirely) — after installing this version, do one hard refresh (Ctrl+Shift+R) to clear the last unversioned copy; from then on every release refreshes automatically.
+* **Less polling on the Overview page.** The header status bar now shares its `system info` reading with the dashboard, so the heaviest page issues one `system info` ubus call per 5-second cycle instead of two. All looks, functions and animations are preserved.
 
 ### v2.0.29
 * **Reworked the collapsed rail interaction.** The hover chevron that overlapped the logo is gone. Collapsed now shows the logo plus all top-level category icons (with tooltips and an accent edge on the active one), and **clicking anywhere in the collapsed rail — logo or any icon — re-expands the full menu** instead of navigating. The expand/collapse pin appears only when expanded, and its tooltip reflects the state.

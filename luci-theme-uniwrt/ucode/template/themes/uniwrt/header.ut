@@ -33,6 +33,10 @@
     u_overview       = cfg.get_first('uniwrt', 'global', 'overview')       ?? u_overview;
   }
 
+  /* theme version doubles as the static-asset cache token: every release gets
+     fresh URLs, so browsers can never serve a stale stylesheet after upgrade */
+  const uniwrt_version = trim(readfile('/usr/share/ucode/luci/template/themes/uniwrt/version')) ?? '0';
+
   /* dark.css is injected inline so the theme can switch instantly client-side
      without a network round-trip (media-attribute toggling, argon/glass style) */
   const dark_css = readfile('/www/luci-static/uniwrt/css/dark.css') ?? '';
@@ -49,8 +53,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" id="u-meta-color" content="{{ u_mode == 'light' ? '#ffffff' : '#131416' }}">
   <title>{{ hostname }}{{ node?.title ? ` - ${striptags(node.title)}` : '' }} - LuCI</title>
-  <link rel="icon" href="{{ media }}/img/uniwrt-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="{{ media }}/css/cascade.css">
+  <link rel="icon" href="{{ media }}/img/uniwrt-logo.svg?v={{ uniwrt_version }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ media }}/css/cascade.css?v={{ uniwrt_version }}">
   <style id="u-dark" media="{{ dark_media }}">{{ dark_css }}</style>
   <style>
     :root{
@@ -93,7 +97,7 @@
 <aside class="u-rail" id="u-rail">
   <div class="u-rail-head">
     <a class="u-brand" href="{{ dispatcher.build_url('admin') }}">
-      <img class="u-brand-mark" src="{{ media }}/img/uniwrt-logo.svg" alt="">
+      <img class="u-brand-mark" src="{{ media }}/img/uniwrt-logo.svg?v={{ uniwrt_version }}" alt="">
       <span class="u-brand-text">
         <span class="u-brand-name">UniWRT</span>
         <span class="u-brand-host">{{ hostname }}</span>

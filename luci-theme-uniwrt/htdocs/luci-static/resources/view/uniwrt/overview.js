@@ -290,8 +290,12 @@ return view.extend({
 		this.update(info);
 
 		poll.add(function() {
+			/* reuse the status bar's system.info reading when it's fresh (<4.5s)
+			   so the Overview page issues one system.info per cycle, not two */
+			var cached = (window.__uniwrtInfo && (Date.now() - window.__uniwrtInfo.t) < 4500)
+				? Promise.resolve(window.__uniwrtInfo.info) : null;
 			return Promise.all([
-				L.resolveDefault(callInfo(), {}),
+				cached || L.resolveDefault(callInfo(), {}),
 				L.resolveDefault(callIfDump(), []),
 				L.resolveDefault(callWifi(), {}),
 				L.resolveDefault(callHints(), {}),

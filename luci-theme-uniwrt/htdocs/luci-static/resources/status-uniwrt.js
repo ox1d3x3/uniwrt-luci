@@ -72,7 +72,12 @@ return baseclass.extend({
 
 	tick: function() {
 		var self = this;
-		L.resolveDefault(callSystemInfo(), {}).then(function(info) { self.updateSystem(info); });
+		L.resolveDefault(callSystemInfo(), {}).then(function(info) {
+			self.updateSystem(info);
+			/* publish for same-page consumers (the overview dashboard) so the two
+			   widgets don't both hit ubus system.info every poll cycle */
+			try { window.__uniwrtInfo = { t: Date.now(), info: info }; } catch (e) {}
+		});
 
 		if (!this.netChecked) {
 			this.netChecked = true;
