@@ -20,6 +20,7 @@
   let u_status_bar    = '1';
   let u_font_size     = '14';
   let u_rail_collapsed= '0';
+  let u_overview      = '1';
 
   let cfg = cursor();
   if (access('/etc/config/uniwrt')) {
@@ -29,6 +30,7 @@
     u_status_bar     = cfg.get_first('uniwrt', 'global', 'status_bar')     ?? u_status_bar;
     u_font_size      = cfg.get_first('uniwrt', 'global', 'font_size')      ?? u_font_size;
     u_rail_collapsed = cfg.get_first('uniwrt', 'global', 'rail_collapsed') ?? u_rail_collapsed;
+    u_overview       = cfg.get_first('uniwrt', 'global', 'overview')       ?? u_overview;
   }
 
   /* dark.css is injected inline so the theme can switch instantly client-side
@@ -41,7 +43,7 @@
   if (u_mode == 'light') dark_media = 'not all';
 -%}
 <!DOCTYPE html>
-<html lang="{{ dispatcher.lang }}" data-rail="{{ u_rail_collapsed == '1' ? 'collapsed' : 'expanded' }}">
+<html lang="{{ dispatcher.lang }}" data-rail="{{ u_rail_collapsed == '1' ? 'collapsed' : 'expanded' }}" data-uniwrt-overview="{{ u_overview == '0' ? '0' : '1' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

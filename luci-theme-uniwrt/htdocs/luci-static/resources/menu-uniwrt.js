@@ -91,8 +91,14 @@ return baseclass.extend({
 		var box = document.getElementById('u-rail-modes');
 		if (!box) return;
 		box.innerHTML = '';
+		/* The Overview entry is always registered server-side; its visibility is
+		   controlled live here from the current setting (data-uniwrt-overview),
+		   because LuCI bakes menu uci-depends into its cached index and would not
+		   react to the toggle until the cache is cleared. */
+		var hideOverview = document.documentElement.getAttribute('data-uniwrt-overview') === '0';
 		for (var i = 0; i < top.length; i++) {
 			var c = top[i];
+			if (hideOverview && c.name === 'uniwrt-overview') continue;
 			var active = L.env.requestpath.length ? c.name == L.env.requestpath[0] : i == 0;
 			var a = E('a', {
 				'class': 'u-mode-tab' + (active ? ' active' : ''),

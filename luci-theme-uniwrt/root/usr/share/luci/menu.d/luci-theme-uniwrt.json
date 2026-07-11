@@ -18,8 +18,7 @@
 			"path": "uniwrt/overview"
 		},
 		"depends": {
-			"acl": [ "luci-theme-uniwrt" ],
-			"uci": { "uniwrt": { "global": { "overview": "1" } } }
+			"acl": [ "luci-theme-uniwrt" ]
 		}
 	}
 }
