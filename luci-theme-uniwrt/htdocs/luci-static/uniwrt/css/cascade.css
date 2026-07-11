@@ -104,7 +104,7 @@ img { max-width: 100%; }
 .u-rail-head {
   display: flex; align-items: center; gap: 10px;
   height: var(--u-top-h);
-  padding: 0 14px;
+  padding: 0 48px 0 14px;   /* right space for the absolutely-positioned pin */
   flex: 0 0 auto;
   border-bottom: 1px solid rgba(255,255,255,.06);
 }
@@ -114,30 +114,38 @@ img { max-width: 100%; }
 .u-brand-text { display: flex; flex-direction: column; min-width: 0; }
 .u-brand-name { font-weight: 700; font-size: .98rem; letter-spacing: .02em; line-height: 1.1; }
 .u-brand-host { font-size: .72rem; color: var(--u-rail-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* collapsed: logo on top, a visible expand arrow right under it */
-[data-rail="collapsed"] .u-rail-head {
-  height: auto; flex-direction: column; justify-content: center;
-  gap: 4px; padding: 12px 0 8px;
-}
+/* collapsed: only the centred logo remains in the head (the pin travels) */
+[data-rail="collapsed"] .u-rail-head { justify-content: center; padding: 0; }
 [data-rail="collapsed"] .u-brand { flex: 0 0 auto; gap: 0; }
 [data-rail="collapsed"] .u-brand-text { display: none; }
 
+/* The expand/collapse pin is positioned absolutely against the rail so it can
+   TRAVEL: expanded it sits top-right of the head; collapsed it docks at the
+   bottom of the rail (well clear of the logo). Both anchors are calc() lengths
+   on the same properties, so the bottom<->top journey interpolates as one
+   seamless animation, coordinated with the rail width transition, plus a 180°
+   rotation of the chevron along the way. */
 .u-rail-pin {
-  flex: 0 0 auto; width: 28px; height: 28px; border: 0; cursor: pointer;
+  position: absolute;
+  top: 14px; left: calc(100% - 42px);      /* expanded: top-right of the head */
+  width: 28px; height: 28px; border: 0; cursor: pointer; z-index: 2;
   background: transparent; color: var(--u-rail-text-2); border-radius: var(--u-radius-xs);
-  display: grid; place-items: center; transition: background .15s, color .15s, transform .22s var(--u-ease);
+  display: grid; place-items: center;
+  transition: top .26s var(--u-ease), left .26s var(--u-ease),
+              transform .26s var(--u-ease), background .15s, color .15s;
 }
 .u-rail-pin svg { width: 18px; height: 18px; }
 .u-rail-pin:hover { background: var(--u-rail-hover); color: #fff; }
-/* Collapsed: the expand chevron sits under the logo (always visible), and
-   clicking ANYTHING in the collapsed rail — logo, arrow or an icon — also
-   re-expands it (wired in the footer script). */
 [data-rail="collapsed"] .u-rail-pin {
+  top: calc(100% - 42px);                  /* collapsed: docked at the bottom */
+  left: calc(50% - 14px);                  /* centred in the narrow rail */
   transform: rotate(180deg);
-  width: 34px; height: 22px; border-radius: 6px;
+  background: var(--u-rail-hover);
 }
 [data-rail="collapsed"] .u-rail { cursor: e-resize; }
 [data-rail="collapsed"] .u-rail a, [data-rail="collapsed"] .u-rail button { cursor: pointer; }
+/* keep the icon column clear of the docked pin */
+[data-rail="collapsed"] .u-rail-modes { padding-bottom: 54px; }
 
 .u-rail-modes { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; }
 /* collapsed rail: all top-level category icons, centered, labels hidden */

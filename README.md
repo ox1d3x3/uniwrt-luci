@@ -75,7 +75,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.30-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.31-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -84,7 +84,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.30-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.30-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.31-1_all.ipk
 ```
 
 ### Activating the theme
@@ -153,8 +153,8 @@ This is expected for *any* sideloaded package — it is not a bug in the theme o
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.30
-git push origin v2.0.30
+git tag v2.0.31
+git push origin v2.0.31
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -247,6 +247,9 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.31
+* **The collapse arrow now docks at the bottom of the collapsed rail and travels.** The cramped arrow-under-the-logo is gone: collapsed, the pin sits centred at the bottom of the rail (well clear of the logo, with its own subtle backing); on click it glides in one continuous animation up to its usual top-right position while the rail widens, rotating 180° along the way — and makes the reverse journey when collapsing. Implemented by anchoring the pin absolutely against the rail with calc() positions on both axes so the whole bottom-to-top journey interpolates seamlessly, coordinated with the rail width transition.
 
 ### v2.0.30
 * **Collapsed rail: visible expand arrow restored (no overlap).** The collapsed head now stacks the logo on top with the expand chevron in its own row directly beneath it, followed by the category icons — nothing overlaps and the affordance is always visible. Clicking anywhere in the collapsed rail (logo, arrow or icon) still expands the full menu.
