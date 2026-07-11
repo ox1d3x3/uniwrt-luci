@@ -104,7 +104,7 @@ return baseclass.extend({
 				'class': 'u-mode-tab' + (active ? ' active' : ''),
 				'href': L.url(c.name),
 				'data-name': c.name
-			}, [ _(c.title) ]);
+			}, [ E('span', { 'class': 'u-mode-label' }, [ _(c.title) ]) ]);
 			a.insertBefore(this.getIcon(c.name), a.firstChild);
 			box.appendChild(a);
 		}

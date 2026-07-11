@@ -114,7 +114,8 @@ img { max-width: 100%; }
 .u-brand-text { display: flex; flex-direction: column; min-width: 0; }
 .u-brand-name { font-weight: 700; font-size: .98rem; letter-spacing: .02em; line-height: 1.1; }
 .u-brand-host { font-size: .72rem; color: var(--u-rail-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-[data-rail="collapsed"] .u-brand-text { display: none; }
+[data-rail="collapsed"] .u-brand { display: none; }
+[data-rail="collapsed"] .u-rail-head { justify-content: center; padding: 0; }
 
 .u-rail-pin {
   flex: 0 0 auto; width: 28px; height: 28px; border: 0; cursor: pointer;
@@ -126,7 +127,11 @@ img { max-width: 100%; }
 [data-rail="collapsed"] .u-rail-pin { transform: rotate(180deg); }
 
 .u-rail-modes { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; }
-[data-rail="collapsed"] .u-rail-modes { display: none; }
+/* collapsed rail shows the top-level category icons centered, labels hidden */
+[data-rail="collapsed"] .u-rail-modes { padding: 12px 0 6px; align-items: center; gap: 4px; }
+[data-rail="collapsed"] .u-mode-tab { justify-content: center; gap: 0; padding: 9px; width: 42px; }
+[data-rail="collapsed"] .u-mode-tab .nav-icon { opacity: 1; }
+[data-rail="collapsed"] .u-mode-label { display: none; }
 .u-mode-tab {
   display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--u-radius-sm);
   font-size: .82rem; font-weight: 600; color: var(--u-rail-text-2); cursor: pointer;
@@ -155,9 +160,12 @@ img { max-width: 100%; }
 .u-nav-arrow { width: 15px; height: 15px; flex: 0 0 auto; transition: transform .2s var(--u-ease); opacity: .65; }
 .u-nav-item.open .u-nav-arrow { transform: rotate(90deg); }
 
+/* contextual sub-nav is hidden when collapsed (top-level icons are enough);
+   if it is ever shown, its labels/arrows must be hidden, not just clipped */
+[data-rail="collapsed"] .u-rail-nav { display: none; }
 [data-rail="collapsed"] .u-nav-label,
-[data-rail="collapsed"] .u-nav-arrow,
-[data-rail="collapsed"] .u-nav-item { justify-content: center; padding: 10px; }
+[data-rail="collapsed"] .u-nav-arrow { display: none; }
+[data-rail="collapsed"] .u-nav-item { justify-content: center; gap: 0; padding: 10px; }
 
 /* submenu */
 .u-nav-sub {

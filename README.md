@@ -4,7 +4,7 @@
 
 # UniWRT Portal
 
-**A modern, standalone LuCI theme for OpenWrt, A clean controller-style dashboard with live status widgets, and light/dark / auto theming.**
+**A modern, standalone LuCI theme for OpenWrt — a clean controller-style dashboard with a collapsible navigation rail, live status widgets, and light / dark / auto theming.**
 
 [![Build](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml/badge.svg)](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/ox1d3x3/uniwrt-luci?include_prereleases&color=006fff)](https://github.com/ox1d3x3/uniwrt-luci/releases)
@@ -75,7 +75,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.26-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.27-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -84,7 +84,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.26-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.26-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.27-1_all.ipk
 ```
 
 ### Activating the theme
@@ -135,8 +135,8 @@ The file is registered as a conffile, so your settings persist across package up
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.26
-git push origin v2.0.26
+git tag v2.0.27
+git push origin v2.0.27
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -229,6 +229,9 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.27
+* **Fixed the collapsed sidebar showing clipped/distorted labels.** When the navigation rail was collapsed, the item labels were not actually hidden — they stayed in place and were cut off by the narrow rail (and the mode-tab labels were bare text nodes with no way to hide them). Collapsing now shows the top-level category **icons centered with their labels hidden**, the contextual sub-nav is hidden, and the rail head centers the expand control. Expanding restores the full labels as before.
 
 ### v2.0.26
 * **Fixed: unchecking "UniWRT Overview page" did not remove the Overview entry from the menu** (reported on 25.x). LuCI evaluates a menu entry's `uci` dependency only when it builds its cached index (`/tmp/luci-indexcache.*`), and that cache is keyed on the menu.d file list — not on UCI state — so toggling the option never invalidated it and the entry kept its baked-in state until the cache was cleared (reinstall/reboot). The Overview entry is now always registered and its visibility is controlled **live in the client menu** from the current setting (exposed by the header), so the toggle takes effect on the next page reload, both on and off, with no cache-clear needed.
