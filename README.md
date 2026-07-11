@@ -4,7 +4,7 @@
 
 # UniWRT Portal
 
-**A modern, standalone LuCI theme for OpenWrt — a clean controller-style dashboard with a collapsible navigation rail, live status widgets, and light / dark / auto theming.**
+**A modern, standalone LuCI theme for OpenWrt, A clean controller-style dashboard with a collapsible navigation rail, live status widgets, and light / dark / auto theming.**
 
 [![Build](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml/badge.svg)](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/ox1d3x3/uniwrt-luci?include_prereleases&color=006fff)](https://github.com/ox1d3x3/uniwrt-luci/releases)
