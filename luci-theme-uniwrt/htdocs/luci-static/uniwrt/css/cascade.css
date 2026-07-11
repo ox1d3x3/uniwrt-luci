@@ -137,19 +137,18 @@ img { max-width: 100%; }
 .u-rail-pin svg { width: 18px; height: 18px; }
 .u-rail-pin:hover { background: var(--u-rail-hover); color: #fff; }
 [data-rail="collapsed"] .u-rail-pin {
-  top: calc(100% - 42px);                  /* collapsed: docked at the bottom */
+  top: calc(var(--u-top-h) + 8px);         /* collapsed: docked right under the logo */
   left: calc(50% - 14px);                  /* centred in the narrow rail */
   transform: rotate(180deg);
   background: var(--u-rail-hover);
 }
 [data-rail="collapsed"] .u-rail { cursor: e-resize; }
 [data-rail="collapsed"] .u-rail a, [data-rail="collapsed"] .u-rail button { cursor: pointer; }
-/* keep the icon column clear of the docked pin */
-[data-rail="collapsed"] .u-rail-modes { padding-bottom: 54px; }
 
 .u-rail-modes { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; }
 /* collapsed rail: all top-level category icons, centered, labels hidden */
-[data-rail="collapsed"] .u-rail-modes { padding: 12px 0 6px; align-items: center; gap: 6px; }
+/* top padding clears the pin slot docked under the logo */
+[data-rail="collapsed"] .u-rail-modes { padding: 46px 0 6px; align-items: center; gap: 6px; }
 [data-rail="collapsed"] .u-mode-tab {
   position: relative; justify-content: center; gap: 0;
   width: 44px; height: 40px; padding: 0; border-radius: 10px;
