@@ -75,7 +75,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.27-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.29-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -84,7 +84,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.27-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.27-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.29-1_all.ipk
 ```
 
 ### Activating the theme
@@ -128,6 +128,24 @@ The file is registered as a conffile, so your settings persist across package up
 
 ---
 
+## Firmware upgrades (Attended Sysupgrade)
+
+The **Attended Sysupgrade** portal builds your new firmware on OpenWrt's official build servers, which only know packages from the **official feeds**. Because `luci-theme-uniwrt` is installed from this repo's releases (sideloaded), the build server cannot include it and the request fails with:
+
+```
+Impossible package selection: missing (luci-theme-uniwrt)
+```
+
+This is expected for *any* sideloaded package — it is not a bug in the theme or in your device. To upgrade via the portal:
+
+1. Enable the package editor: `uci set attendedsysupgrade.client.advanced_mode='1' && uci commit attendedsysupgrade`, then reload the upgrade page (the setting is also exposed in the Attended Sysupgrade configuration).
+2. In the request form's **Packages** list, **remove `luci-theme-uniwrt`**, then request the build and flash as usual with *Keep settings* enabled.
+3. After the reboot, **reinstall the theme** (the matching `.apk` / `.ipk` from [Releases](https://github.com/ox1d3x3/uniwrt-luci/releases), or `uniwrt-apply.sh`). Your `/etc/config/uniwrt` settings survive the upgrade, so the theme returns exactly as configured.
+
+> Until the theme is reinstalled, LuCI may render unstyled because `luci.main.mediaurlbase` still points at the removed theme. Reinstalling fixes it; or switch back temporarily with `uci set luci.main.mediaurlbase='/luci-static/bootstrap' && uci commit luci`.
+
+---
+
 ## Building from source
 
 ### Option A — GitHub Actions (recommended)
@@ -135,8 +153,8 @@ The file is registered as a conffile, so your settings persist across package up
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.27
-git push origin v2.0.27
+git tag v2.0.29
+git push origin v2.0.29
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -229,6 +247,16 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.29
+* **Reworked the collapsed rail interaction.** The hover chevron that overlapped the logo is gone. Collapsed now shows the logo plus all top-level category icons (with tooltips and an accent edge on the active one), and **clicking anywhere in the collapsed rail — logo or any icon — re-expands the full menu** instead of navigating. The expand/collapse pin appears only when expanded, and its tooltip reflects the state.
+* **Icon polish.** Collapsed icons are larger (20 px) in consistent 44x40 hit targets with proper hover pills and a left accent indicator for the active category.
+* **Performance pass.** Dashboard cards now use CSS layout/style containment so their 5-second live-data updates can no longer trigger page-wide reflow; card hover animates only the composited transform (no more box-shadow paint animation); button and login-button transitions dropped the expensive `filter`/`box-shadow` animations. Combined with the existing poll-pausing and pre-paint state restore, interaction and scrolling are noticeably smoother, especially on slower machines.
+* **Documented Attended Sysupgrade.** The portal's "Impossible package selection: missing (luci-theme-uniwrt)" error is expected for any sideloaded package: the official build servers only know official-feed packages. The README now has a step-by-step section (enable Advanced Mode, remove the theme from the package list, flash, reinstall the theme; settings survive).
+
+### v2.0.28
+* **The collapsed rail now keeps the logo.** Previously collapsing hid the brand entirely and left only the expand chevron. The logo now stays centred in the collapsed rail head; since a 66 px rail has no room for the logo and the chevron side by side, the expand control covers the head and fades in on hover/focus — so the mark is what you see at rest and the whole head is one large, obvious expand target.
+* The rail toggle's tooltip/aria-label now reflects the current state ("Expand menu" when collapsed, "Collapse menu" when expanded) instead of always reading "Collapse menu".
 
 ### v2.0.27
 * **Fixed the collapsed sidebar showing clipped/distorted labels.** When the navigation rail was collapsed, the item labels were not actually hidden — they stayed in place and were cut off by the narrow rail (and the mode-tab labels were bare text nodes with no way to hide them). Collapsing now shows the top-level category **icons centered with their labels hidden**, the contextual sub-nav is hidden, and the rail head centers the expand control. Expanding restores the full labels as before.

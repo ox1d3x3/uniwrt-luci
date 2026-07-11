@@ -103,7 +103,8 @@ return baseclass.extend({
 			var a = E('a', {
 				'class': 'u-mode-tab' + (active ? ' active' : ''),
 				'href': L.url(c.name),
-				'data-name': c.name
+				'data-name': c.name,
+				'title': _(c.title)
 			}, [ E('span', { 'class': 'u-mode-label' }, [ _(c.title) ]) ]);
 			a.insertBefore(this.getIcon(c.name), a.firstChild);
 			box.appendChild(a);

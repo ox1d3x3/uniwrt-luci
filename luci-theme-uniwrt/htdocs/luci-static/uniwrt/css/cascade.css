@@ -114,8 +114,10 @@ img { max-width: 100%; }
 .u-brand-text { display: flex; flex-direction: column; min-width: 0; }
 .u-brand-name { font-weight: 700; font-size: .98rem; letter-spacing: .02em; line-height: 1.1; }
 .u-brand-host { font-size: .72rem; color: var(--u-rail-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-[data-rail="collapsed"] .u-brand { display: none; }
-[data-rail="collapsed"] .u-rail-head { justify-content: center; padding: 0; }
+/* collapsed: keep the logo, drop only the wordmark, and centre the mark */
+[data-rail="collapsed"] .u-rail-head { position: relative; justify-content: center; padding: 0; }
+[data-rail="collapsed"] .u-brand { flex: 0 0 auto; gap: 0; }
+[data-rail="collapsed"] .u-brand-text { display: none; }
 
 .u-rail-pin {
   flex: 0 0 auto; width: 28px; height: 28px; border: 0; cursor: pointer;
@@ -124,13 +126,25 @@ img { max-width: 100%; }
 }
 .u-rail-pin svg { width: 18px; height: 18px; }
 .u-rail-pin:hover { background: var(--u-rail-hover); color: #fff; }
-[data-rail="collapsed"] .u-rail-pin { transform: rotate(180deg); }
+/* Collapsed: the chevron pin is hidden entirely — the logo stays visible and
+   clicking ANYTHING in the collapsed rail (logo or an icon) re-expands it.
+   Wired in the footer script; the cursor signals the affordance. */
+[data-rail="collapsed"] .u-rail-pin { display: none; }
+[data-rail="collapsed"] .u-rail { cursor: e-resize; }
+[data-rail="collapsed"] .u-rail a { cursor: pointer; }
 
 .u-rail-modes { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; }
-/* collapsed rail shows the top-level category icons centered, labels hidden */
-[data-rail="collapsed"] .u-rail-modes { padding: 12px 0 6px; align-items: center; gap: 4px; }
-[data-rail="collapsed"] .u-mode-tab { justify-content: center; gap: 0; padding: 9px; width: 42px; }
-[data-rail="collapsed"] .u-mode-tab .nav-icon { opacity: 1; }
+/* collapsed rail: all top-level category icons, centered, labels hidden */
+[data-rail="collapsed"] .u-rail-modes { padding: 12px 0 6px; align-items: center; gap: 6px; }
+[data-rail="collapsed"] .u-mode-tab {
+  position: relative; justify-content: center; gap: 0;
+  width: 44px; height: 40px; padding: 0; border-radius: 10px;
+}
+[data-rail="collapsed"] .u-mode-tab .nav-icon { width: 20px; height: 20px; opacity: 1; }
+[data-rail="collapsed"] .u-mode-tab.active::before {
+  content: ""; position: absolute; left: -11px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 22px; border-radius: 0 3px 3px 0; background: var(--u-accent);
+}
 [data-rail="collapsed"] .u-mode-label { display: none; }
 .u-mode-tab {
   display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--u-radius-sm);
@@ -355,7 +369,7 @@ body.page-leaving .u-content { opacity: 0; transition: opacity .16s; }
 .u-login-btn {
   margin-top: 6px; padding: 12px; border: 0; border-radius: var(--u-radius-sm);
   background: var(--u-accent); color: #fff; font-size: .95rem; font-weight: 650; cursor: pointer;
-  font-family: inherit; transition: filter .15s, transform .08s, box-shadow .15s;
+  font-family: inherit; transition: background .15s, transform .08s;
   box-shadow: 0 4px 14px var(--u-accent-soft);
 }
 .u-login-btn:hover { filter: brightness(1.06); }
@@ -524,7 +538,7 @@ input[type="radio"] { width: 17px; height: 17px; accent-color: var(--u-accent); 
   padding: 9px 16px; border-radius: var(--u-radius-sm);
   border: 1.5px solid var(--u-line); background: var(--u-surface); color: var(--u-text);
   cursor: pointer; text-decoration: none;
-  transition: background .15s, border-color .15s, color .15s, transform .08s, box-shadow .15s;
+  transition: background .15s, border-color .15s, color .15s, transform .08s;
   position: relative; overflow: hidden;
 }
 .btn:hover, .cbi-button:hover, button:hover, input[type="submit"]:hover {
@@ -853,7 +867,10 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 .u-card {
   background: var(--u-surface); border: 1px solid var(--u-line);
   border-radius: var(--u-radius); box-shadow: var(--u-shadow-1); padding: 18px 20px;
-  transition: box-shadow .2s, transform .2s;
+  /* perf: animate only the composited transform; shadow snaps (no paint anim).
+     contain keeps the 5s live-data updates inside the card from reflowing the page. */
+  transition: transform .18s var(--u-ease);
+  contain: layout style;
 }
 .u-card:hover { box-shadow: var(--u-shadow-2); transform: translateY(-2px); }
 .u-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }

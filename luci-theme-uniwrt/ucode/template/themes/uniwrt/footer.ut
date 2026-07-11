@@ -42,11 +42,33 @@
     });
     if (scrim) scrim.addEventListener('click', closeRail);
 
-    if (pin) pin.addEventListener('click', function(){
-      var collapsed = html.getAttribute('data-rail') === 'collapsed';
-      html.setAttribute('data-rail', collapsed ? 'expanded' : 'collapsed');
-      try { localStorage.setItem('uniwrt-rail', collapsed ? 'expanded' : 'collapsed'); } catch(e){}
-    });
+    if (pin) {
+      var pinLabels = { collapsed: '{{ _('Expand menu') }}', expanded: '{{ _('Collapse menu') }}' };
+      function syncPinLabel(){
+        var t = pinLabels[html.getAttribute('data-rail') === 'collapsed' ? 'collapsed' : 'expanded'];
+        pin.title = t; pin.setAttribute('aria-label', t);
+      }
+      function setRail(state){
+        html.setAttribute('data-rail', state);
+        try { localStorage.setItem('uniwrt-rail', state); } catch(e){}
+        syncPinLabel();
+      }
+      syncPinLabel();
+      pin.addEventListener('click', function(){
+        setRail(html.getAttribute('data-rail') === 'collapsed' ? 'expanded' : 'collapsed');
+      });
+      /* Collapsed rail is one big expand control: clicking anything inside it
+         (logo or a category icon) re-expands the full menu instead of
+         navigating. Desktop only — on mobile the rail is an off-canvas
+         overlay driven by the burger. */
+      if (rail) rail.addEventListener('click', function(ev){
+        if (html.getAttribute('data-rail') !== 'collapsed') return;
+        if (!window.matchMedia('(min-width: 921px)').matches) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        setRail('expanded');
+      }, true);
+    }
 
     /* (rail state is restored pre-paint by the header script) */
   })();
