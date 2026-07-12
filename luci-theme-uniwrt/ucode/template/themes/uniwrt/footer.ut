@@ -64,6 +64,11 @@
       if (rail) rail.addEventListener('click', function(ev){
         if (html.getAttribute('data-rail') !== 'collapsed') return;
         if (!window.matchMedia('(min-width: 921px)').matches) return;
+        /* a category icon: expand AND follow the link, so the page loads with
+           that category's sub-options in the open sidebar */
+        var tab = ev.target && ev.target.closest && ev.target.closest('.u-mode-tab');
+        if (tab) { setRail('expanded'); return; }
+        /* logo / arrow / empty rail: just expand */
         ev.preventDefault();
         ev.stopPropagation();
         setRail('expanded');

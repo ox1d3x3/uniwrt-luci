@@ -51,16 +51,24 @@ return baseclass.extend({
 		if (!nav) return;
 		nav.innerHTML = '';
 
-		var top = ui.menu.getChildren(tree);
+		/* On real devices the loaded tree's root wraps everything in a single
+		   'admin' node, so getChildren(root) returns just ['admin'] and the
+		   category switcher never populated (top.length > 1 was false). Descend
+		   into 'admin' so the actual categories (Status/System/Network/...)
+		   become the modes; keep the base for links and active-path checks. */
+		var base = (tree && tree.children && tree.children.admin) ? 'admin' : '';
+		var root = base ? tree.children.admin : tree;
+		var idx  = base ? 1 : 0;   /* category position within requestpath */
+		var top  = ui.menu.getChildren(root);
 
 		/* sidebar tree for the active top-level category */
 		for (var i = 0; i < top.length; i++) {
-			var active = L.env.requestpath.length ? top[i].name == L.env.requestpath[0] : i == 0;
-			if (active) this.renderSidebar(nav, top[i], top[i].name);
+			var active = (L.env.requestpath.length > idx) ? top[i].name == L.env.requestpath[idx] : i == 0;
+			if (active) this.renderSidebar(nav, top[i], base ? base + '/' + top[i].name : top[i].name);
 		}
 
 		/* top-level category switcher (Status / System / Network / ...) */
-		if (top.length > 1) this.renderModes(top);
+		if (top.length > 1) this.renderModes(top, base, idx);
 
 		/* page title in the topbar */
 		this.renderTitle(tree);
@@ -87,7 +95,7 @@ return baseclass.extend({
 		el.textContent = title ? _(title) : '';
 	},
 
-	renderModes: function(top) {
+	renderModes: function(top, base, idx) {
 		var box = document.getElementById('u-rail-modes');
 		if (!box) return;
 		box.innerHTML = '';
@@ -99,10 +107,10 @@ return baseclass.extend({
 		for (var i = 0; i < top.length; i++) {
 			var c = top[i];
 			if (hideOverview && c.name === 'uniwrt-overview') continue;
-			var active = L.env.requestpath.length ? c.name == L.env.requestpath[0] : i == 0;
+			var active = (L.env.requestpath.length > (idx || 0)) ? c.name == L.env.requestpath[idx || 0] : i == 0;
 			var a = E('a', {
 				'class': 'u-mode-tab' + (active ? ' active' : ''),
-				'href': L.url(c.name),
+				'href': base ? L.url(base, c.name) : L.url(c.name),
 				'data-name': c.name,
 				'title': _(c.title)
 			}, [ E('span', { 'class': 'u-mode-label' }, [ _(c.title) ]) ]);

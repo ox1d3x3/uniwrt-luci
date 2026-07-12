@@ -75,7 +75,7 @@ Download the artifact that matches your OpenWrt release from the [Releases](http
 
 ```sh
 # copy the .apk to the router first, then:
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.32-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.33-r1.apk
 ```
 
 `--allow-untrusted` is required for a manually-downloaded, unsigned package. If you publish a signed feed, install its public key into `/etc/apk/keys/` instead and drop the flag.
@@ -84,7 +84,7 @@ apk add --allow-untrusted ./luci-theme-uniwrt-2.0.32-r1.apk
 
 ```sh
 # copy the .ipk to the router first, then:
-opkg install ./luci-theme-uniwrt_2.0.32-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.33-1_all.ipk
 ```
 
 ### Activating the theme
@@ -153,8 +153,8 @@ This is expected for *any* sideloaded package — it is not a bug in the theme o
 This repo ships `.github/workflows/build.yml`, which runs a static QA gate (`qa-static.sh`) and then builds three OpenWrt releases with the official `openwrt/gh-action-sdk` (pinned to `@main`), producing both `.ipk` (23.05.x / 24.10.x) and `.apk` (25.12.x+) artifacts. Every push to `main` / `master` publishes a rolling `nightly` pre-release; pushing a `v*` tag publishes a normal release:
 
 ```sh
-git tag v2.0.32
-git push origin v2.0.32
+git tag v2.0.33
+git push origin v2.0.33
 ```
 
 The release also bundles `uniwrt-apply.sh`, a one-shot router-side helper that auto-detects the local `.ipk` / `.apk`, installs it, activates UniWRT, clears the LuCI cache and restarts the web UI.
@@ -247,6 +247,10 @@ Issues and pull requests are welcome. If you hit a rendering bug, a screenshot p
 ---
 
 ## Changelog
+
+### v2.0.33
+* **Fixed the empty collapsed rail — the category icons now actually appear on real devices.** Root cause: LuCI's loaded menu tree wraps everything in a single `admin` node, so the theme's category switcher saw only one top-level child and never rendered (`#u-rail-modes` stayed empty on every real device; the items visible when expanded were the sidebar, which collapse hides — hence the blank column). The renderer now descends into the `admin` wrapper so the true categories (Overview / Status / System / Network / Log out) populate the switcher, with corrected links (`admin/<category>`) and active-path detection. Verified by running the shipped renderer against a device-shaped tree: five icon tabs render with correct hrefs and active state.
+* **Collapsed icons are interactive the way you'd expect:** clicking a category icon expands the sidebar *and* navigates to that category, so the page opens with its sub-options visible; clicking the logo, the arrow or empty rail space just expands.
 
 ### v2.0.32
 * **Collapsed arrow repositioned: docked directly under the logo** (in its own slot just below the head divider, horizontally aligned with the mark) instead of at the very bottom of the rail. The travel animation is unchanged — clicking it still glides the pin up to its top-right position in one continuous motion as the rail expands, and back down under the logo when collapsing. The icon column starts below the pin slot, so nothing can overlap.
