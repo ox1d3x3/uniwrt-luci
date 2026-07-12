@@ -61,13 +61,20 @@ return baseclass.extend({
 		var idx  = base ? 1 : 0;   /* category position within requestpath */
 		var top  = ui.menu.getChildren(root);
 
-		/* sidebar tree for the active top-level category */
-		for (var i = 0; i < top.length; i++) {
-			var active = (L.env.requestpath.length > idx) ? top[i].name == L.env.requestpath[idx] : i == 0;
-			if (active) this.renderSidebar(nav, top[i], base ? base + '/' + top[i].name : top[i].name);
+		/* Expanded sidebar keeps the ORIGINAL single accordion tree: all
+		   categories listed, the active one opening its sub-items inline.
+		   (The category switcher below is populated too, but it is only
+		   DISPLAYED while the rail is collapsed — as the icon column.) */
+		if (base) {
+			this.renderSidebar(nav, root, base);
+		} else {
+			for (var i = 0; i < top.length; i++) {
+				var active = (L.env.requestpath.length > idx) ? top[i].name == L.env.requestpath[idx] : i == 0;
+				if (active) this.renderSidebar(nav, top[i], top[i].name);
+			}
 		}
 
-		/* top-level category switcher (Status / System / Network / ...) */
+		/* category icon column (visible only when the rail is collapsed) */
 		if (top.length > 1) this.renderModes(top, base, idx);
 
 		/* page title in the topbar */
@@ -125,8 +132,10 @@ return baseclass.extend({
 		var group = E('div', { 'class': 'u-nav-group' });
 		var self = this;
 
+		var hideOverview = document.documentElement.getAttribute('data-uniwrt-overview') === '0';
 		for (var i = 0; i < children.length; i++) {
 			var child = children[i];
+			if (hideOverview && child.name === 'uniwrt-overview') continue;
 			var subs = ui.menu.getChildren(child);
 			var hasSubs = subs.length > 0;
 			var open = L.env.dispatchpath[1] == child.name;

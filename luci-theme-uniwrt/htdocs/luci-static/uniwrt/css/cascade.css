@@ -129,26 +129,33 @@ img { max-width: 100%; }
   position: absolute;
   top: 14px; left: calc(100% - 42px);      /* expanded: top-right of the head */
   width: 28px; height: 28px; border: 0; cursor: pointer; z-index: 2;
+  box-sizing: border-box; padding: 0; min-width: 0;  /* immune to global button padding: exactly square */
   background: transparent; color: var(--u-rail-text-2); border-radius: var(--u-radius-xs);
   display: grid; place-items: center;
   transition: top .26s var(--u-ease), left .26s var(--u-ease),
-              transform .26s var(--u-ease), background .15s, color .15s;
+              background .15s, color .15s;
 }
-.u-rail-pin svg { width: 18px; height: 18px; }
+.u-rail-pin svg { width: 18px; height: 18px; display: block; transition: transform .26s var(--u-ease); }
 .u-rail-pin:hover { background: var(--u-rail-hover); color: #fff; }
 [data-rail="collapsed"] .u-rail-pin {
   top: calc(var(--u-top-h) + 8px);         /* collapsed: docked right under the logo */
   left: calc(50% - 14px);                  /* centred in the narrow rail */
-  transform: rotate(180deg);
   background: var(--u-rail-hover);
+  border: 1px solid rgba(255,255,255,.08);
 }
+/* rotate only the chevron, keeping the button box axis-aligned (a rotated
+   rounded box renders with blurry/skewed edges on some GPUs) */
+[data-rail="collapsed"] .u-rail-pin svg { transform: rotate(180deg); }
 [data-rail="collapsed"] .u-rail { cursor: e-resize; }
 [data-rail="collapsed"] .u-rail a, [data-rail="collapsed"] .u-rail button { cursor: pointer; }
 
-.u-rail-modes { padding: 10px 12px 4px; display: flex; flex-direction: column; gap: 2px; }
+/* the category switcher exists in the DOM on every page but is only shown
+   as the icon column while the rail is collapsed; expanded uses the classic
+   accordion tree in .u-rail-nav */
+.u-rail-modes { display: none; }
 /* collapsed rail: all top-level category icons, centered, labels hidden */
 /* top padding clears the pin slot docked under the logo */
-[data-rail="collapsed"] .u-rail-modes { padding: 46px 0 6px; align-items: center; gap: 6px; }
+[data-rail="collapsed"] .u-rail-modes { display: flex; flex-direction: column; padding: 46px 0 6px; align-items: center; gap: 6px; }
 [data-rail="collapsed"] .u-mode-tab {
   position: relative; justify-content: center; gap: 0;
   width: 44px; height: 40px; padding: 0; border-radius: 10px;
@@ -950,6 +957,11 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 
 /* ================================================================ RESPONSIVE */
 @media (max-width: 920px) {
+  /* the off-canvas mobile rail always shows the full tree, regardless of the
+     desktop collapsed preference */
+  [data-rail="collapsed"] .u-rail-nav { display: block; }
+  [data-rail="collapsed"] .u-rail-modes { display: none; }
+
   :root { --u-rail-w: 270px; }
   .u-rail { transform: translateX(-100%); box-shadow: var(--u-shadow-pop); }
   .u-rail.open { transform: translateX(0); }
