@@ -4,6 +4,8 @@
 
 # UniWRT Portal
 
+If UniWRT is useful to you, a ⭐ helps others find it.
+
 **A modern, controller-style theme for OpenWrt's LuCI web interface.**
 
 Collapsible icon navigation, a live dashboard, and light / dark / auto theming — in a single package with no external dependencies.
@@ -263,7 +265,5 @@ Release notes for every version are published on the [Releases](https://github.c
 <div align="center">
 
 Built by [ox1d3x3](https://github.com/ox1d3x3) · Licensed under [Apache 2.0](./LICENSE)
-
-If UniWRT is useful to you, a ⭐ helps others find it.
 
 </div>
