@@ -2,9 +2,9 @@
 
 <img src="luci-theme-uniwrt/htdocs/luci-static/uniwrt/img/uniwrt-logo.svg" width="80" alt="UniWRT">
 
-# UniWRT Portal
+## If UniWRT is useful to you, a ⭐ helps others find it.
 
-If UniWRT is useful to you, a ⭐ helps others find it.
+# UniWRT Portal
 
 **A modern, controller-style theme for OpenWrt's LuCI web interface.**
 
