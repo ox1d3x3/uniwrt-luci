@@ -99,7 +99,7 @@ img { max-width: 100%; }
   transition: width .22s var(--u-ease), transform .24s var(--u-ease);
   overflow: hidden;
 }
-[data-rail="collapsed"] .u-rail { width: var(--u-rail-w-min); }
+[data-rail="collapsed"] .u-rail { width: var(--u-rail-w-min); cursor: e-resize; }
 
 .u-rail-head {
   display: flex; align-items: center; gap: 10px;
@@ -146,7 +146,6 @@ img { max-width: 100%; }
 /* rotate only the chevron, keeping the button box axis-aligned (a rotated
    rounded box renders with blurry/skewed edges on some GPUs) */
 [data-rail="collapsed"] .u-rail-pin svg { transform: rotate(180deg); }
-[data-rail="collapsed"] .u-rail { cursor: e-resize; }
 [data-rail="collapsed"] .u-rail a, [data-rail="collapsed"] .u-rail button { cursor: pointer; }
 
 /* the category switcher exists in the DOM on every page but is only shown
@@ -194,12 +193,11 @@ img { max-width: 100%; }
 .u-nav-arrow { width: 15px; height: 15px; flex: 0 0 auto; transition: transform .2s var(--u-ease); opacity: .65; }
 .u-nav-item.open .u-nav-arrow { transform: rotate(90deg); }
 
-/* contextual sub-nav is hidden when collapsed (top-level icons are enough);
-   if it is ever shown, its labels/arrows must be hidden, not just clipped */
+/* When collapsed the accordion tree is hidden entirely and the icon column
+   above takes its place. Do NOT add label/arrow hiding rules here: the mobile
+   off-canvas rail re-shows .u-rail-nav while data-rail may still be
+   "collapsed", and unscoped child rules would strip its labels and submenus. */
 [data-rail="collapsed"] .u-rail-nav { display: none; }
-[data-rail="collapsed"] .u-nav-label,
-[data-rail="collapsed"] .u-nav-arrow { display: none; }
-[data-rail="collapsed"] .u-nav-item { justify-content: center; gap: 0; padding: 10px; }
 
 /* submenu */
 .u-nav-sub {
@@ -209,7 +207,6 @@ img { max-width: 100%; }
   border-left: 1.5px solid rgba(255,255,255,.08);
 }
 .u-nav-sub.open { display: flex; }
-[data-rail="collapsed"] .u-nav-sub { display: none !important; }
 .u-nav-sub .u-nav-item { padding: 7px 11px; font-size: .82rem; color: var(--u-rail-text-2); }
 .u-nav-sub .u-nav-item:hover { color: #fff; }
 .u-nav-sub .u-nav-item.active { color: #fff; }
@@ -780,6 +777,37 @@ body.modal-overlay-active #modal_overlay {
   }
 }
 
+/* ------------------------------------------------------------ keyboard focus
+   The theme's own controls are custom-styled, so give them one consistent,
+   high-contrast focus ring instead of relying on the browser default (which is
+   easy to miss against the dark rail). Only :focus-visible, so mouse users
+   never see it. */
+.u-nav-item:focus-visible,
+.u-mode-tab:focus-visible,
+.u-brand:focus-visible,
+.u-rail-pin:focus-visible,
+.u-burger:focus-visible,
+.u-iconbtn:focus-visible,
+.u-credit:focus-visible {
+  outline: 2px solid var(--u-accent);
+  outline-offset: 2px;
+  border-radius: var(--u-radius-xs);
+}
+.u-subnav-tab:focus-visible,
+.u-action:focus-visible,
+.btn:focus-visible, .cbi-button:focus-visible,
+button:focus-visible, a.cbi-button:focus-visible {
+  outline: 2px solid var(--u-accent);
+  outline-offset: 2px;
+}
+/* skip-to-content affordance for keyboard users */
+.u-skip {
+  position: absolute; left: -9999px; top: 8px; z-index: 1200;
+  padding: 10px 16px; border-radius: var(--u-radius-sm);
+  background: var(--u-accent); color: #fff; font-weight: 600; text-decoration: none;
+}
+.u-skip:focus { left: 8px; }
+
 /* -------------------------------------------------- previously-missing bits */
 
 /* tooltips (cbi-tooltip popup + dotted-underline trigger) */
@@ -808,6 +836,9 @@ body.modal-overlay-active #modal_overlay {
   content: attr(title); position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: .72rem; font-weight: 600; color: var(--u-text);
+  /* the label sits over both the filled (accent) and unfilled (track) parts,
+     so give it a halo in the surface colour to stay legible over either */
+  text-shadow: 0 0 3px var(--u-surface), 0 0 3px var(--u-surface), 0 0 2px var(--u-surface);
 }
 
 /* interface badges (Network / Status pages) */
@@ -900,7 +931,10 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 .u-card-metric { font-size: 1.8rem; font-weight: 700; color: var(--u-text); line-height: 1; font-variant-numeric: tabular-nums; }
 .u-card-sub { font-size: .78rem; color: var(--u-text-3); margin-top: 6px; }
 .u-meter { height: 7px; border-radius: 4px; background: var(--u-line); overflow: hidden; margin-top: 12px; }
-.u-meter > i { display: block; height: 100%; border-radius: 4px; background: var(--u-accent); transition: width .5s var(--u-ease); }
+/* fill is full-width and scaled: transform is GPU-composited, so the live
+   5s metric updates no longer force a layout pass on every refresh */
+.u-meter > i { display: block; height: 100%; width: 100%; border-radius: 4px; background: var(--u-accent);
+  transform-origin: left center; transform: scaleX(0); transition: transform .5s var(--u-ease); }
 .u-meter.ok > i { background: var(--u-ok); } .u-meter.warn > i { background: var(--u-warn); } .u-meter.crit > i { background: var(--u-crit); }
 .u-kv { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--u-line-2); font-size: .85rem; }
 .u-kv:last-child { border-bottom: 0; }

@@ -79,7 +79,7 @@
       <input type="submit" class="u-login-btn" value="{{ _('Log in') }}">
     </form>
 
-    <p class="u-login-ver">UniWRT Portal v{{ uniwrt_version }}</p>
+    <p class="u-login-ver">OX1d3x3 X UniWRT V{{ uniwrt_version }}</p>
   </div>
 </div>
 

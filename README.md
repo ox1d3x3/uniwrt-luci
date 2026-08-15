@@ -2,8 +2,6 @@
 
 <img src="luci-theme-uniwrt/htdocs/luci-static/uniwrt/img/uniwrt-logo.svg" width="80" alt="UniWRT">
 
-## If UniWRT is useful to you, a ⭐ helps others find it.
-
 # UniWRT Portal
 
 **A modern, controller-style theme for OpenWrt's LuCI web interface.**
@@ -92,13 +90,13 @@ Download the package for your OpenWrt release from the [Releases](https://github
 **OpenWrt 25.x** (apk)
 
 ```sh
-apk add --allow-untrusted ./luci-theme-uniwrt-2.0.34-r1.apk
+apk add --allow-untrusted ./luci-theme-uniwrt-2.0.37-r1.apk
 ```
 
 **OpenWrt 24.10 / 23.05** (opkg)
 
 ```sh
-opkg install ./luci-theme-uniwrt_2.0.34-1_all.ipk
+opkg install ./luci-theme-uniwrt_2.0.37-1_all.ipk
 ```
 
 `--allow-untrusted` is required because the package is downloaded manually rather than from a signed feed.
@@ -265,5 +263,7 @@ Release notes for every version are published on the [Releases](https://github.c
 <div align="center">
 
 Built by [ox1d3x3](https://github.com/ox1d3x3) · Licensed under [Apache 2.0](./LICENSE)
+
+If UniWRT is useful to you, a ⭐ helps others find it.
 
 </div>

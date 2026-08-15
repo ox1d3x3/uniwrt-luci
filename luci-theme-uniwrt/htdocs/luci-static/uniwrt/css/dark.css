@@ -58,6 +58,30 @@ input:focus, textarea:focus, select:focus, .cbi-dropdown[open], .cbi-dropdown:fo
 .btn:hover, .cbi-button:hover, button:hover { background: #30343a; border-color: #3a3f46; }
 .cbi-button-neutral, .cbi-button-reset, .cbi-button-link { background: var(--u-surface-2); }
 
+/* Re-assert the semantic button colours. The neutral rule above matches
+   .cbi-button with the SAME specificity but comes later in the cascade, so
+   without this the primary (Save & Apply) and destructive (Remove/Reset)
+   buttons would both flatten to neutral grey in dark mode. */
+.cbi-button-positive, .cbi-button-save, .cbi-button-apply, .cbi-button-add,
+.btn.cbi-button-positive {
+  background: var(--u-accent); border-color: var(--u-accent); color: #fff;
+}
+.cbi-button-positive:hover, .cbi-button-save:hover, .cbi-button-apply:hover, .cbi-button-add:hover {
+  background: var(--u-accent); border-color: var(--u-accent); color: #fff;
+}
+.cbi-button-negative, .cbi-button-remove {
+  background: var(--u-crit); border-color: var(--u-crit); color: #fff;
+}
+.cbi-button-negative:hover, .cbi-button-remove:hover {
+  background: var(--u-crit); border-color: var(--u-crit); color: #fff;
+}
+.cbi-button-action, .cbi-button-edit {
+  background: var(--u-accent-soft); border-color: transparent; color: var(--u-accent);
+}
+.cbi-button-action:hover, .cbi-button-edit:hover {
+  background: var(--u-accent); border-color: var(--u-accent); color: #fff;
+}
+
 /* tables */
 .table .tr:hover, table tbody tr:hover { background: var(--u-surface-2); }
 

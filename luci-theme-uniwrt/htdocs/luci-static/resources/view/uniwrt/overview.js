@@ -45,7 +45,7 @@ function metricCard(icon, title, valueId, subId, withMeter) {
 		E('div', { 'class': 'u-card-metric', 'id': valueId }, [ '–' ])
 	];
 	if (withMeter)
-		body.push(E('div', { 'class': 'u-meter', 'id': valueId + '-meter' }, [ E('i', { 'style': 'width:0%' }) ]));
+		body.push(E('div', { 'class': 'u-meter', 'id': valueId + '-meter' }, [ E('i', { 'style': 'transform:scaleX(0)' }) ]));
 	body.push(E('div', { 'class': 'u-card-sub', 'id': subId }, [ '' ]));
 	return E('div', { 'class': 'u-card' }, body);
 }
@@ -101,6 +101,13 @@ function resolvePath(tree, candidates, re, hint) {
 	for (var i = 0; i < (candidates || []).length; i++)
 		if (nodeAt(tree, candidates[i])) return candidates[i];
 	return re ? searchTree(tree, re, hint) : null;
+}
+
+/* meters are driven by a composited transform rather than width */
+function setMeter(meterEl, pct) {
+	if (!meterEl) return;
+	var fill = meterEl.firstElementChild;
+	if (fill) fill.style.transform = 'scaleX(' + Math.max(0, Math.min(100, pct)) / 100 + ')';
 }
 
 function fmtRate(bps) {
@@ -327,7 +334,7 @@ return view.extend({
 			var pct = Math.min(load1 / cores, 1) * 100;
 			$('u-ov-cpu').textContent = pct.toFixed(0) + '%';
 			var meter = $('u-ov-cpu-meter');
-			if (meter) { meter.className = 'u-meter ' + level(pct); meter.firstElementChild.style.width = pct.toFixed(0) + '%'; }
+			if (meter) { meter.className = 'u-meter ' + level(pct); setMeter(meter, pct); }
 			$('u-ov-cpu-sub').textContent = _('Load average') + ': ' + load1.toFixed(2) + ' (' + cores + (cores === 1 ? ' core)' : ' cores)');
 		}
 		if (info.memory && info.memory.total && $('u-ov-ram')) {
@@ -335,7 +342,7 @@ return view.extend({
 			var pctR = used / total * 100;
 			$('u-ov-ram').textContent = pctR.toFixed(0) + '%';
 			var mr = $('u-ov-ram-meter');
-			if (mr) { mr.className = 'u-meter ' + level(pctR); mr.firstElementChild.style.width = pctR.toFixed(0) + '%'; }
+			if (mr) { mr.className = 'u-meter ' + level(pctR); setMeter(mr, pctR); }
 			$('u-ov-ram-sub').textContent = fmtBytes(used) + ' / ' + fmtBytes(total);
 		}
 		if (info.uptime && $('u-ov-up')) {
@@ -357,7 +364,7 @@ return view.extend({
 					E('span', {}, [ label ]),
 					E('span', { 'class': 'u-store-num' }, [ fmtBytes(used) + ' / ' + fmtBytes(total) + ' (' + pct + '%)' ])
 				]),
-				E('div', { 'class': 'u-meter ' + level(pct) }, [ E('i', { 'style': 'width:' + pct + '%' }) ])
+				E('div', { 'class': 'u-meter ' + level(pct) }, [ E('i', { 'style': 'transform:scaleX(' + (pct / 100) + ')' }) ])
 			]);
 		}
 		var rows = [];

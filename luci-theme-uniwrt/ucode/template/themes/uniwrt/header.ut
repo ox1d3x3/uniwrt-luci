@@ -92,6 +92,7 @@
 <body class="lang_{{ dispatcher.lang }}" data-page="{{ entityencode(join('-', ctx.request_path), true) }}">
 
 {% if (!blank_page): %}
+<a class="u-skip" href="#maincontent">{{ _('Skip to main content') }}</a>
 <div class="u-scrim" id="u-scrim"></div>
 
 <aside class="u-rail" id="u-rail">
