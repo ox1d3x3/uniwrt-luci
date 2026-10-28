@@ -145,59 +145,99 @@ jobs:
           ( cd release && sha256sum * > SHA256SUMS )
           ls -la release
 
-      - name: Choose release tag
-        id: release_tag
+      - name: Decide what to publish
+        id: plan
         shell: bash
         run: |
           set -euo pipefail
+          VER="$(tr -d '[:space:]' < luci-theme-uniwrt/ucode/template/themes/uniwrt/version)"
+          echo "version=${VER}" >> "$GITHUB_OUTPUT"
+
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            echo "tag=${GITHUB_REF_NAME}"                   >> "$GITHUB_OUTPUT"
-            echo "title=${GITHUB_REF_NAME}"                 >> "$GITHUB_OUTPUT"
-            echo "prerelease=false"                          >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=nightly"                               >> "$GITHUB_OUTPUT"
-            echo "title=Nightly build #${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-            echo "prerelease=true"                           >> "$GITHUB_OUTPUT"
+            # Manual tag push: publish exactly that tag.
+            [ "${GITHUB_REF_NAME}" = "v${VER}" ] || \
+              echo "::warning::Tag ${GITHUB_REF_NAME} does not match package version ${VER}"
+            echo "nightly=false"              >> "$GITHUB_OUTPUT"
+            echo "versioned=true"             >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF_NAME}"     >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
+          # Branch push: always refresh the rolling nightly.
+          echo "nightly=true" >> "$GITHUB_OUTPUT"
+
+          # On the default branch, a version that has no release tag yet is a
+          # new release: publish v<version> automatically and mark it Latest.
+          if [ "${GITHUB_REF}" = "refs/heads/${{ github.event.repository.default_branch }}" ] \
+             && ! git ls-remote --exit-code --tags origin "refs/tags/v${VER}" >/dev/null; then
+            echo "New version ${VER} detected - publishing release v${VER}"
+            echo "versioned=true"   >> "$GITHUB_OUTPUT"
+            echo "tag=v${VER}"      >> "$GITHUB_OUTPUT"
+          else
+            echo "Version ${VER} is already released - nightly only"
+            echo "versioned=false"  >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          cat > release-notes.md <<'NOTES'
+          Pick by **OpenWrt version**, not router CPU — the theme package is architecture-independent.
+
+          | OpenWrt version | Package manager | Asset |
+          |---:|:---:|:---|
+          | 25.12.x and newer | apk | `luci-theme-uniwrt-*.apk` |
+          | 24.10.x | opkg | `luci-theme-uniwrt_*-r1_all.ipk` |
+          | 23.05.x | opkg | `luci-theme-uniwrt_*_all.ipk` (no `-r1`) |
+
+          ```sh
+          # OpenWrt 25.12+
+          apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
+
+          # OpenWrt 23.05 / 24.10 (download only the .ipk for your release)
+          opkg install ./luci-theme-uniwrt_*_all.ipk
+          ```
+
+          Optional one-shot helper (detects the package manager, installs the local
+          package, activates UniWRT, clears the LuCI cache and restarts the web UI):
+
+          ```sh
+          sh ./uniwrt-apply.sh
+          ```
+
+          After upgrading, do one hard refresh in the browser (Ctrl+Shift+R).
+          NOTES
+
       - name: Reset rolling nightly release
-        if: github.ref_type != 'tag'
+        if: steps.plan.outputs.nightly == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: gh release delete nightly --yes --cleanup-tag || true
 
-      - name: Publish release
+      - name: Publish nightly
+        if: steps.plan.outputs.nightly == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.release_tag.outputs.tag }}
-          name: ${{ steps.release_tag.outputs.title }}
-          prerelease: ${{ steps.release_tag.outputs.prerelease }}
-          make_latest: ${{ github.ref_type == 'tag' }}
+          tag_name: nightly
+          target_commitish: ${{ github.sha }}
+          name: Nightly build #${{ github.run_number }} (${{ steps.plan.outputs.version }})
+          prerelease: true
+          make_latest: false
           fail_on_unmatched_files: true
           files: release/*
-          body: |
-            Automated UniWRT Portal build from `${{ github.sha }}`.
+          body_path: release-notes.md
 
-            Pick by **OpenWrt version**, not router CPU — the theme package is architecture-independent.
-
-            | OpenWrt version | Package manager | Asset |
-            |---:|:---:|:---|
-            | 23.05.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
-            | 24.10.x | opkg | `luci-theme-uniwrt_*_all.ipk` |
-            | 25.12.x and newer | apk | `luci-theme-uniwrt-*.apk` |
-
-            ```sh
-            # OpenWrt 23.05 / 24.10
-            opkg install ./luci-theme-uniwrt_*_all.ipk
-
-            # OpenWrt 25.12+
-            apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
-            ```
-
-            Optional one-shot helper (auto-detects the local package, installs it,
-            activates UniWRT, clears the LuCI cache and restarts the web UI):
-
-            ```sh
-            chmod +x ./uniwrt-apply.sh && ./uniwrt-apply.sh
-            ```
+      - name: Publish versioned release
+        if: steps.plan.outputs.versioned == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.plan.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: UniWRT Portal ${{ steps.plan.outputs.tag }}
+          prerelease: false
+          make_latest: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: release/*
+          body_path: release-notes.md

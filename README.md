@@ -240,7 +240,9 @@ Third-party LuCI apps generally work without changes, since UniWRT styles the st
 
 ## Building from source
 
-Every push to `main` runs a static QA gate and builds packages for all supported releases with the OpenWrt SDK, published as a rolling [`nightly`](https://github.com/ox1d3x3/uniwrt-luci/releases/tag/nightly) pre-release. Pushing a `v*` tag publishes a versioned release.
+Every push to `main` runs a static QA gate, builds packages for all supported releases with the OpenWrt SDK, and refreshes the rolling [`nightly`](https://github.com/ox1d3x3/uniwrt-luci/releases/tag/nightly) pre-release.
+
+**Releasing** is automatic: bump the version in [`luci-theme-uniwrt/ucode/template/themes/uniwrt/version`](luci-theme-uniwrt/ucode/template/themes/uniwrt/version) and push to `main`. When CI sees a version that has no `v<version>` tag yet, it tags the commit, publishes the release with all packages, checksums and generated notes, and marks it **Latest**. Pushing a `v*` tag by hand still works too.
 
 To build locally inside an OpenWrt SDK:
 

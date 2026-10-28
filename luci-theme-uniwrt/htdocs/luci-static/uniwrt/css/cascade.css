@@ -997,8 +997,10 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
   [data-rail="collapsed"] .u-rail-modes { display: none; }
 
   :root { --u-rail-w: 270px; }
-  .u-rail { transform: translateX(-100%); box-shadow: var(--u-shadow-pop); }
-  .u-rail.open { transform: translateX(0); }
+  /* the shadow belongs to the OPEN drawer only — on the closed, off-screen
+     rail its blur bleeds ~30px onto the page as a dark band down the left */
+  .u-rail { transform: translateX(-100%); box-shadow: none; }
+  .u-rail.open { transform: translateX(0); box-shadow: var(--u-shadow-pop); }
   [data-rail] .u-top, [data-rail] .u-subnav, [data-rail] .u-main, [data-rail] .u-footer { left: 0; margin-left: 0; }
   .u-top { left: 0; }
   .u-subnav { left: 0; }
