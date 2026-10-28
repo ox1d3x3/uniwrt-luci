@@ -33,6 +33,21 @@
     u_overview       = cfg.get_first('uniwrt', 'global', 'overview')       ?? u_overview;
   }
 
+  /* ---- validate ----
+     These values are written verbatim into <style> and <script> below, so
+     anything that is not exactly an expected value falls back to its default.
+     /etc/config/uniwrt is root-writable, but the theme must never be the step
+     that turns a bad config value into injected markup. */
+  const u_hex = (v, d) => (type(v) == 'string' && match(v, /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)) ? v : d;
+  const u_one = (v, allowed, d) => (index(allowed, v) >= 0) ? v : d;
+  u_mode           = u_one(u_mode, [ 'auto', 'light', 'dark' ], 'auto');
+  u_accent         = u_hex(u_accent, '#006fff');
+  u_dark_accent    = u_hex(u_dark_accent, '#4797ff');
+  u_status_bar     = u_one(u_status_bar, [ '0', '1' ], '1');
+  u_font_size      = u_one(u_font_size, [ '12', '13', '14', '15', '16', '17', '18' ], '14');
+  u_rail_collapsed = u_one(u_rail_collapsed, [ '0', '1' ], '0');
+  u_overview       = u_one(u_overview, [ '0', '1' ], '1');
+
   /* theme version doubles as the static-asset cache token: every release gets
      fresh URLs, so browsers can never serve a stale stylesheet after upgrade */
   const uniwrt_version = trim(readfile('/usr/share/ucode/luci/template/themes/uniwrt/version')) ?? '0';

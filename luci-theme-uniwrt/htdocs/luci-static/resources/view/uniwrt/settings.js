@@ -49,17 +49,25 @@ return view.extend({
 			return el;
 		}
 
+		/* only #RGB / #RRGGBB — the theme writes these straight into CSS */
+		function validateHex(section_id, value) {
+			return (value == null || value === '' || /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value))
+				? true : _('Expecting a colour in #RRGGBB format');
+		}
+
 		o = s.option(form.Value, 'accent', _('Accent (light mode)'),
 			_('Primary colour for links, active items and buttons in light mode.'));
 		o.default = '#006fff';
 		o.placeholder = '#006fff';
 		o.renderWidget = colorWidget;
+		o.validate = validateHex;
 
 		o = s.option(form.Value, 'dark_accent', _('Accent (dark mode)'),
 			_('Primary colour for links, active items and buttons in dark mode.'));
 		o.default = '#4797ff';
 		o.placeholder = '#4797ff';
 		o.renderWidget = colorWidget;
+		o.validate = validateHex;
 
 		/* ---- Dashboard ---- */
 		s = m.section(form.NamedSection, 'global', 'global', _('Dashboard & Status'));

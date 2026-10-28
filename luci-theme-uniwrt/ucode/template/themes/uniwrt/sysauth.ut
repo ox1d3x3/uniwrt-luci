@@ -17,6 +17,12 @@
     u_dark_accent = cfg.get_first('uniwrt', 'global', 'dark_accent') ?? u_dark_accent;
   }
 
+  /* validate: these are written verbatim into <style>/<script> below */
+  const u_hex = (v, d) => (type(v) == 'string' && match(v, /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/)) ? v : d;
+  u_mode        = (index([ 'auto', 'light', 'dark' ], u_mode) >= 0) ? u_mode : 'auto';
+  u_accent      = u_hex(u_accent, '#006fff');
+  u_dark_accent = u_hex(u_dark_accent, '#4797ff');
+
   const dark_css = readfile('/www/luci-static/uniwrt/css/dark.css') ?? '';
   let dark_media = '(prefers-color-scheme: dark)';
   if (u_mode == 'dark')  dark_media = 'all';
@@ -67,7 +73,10 @@
     <div class="u-login-error">{{ _('Invalid username and/or password! Please try again.') }}</div>
     {% endif %}
 
-    <form class="u-login-form" method="post" action="{{ http.getenv('REQUEST_URI') }}">
+    {# No action attribute: the form posts back to the current URL, exactly like
+       the stock Bootstrap theme. Reflecting REQUEST_URI here let a crafted link
+       render a login form that submits credentials to another site (issue #2). #}
+    <form class="u-login-form" method="post">
       <label class="u-field">
         <span class="u-field-label">{{ _('Username') }}</span>
         <input type="text" name="luci_username" value="{{ entityencode(duser, true) }}" autocomplete="username">

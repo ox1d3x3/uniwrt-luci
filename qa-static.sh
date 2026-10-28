@@ -58,6 +58,30 @@ if printf '%s' "$VER" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then ok "version $V
 echo "== No proprietary trademark strings in shipped files =="
 if grep -rinE 'unifi|ubiquiti|ubnt' "$PKG_DIR" >/tmp/tm 2>/dev/null; then bad "trademark strings found:"; cat /tmp/tm; else ok "clean"; fi
 
+echo "== Security: login form must not reflect the request URL (issue #2) =="
+if grep -nE 'getenv\(.REQUEST_URI.\)|QUERY_STRING' "$PKG_DIR"/ucode/template/themes/uniwrt/*.ut >/tmp/refl; then
+  bad "request data reflected into a template:"; cat /tmp/refl
+else ok "no request reflection"; fi
+if grep -nE '<form[^>]*\baction=' "$PKG_DIR/ucode/template/themes/uniwrt/sysauth.ut" >/tmp/act; then
+  bad "login form has an action attribute (must post back to itself):"; cat /tmp/act
+else ok "login form posts back to itself"; fi
+
+echo "== Security: UCI values are validated before reaching <style>/<script> =="
+for f in header.ut sysauth.ut; do
+  if grep -q 'u_hex' "$PKG_DIR/ucode/template/themes/uniwrt/$f"; then ok "$f validates colours"; else bad "$f writes UCI values unvalidated"; fi
+done
+
+echo "== No legacy (pre-v2.0.15) files in the package =="
+legacy=0
+for p in "$PKG_DIR/luasrc" "$PKG_DIR/htdocs/luci-static/uniwrt/js" \
+         "$PKG_DIR/htdocs/luci-static/uniwrt/css/uniwrt.css"; do
+  [ -e "$p" ] && { bad "legacy path present: $p"; legacy=1; }
+done
+for f in "$PKG_DIR"/htdocs/luci-static/uniwrt/*.css "$PKG_DIR"/htdocs/luci-static/uniwrt/*.svg; do
+  [ -e "$f" ] && { bad "stray asset outside css/ or img/: $f"; legacy=1; }
+done
+[ "$legacy" = 0 ] && ok "clean"
+
 echo "== Required files present =="
 for req in \
   "$PKG_DIR/Makefile" \

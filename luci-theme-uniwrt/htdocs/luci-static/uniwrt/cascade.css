@@ -1,8 +1,0 @@
-/* UniWRT LuCI media entrypoint.
- *
- * Bootstrap header/footer are intentionally used as the safe LuCI renderer.
- * Import Bootstrap's stock cascade first so functional LuCI widgets keep their
- * baseline behaviour, then layer UniWRT Portal styling on top.
- */
-@import url("/luci-static/bootstrap/cascade.css");
-@import url("css/uniwrt.css?v=2.0.14");
