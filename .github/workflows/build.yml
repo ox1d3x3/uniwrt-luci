@@ -159,7 +159,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -x "$BUSYBOX" && test -x "$UCI_BIN" && test -x "$APK_BIN"
+          for v in BUSYBOX UCI_BIN APK_BIN; do test -x "${!v:-}" || { echo "::error::$v not built"; exit 1; }; done
+          "$BUSYBOX" 2>&1 | head -n1 || true
           PKG_APK="$(find artifacts -name 'luci-theme-uniwrt-*.apk' | head -n1)"
           test -n "$PKG_APK"
           PKG_APK="$PKG_APK" bash tests/test-apply.sh artifacts/luci-theme-uniwrt-standalone.tar.gz

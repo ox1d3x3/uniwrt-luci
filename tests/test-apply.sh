@@ -21,9 +21,14 @@ BUSYBOX="${BUSYBOX:-$(command -v busybox)}" || { echo "busybox is required"; exi
 UCI_BIN="${UCI_BIN:-}"
 
 T="$(mktemp -d)"; trap 'rm -rf "$T"' EXIT
-pass=0; fail=0
+pass=0; fail=0; SECTION=""
 ok()  { printf '\033[32mok\033[0m   %s\n' "$*"; pass=$((pass+1)); }
-bad() { printf '\033[31mFAIL\033[0m %s\n' "$*"; fail=$((fail+1)); }
+bad() {
+	printf '\033[31mFAIL\033[0m %s\n' "$*"; fail=$((fail+1))
+	# surface failures as annotations in GitHub Actions, with the script's output
+	[ -n "${GITHUB_ACTIONS:-}" ] && echo "::error title=test-apply::$SECTION — $* | $(tail -n 4 "$T/out" 2>/dev/null | tr '\n' ' ' | cut -c1-400)"
+	return 0
+}
 check() { local d="$1"; shift; if "$@"; then ok "$d"; else bad "$d"; fi; }
 
 # --- BusyBox applets + stubs on PATH -----------------------------------------
@@ -109,7 +114,7 @@ sysupgrade_keep() {
 
 all_present() { local m=0; for f in $FILES; do [ -f "$UNIWRT_ROOT$f" ] || { echo "      missing $f"; m=1; }; done; [ $m = 0 ]; }
 
-echo "== 1. fresh standalone install from a local archive =="
+SECTION="1. fresh standalone install from a local archive"; echo "== 1. fresh standalone install from a local archive =="
 new_root 1
 check "install succeeds" run --file "$ARCHIVE"
 check "all theme files installed" all_present
@@ -122,7 +127,7 @@ check "manifest lists itself and the config" bash -c "grep -qx /$KEEP '$UNIWRT_R
 check "no temp files left behind" bash -c "! find '$UNIWRT_ROOT' -name '*.uniwrt-new' | grep -q . && ! ls -d '$UNIWRT_ROOT'/tmp/uniwrt.* >/dev/null 2>&1"
 check "status: standalone, all files present" bash -c "PATH='$BB' '$BUSYBOX' sh '$SCRIPT' --status | grep -q 'All theme files present'"
 
-echo "== 2. survives a firmware upgrade with Keep settings =="
+SECTION="2. survives a firmware upgrade with Keep settings"; echo "== 2. survives a firmware upgrade with Keep settings =="
 echo "	option accent '#38cc65'" >> "$UNIWRT_ROOT/etc/config/uniwrt"
 sysupgrade_keep
 check "every theme file is restored after the upgrade" all_present
@@ -132,7 +137,7 @@ check "theme still registered and active" bash -c "[ '$(uciget luci.themes.UniWR
 sysupgrade_keep
 check "and survives a second upgrade" all_present
 
-echo "== 3. update: keeps settings and theme choice, removes obsolete files =="
+SECTION="3. update: keeps settings and theme choice, removes obsolete files"; echo "== 3. update: keeps settings and theme choice, removes obsolete files =="
 uci_ set luci.main.mediaurlbase=/luci-static/bootstrap; uci_ commit luci
 mkdir -p "$UNIWRT_ROOT/www/luci-static/uniwrt/old"; echo x > "$UNIWRT_ROOT/www/luci-static/uniwrt/old/legacy.css"
 echo "/www/luci-static/uniwrt/old/legacy.css" >> "$UNIWRT_ROOT/$KEEP"
@@ -143,13 +148,13 @@ check "user's theme choice not overridden on update" [ "$(uciget luci.main.media
 check "obsolete file and its empty dir removed" bash -c "[ ! -e '$UNIWRT_ROOT/www/luci-static/uniwrt/old' ]"
 check "obsolete file dropped from manifest" bash -c "! grep -q legacy.css '$UNIWRT_ROOT/$KEEP'"
 
-echo "== 4. status detects damage; re-run repairs =="
+SECTION="4. status detects damage; re-run repairs"; echo "== 4. status detects damage; re-run repairs =="
 rm -f "$UNIWRT_ROOT/www/luci-static/uniwrt/css/dark.css"
 PATH="$BB" "$BUSYBOX" sh "$SCRIPT" --status > "$T/out" 2>&1
 check "status reports the missing file" grep -q "missing: /www/luci-static/uniwrt/css/dark.css" "$T/out"
 check "re-run repairs it" bash -c "PATH='$BB' '$BUSYBOX' sh '$SCRIPT' --file '$ARCHIVE' >/dev/null 2>&1 && [ -f '$UNIWRT_ROOT/www/luci-static/uniwrt/css/dark.css' ]"
 
-echo "== 5. uninstall =="
+SECTION="5. uninstall"; echo "== 5. uninstall =="
 uci_ set luci.main.mediaurlbase=/luci-static/uniwrt; uci_ commit luci
 check "uninstall succeeds" run --uninstall
 left=$(cd "$UNIWRT_ROOT" && find . -path '*uniwrt*' | grep -v '^./etc/config/\.stubdb' || true)
@@ -160,14 +165,14 @@ check "theme unregistered" [ -z "$(uciget luci.themes.UniWRT)" ]
 check "LuCI switched back to Bootstrap" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/bootstrap ]
 check "uninstall again fails cleanly" runfail --uninstall
 
-echo "== 6. uninstall picks another installed theme when Bootstrap is absent =="
+SECTION="6. uninstall picks another installed theme when Bootstrap is absent"; echo "== 6. uninstall picks another installed theme when Bootstrap is absent =="
 new_root 6; rm -rf "$UNIWRT_ROOT/www/luci-static/bootstrap"
 run --file "$ARCHIVE" >/dev/null
 uci_ set luci.themes.Material=/luci-static/material; uci_ delete luci.themes.Bootstrap; uci_ commit luci
 check "uninstall succeeds" run --uninstall
 check "LuCI set to the remaining theme" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/material ]
 
-echo "== 7. online install: always downloads, checksum enforced =="
+SECTION="7. online install: always downloads, checksum enforced"; echo "== 7. online install: always downloads, checksum enforced =="
 new_root 7; fake_release latest; fake_release v9.9.9
 check "downloads the latest release" run
 check "used the releases/latest URL" grep -q "releases/latest/download/luci-theme-uniwrt-standalone.tar.gz" "$UNIWRT_ROOT/fetch.log"
@@ -180,7 +185,7 @@ check "…with a checksum error" grep -qi "checksum mismatch" "$T/out"
 check "…and the installed theme is left intact" all_present
 fake_release latest
 
-echo "== 8. a stale archive in /tmp is never used instead of the latest release =="
+SECTION="8. a stale archive in /tmp is never used instead of the latest release"; echo "== 8. a stale archive in /tmp is never used instead of the latest release =="
 new_root 8; fake_release latest
 mkdir -p "$T/old" && tar xzf "$ARCHIVE" -C "$T/old" && echo "1.0.0" > "$T/old/usr/share/ucode/luci/template/themes/uniwrt/version"
 tar czf "$UNIWRT_ROOT/tmp/luci-theme-uniwrt-standalone.tar.gz" -C "$T/old" .
@@ -188,7 +193,7 @@ tar czf "$UNIWRT_ROOT/tmp/luci-theme-uniwrt-standalone.tar.gz" -C "$T/old" .
 check "downloaded instead of using the leftover archive" grep -q "releases/latest/download" "$UNIWRT_ROOT/fetch.log"
 check "installed the real latest version" [ "$(sed -n 1p "$UNIWRT_ROOT/usr/share/ucode/luci/template/themes/uniwrt/version" | tr -d '[:space:]')" = "$(tar xzf "$ARCHIVE" -O ./usr/share/ucode/luci/template/themes/uniwrt/version | tr -d '[:space:]')" ]
 
-echo "== 9. migrating from the package install (apk) =="
+SECTION="9. migrating from the package install (apk)"; echo "== 9. migrating from the package install (apk) =="
 apk_stub() { # $1 = behaviour of 'apk del': ok | fail
 	rm -f "$BB/apk"; cat > "$BB/apk" <<EOF
 #!/bin/sh
@@ -225,7 +230,7 @@ check "owut remove entry for the theme dropped" bash -c "! UNIWRT_ROOT='$UNIWRT_
 check "…other owut remove entries kept" bash -c "UNIWRT_ROOT='$UNIWRT_ROOT' '$BB/uci' -q get attendedsysupgrade.owut.remove | grep -q luci-app-foo"
 check "now reported as standalone" bash -c "PATH='$BB' '$BUSYBOX' sh '$SCRIPT' --status | grep -q standalone"
 
-echo "== 10. apk failure leaves everything as it was =="
+SECTION="10. apk failure leaves everything as it was"; echo "== 10. apk failure leaves everything as it was =="
 pkg_root 10; apk_stub fail
 check "migration refused" runfail --file "$ARCHIVE"
 check "apk's real error is shown" grep -q "luci-theme-aurora" "$T/out"
@@ -233,7 +238,7 @@ check "hint about stale world entries" grep -q "/etc/apk/world" "$T/out"
 check "package still installed, no standalone manifest" bash -c "[ -f '$UNIWRT_ROOT/pkg-installed' ] && [ ! -e '$UNIWRT_ROOT/$KEEP' ]"
 check "theme still active" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/uniwrt ]
 
-echo "== 11. not enough space: refused before touching anything =="
+SECTION="11. not enough space: refused before touching anything"; echo "== 11. not enough space: refused before touching anything =="
 pkg_root 11; apk_stub ok
 rm -f "$BB/df"; cat > "$BB/df" <<'EOF'
 #!/bin/sh
@@ -245,7 +250,7 @@ check "…with a clear message" grep -q "Not enough free space" "$T/out"
 check "package NOT removed" [ -f "$UNIWRT_ROOT/pkg-installed" ]
 rm -f "$BB/df"; ln -s "$BUSYBOX" "$BB/df"
 
-echo "== 12. copy failure after migration keeps LuCI usable =="
+SECTION="12. copy failure after migration keeps LuCI usable"; echo "== 12. copy failure after migration keeps LuCI usable =="
 pkg_root 12; apk_stub ok
 rm -rf "$UNIWRT_ROOT/usr/share/ucode/luci/template/themes"; : > "$UNIWRT_ROOT/usr/share/ucode/luci/template/themes"   # mkdir will fail
 check "install fails" runfail --file "$ARCHIVE"
@@ -256,7 +261,7 @@ check "re-running completes the install" run --file "$ARCHIVE"
 check "…all files present" all_present
 rm -f "$BB/apk"
 
-echo "== 12b. package detected from the database even if 'apk info' fails =="
+SECTION="12b. package detected from the database even if 'apk info' fails"; echo "== 12b. package detected from the database even if 'apk info' fails =="
 pkg_root 14; apk_stub ok
 mkdir -p "$UNIWRT_ROOT/lib/apk/db"; printf 'C:Q1x\nP:luci-theme-uniwrt\nV:2.0.39-r1\n\n' > "$UNIWRT_ROOT/lib/apk/db/installed"
 rm -f "$UNIWRT_ROOT/pkg-installed"          # stub's 'apk info -e' now says "not installed"
@@ -265,7 +270,7 @@ check "migration still happens" run --file "$ARCHIVE"
 check "apk del was called" grep -q "apk del luci-theme-uniwrt" "$UNIWRT_ROOT/apk.log"
 check "package gone from the database" bash -c "! grep -qx 'P:luci-theme-uniwrt' '$UNIWRT_ROOT/lib/apk/db/installed'"
 
-echo "== 12c. a removal that leaves the package registered is caught =="
+SECTION="12c. a removal that leaves the package registered is caught"; echo "== 12c. a removal that leaves the package registered is caught =="
 pkg_root 15; apk_stub ok
 mkdir -p "$UNIWRT_ROOT/lib/apk/db"; printf 'P:luci-theme-uniwrt\n\n' > "$UNIWRT_ROOT/lib/apk/db/installed"
 check "install stops" runfail --file "$ARCHIVE"
@@ -273,7 +278,7 @@ check "…saying the package is still registered" grep -q "still registered" "$T
 check "…and LuCI is on a working theme" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/bootstrap ]
 rm -f "$BB/apk"
 
-echo "== 12d. migrating from the package install (opkg, OpenWrt 23.05 / 24.10) =="
+SECTION="12d. migrating from the package install (opkg, OpenWrt 23.05 / 24.10)"; echo "== 12d. migrating from the package install (opkg, OpenWrt 23.05 / 24.10) =="
 pkg_root 16; rm -f "$UNIWRT_ROOT/pkg-installed"
 mkdir -p "$UNIWRT_ROOT/usr/lib/opkg"
 printf 'Package: luci-base\nStatus: install user installed\n\nPackage: luci-theme-uniwrt\nVersion: 2.0.39-r1\nStatus: install user installed\n\n' > "$UNIWRT_ROOT/usr/lib/opkg/status"
@@ -296,11 +301,12 @@ check "all theme files present" all_present
 rm -f "$BB/opkg"
 
 if [ -n "${APK_BIN:-}" ] && [ -n "${PKG_APK:-}" ]; then
-echo "== 12e. REAL apk: migrating the real 25.12 package =="
+SECTION="12e. REAL apk: migrating the real 25.12 package"; echo "== 12e. REAL apk: migrating the real 25.12 package =="
 new_root 17; mkdir -p "$UNIWRT_ROOT/etc/apk"
 "$APK_BIN" mkpkg --info name:libc --info version:1-r1 --info arch:noarch --info description:stub --output "$T/libc.apk" >/dev/null
 "$APK_BIN" mkpkg --info name:luci-base --info version:1-r1 --info arch:noarch --info description:stub --output "$T/luci-base.apk" >/dev/null
 "$APK_BIN" --root "$UNIWRT_ROOT" --initdb --allow-untrusted --no-network add --no-scripts "$T/libc.apk" "$T/luci-base.apk" "$PKG_APK" >/dev/null 2>&1
+check "real apk installed the 25.12 package (test precondition)" grep -qx "P:luci-theme-uniwrt" "$UNIWRT_ROOT/lib/apk/db/installed"
 uci_ set luci.themes.UniWRT=/luci-static/uniwrt; uci_ set luci.main.mediaurlbase=/luci-static/uniwrt; uci_ commit luci
 echo "	option accent '#38cc65'" >> "$UNIWRT_ROOT/etc/config/uniwrt"
 rm -f "$BB/apk"
@@ -319,7 +325,7 @@ asu_list() {
 }
 if asu_list | grep -qx luci-theme-uniwrt; then ok "before: the theme is in the upgrade request"; else bad "before: the theme is in the upgrade request"; fi
 check "migration succeeds" run --file "$ARCHIVE"
-if asu_list | grep -qx luci-theme-uniwrt; then bad "after: the theme is NOT in the upgrade request"; else ok "after: the theme is NOT in the upgrade request"; fi
+if [ -f "$UNIWRT_ROOT/lib/apk/db/installed" ] && ! asu_list | grep -qx luci-theme-uniwrt; then ok "after: the theme is NOT in the upgrade request"; else bad "after: the theme is NOT in the upgrade request"; fi
 check "after: not installed per apk either" bash -c "! UNIWRT_ROOT='$UNIWRT_ROOT' '$BB/apk' info -e luci-theme-uniwrt >/dev/null 2>&1"
 check "custom settings kept" grep -q 38cc65 "$UNIWRT_ROOT/etc/config/uniwrt"
 check "all theme files present" all_present
@@ -327,7 +333,7 @@ check "theme active" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/uniwrt 
 rm -f "$BB/apk"
 fi
 
-echo "== 13. rejects a wrong archive =="
+SECTION="13. rejects a wrong archive"; echo "== 13. rejects a wrong archive =="
 new_root 13; mkdir -p "$T/bogus/etc"; echo hi > "$T/bogus/etc/x"; tar czf "$T/luci-theme-uniwrt-standalone.tar.gz" -C "$T/bogus" .
 check "non-UniWRT archive refused" runfail --file "$T/luci-theme-uniwrt-standalone.tar.gz"
 check "nothing installed" [ ! -e "$UNIWRT_ROOT/$KEEP" ]

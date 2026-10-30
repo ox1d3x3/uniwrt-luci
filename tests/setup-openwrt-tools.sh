@@ -78,8 +78,9 @@ if [ ! -d apk-tools ]; then
 	git -C apk-tools checkout -q FETCH_HEAD
 fi
 log "building apk-tools ${APKREV:0:10}"
-( cd apk-tools && meson setup b -Dlua=disabled -Ddocs=disabled -Dhelp=disabled -Dtests=disabled -Durl_backend=wget >/dev/null \
+( cd apk-tools && meson setup b -Dlua=disabled -Ddocs=disabled -Dhelp=disabled -Dtests=disabled -Durl_backend=wget -Ddefault_library=static >/dev/null \
 	&& ninja -C b >/dev/null )
 cp apk-tools/b/src/apk "$OUT/apk"
+"$OUT/apk" --version >&2   # must run from its new location
 
 echo "BUSYBOX=$OUT/busybox BUSYBOX_LINKS=$OUT/busybox.links UCI_BIN=$OUT/uci APK_BIN=$OUT/apk"
