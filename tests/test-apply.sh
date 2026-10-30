@@ -305,7 +305,9 @@ SECTION="12e. REAL apk: migrating the real 25.12 package"; echo "== 12e. REAL ap
 new_root 17; mkdir -p "$UNIWRT_ROOT/etc/apk"
 "$APK_BIN" mkpkg --info name:libc --info version:1-r1 --info arch:noarch --info description:stub --output "$T/libc.apk" >/dev/null
 "$APK_BIN" mkpkg --info name:luci-base --info version:1-r1 --info arch:noarch --info description:stub --output "$T/luci-base.apk" >/dev/null
-"$APK_BIN" --root "$UNIWRT_ROOT" --initdb --allow-untrusted --no-network add --no-scripts "$T/libc.apk" "$T/luci-base.apk" "$PKG_APK" >/dev/null 2>&1
+# CI runners are not root: apk needs --usermode to create a database there
+usermode=""; [ "$(id -u)" = 0 ] || usermode="--usermode"
+"$APK_BIN" --root "$UNIWRT_ROOT" --initdb $usermode --allow-untrusted --no-network add --no-scripts "$T/libc.apk" "$T/luci-base.apk" "$PKG_APK" > "$T/out" 2>&1
 check "real apk installed the 25.12 package (test precondition)" grep -qx "P:luci-theme-uniwrt" "$UNIWRT_ROOT/lib/apk/db/installed"
 uci_ set luci.themes.UniWRT=/luci-static/uniwrt; uci_ set luci.main.mediaurlbase=/luci-static/uniwrt; uci_ commit luci
 echo "	option accent '#38cc65'" >> "$UNIWRT_ROOT/etc/config/uniwrt"

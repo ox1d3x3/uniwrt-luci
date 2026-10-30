@@ -68,7 +68,16 @@ log "building libubox + uci"
 ( cd uci && cmake -S . -B b -DCMAKE_INSTALL_PREFIX="$P" -DBUILD_LUA=OFF -DCMAKE_C_FLAGS="-I$P/include" \
 	-DCMAKE_EXE_LINKER_FLAGS="-L$P/lib -Wl,-rpath,$P/lib" -DCMAKE_SHARED_LINKER_FLAGS="-L$P/lib -Wl,-rpath,$P/lib" >/dev/null \
 	&& cmake --build b -j8 >/dev/null && cmake --install b >/dev/null )
-cp "$P/bin/uci" "$OUT/uci"
+# relocatable: libraries beside the binary, found via a tiny wrapper
+mkdir -p "$OUT/lib"
+cp "$P/bin/uci" "$OUT/lib/uci.bin"
+cp -P "$P"/lib/libuci.so* "$P"/lib/libubox.so* "$OUT/lib/"
+cat > "$OUT/uci" <<'WRAP'
+#!/bin/sh
+d="$(cd "$(dirname "$0")" && pwd)/lib"
+LD_LIBRARY_PATH="$d${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" exec "$d/uci.bin" "$@"
+WRAP
+chmod +x "$OUT/uci"
 
 # --- apk-tools ------------------------------------------------------------------
 APKREV="$(sed -n 's/^PKG_SOURCE_VERSION:=//p' openwrt/package/system/apk/Makefile)"
