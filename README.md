@@ -112,7 +112,7 @@ The script downloads the latest release, verifies it against the release's `SHA2
 | `sh uniwrt-apply.sh` | Install, or update to the latest release |
 | `sh uniwrt-apply.sh --version v2.0.39` | Install a specific release |
 | `sh uniwrt-apply.sh --file /tmp/luci-theme-uniwrt-standalone.tar.gz` | Install from a downloaded archive (no internet needed on the router) |
-| `sh uniwrt-apply.sh --status` | Show the installed version and how it is installed |
+| `sh uniwrt-apply.sh --status` | Show the installed version, how it is installed, and check that every file is present |
 | `sh uniwrt-apply.sh --uninstall` | Remove UniWRT and switch LuCI back to Bootstrap |
 
 <details>
@@ -121,7 +121,7 @@ The script downloads the latest release, verifies it against the release's `SHA2
 
 Attended Sysupgrade asks OpenWrt's build servers for a firmware image containing every installed **package**. The servers only know packages from the official feeds, so a theme installed from a downloaded package makes the request fail.
 
-The standalone install copies the theme's files into place without registering a package, so the upgrade request never mentions it. It records the files in `/lib/upgrade/keep.d/uniwrt-standalone` — OpenWrt's standard list of extra files to keep — so `sysupgrade` carries the theme and your settings into the new firmware whenever *Keep settings* is enabled. The archive is cut from the same build as the `.ipk`, so the files are byte-identical to the package.
+The standalone install copies the theme's files into place without registering a package, so the upgrade request never mentions it. When switching from the package, the script removes it and then checks the package database — the same files the upgrade tools read — to confirm it is really gone. It records the files in `/lib/upgrade/keep.d/uniwrt-standalone` — OpenWrt's standard list of extra files to keep — so `sysupgrade` carries the theme and your settings into the new firmware whenever *Keep settings* is enabled. The archive is cut from the same build as the `.ipk`, so the files are byte-identical to the package.
 </details>
 
 ### Package install
@@ -271,7 +271,7 @@ Third-party LuCI apps generally work without changes, since UniWRT styles the st
 
 ## Building from source
 
-Every push to `main` runs a static QA gate, builds packages for all supported releases with the OpenWrt SDK, cuts the standalone archive from the 24.10 `.ipk` and tests `uniwrt-apply.sh` against it, and refreshes the rolling [`nightly`](https://github.com/ox1d3x3/uniwrt-luci/releases/tag/nightly) pre-release.
+Every push to `main` runs a static QA gate, builds packages for all supported releases with the OpenWrt SDK, cuts the standalone archive from the 24.10 `.ipk`, tests `uniwrt-apply.sh` against it with the router's own tools, and refreshes the rolling [`nightly`](https://github.com/ox1d3x3/uniwrt-luci/releases/tag/nightly) pre-release.
 
 **Releasing** is automatic: bump the version in [`luci-theme-uniwrt/ucode/template/themes/uniwrt/version`](luci-theme-uniwrt/ucode/template/themes/uniwrt/version) and push to `main`. When CI sees a version that has no `v<version>` tag yet, it tags the commit, publishes the release with all packages, checksums and generated notes, and marks it **Latest**. Pushing a `v*` tag by hand still works too.
 
@@ -302,7 +302,8 @@ luci-theme-uniwrt/
 ├── ucode/template/themes/uniwrt/    header.ut, footer.ut, sysauth.ut, version
 └── root/                            default config, uci-defaults, menu and ACL entries
 scripts/make-standalone.sh           cuts the standalone archive from the built .ipk
-tests/test-apply.sh                  tests uniwrt-apply.sh in a simulated router (BusyBox)
+tests/test-apply.sh                  tests uniwrt-apply.sh in a simulated router
+tests/setup-openwrt-tools.sh         builds OpenWrt's BusyBox, uci and apk for those tests
 qa-static.sh                         static checks run in CI
 uniwrt-apply.sh                      on-router installer (standalone / package / uninstall)
 ```
@@ -324,7 +325,7 @@ Run the static checks before opening a pull request:
 ./qa-static.sh
 ```
 
-Changes to `uniwrt-apply.sh` are tested in CI against the real build with `tests/test-apply.sh` (needs `busybox`).
+Changes to `uniwrt-apply.sh` are tested in CI with `tests/test-apply.sh`, using BusyBox built with OpenWrt's configuration, OpenWrt's `uci`, and the apk version OpenWrt 25.12 ships — including a real migration of the built 25.12 package. Run `tests/setup-openwrt-tools.sh` to get the same tools locally.
 
 ## Security
 

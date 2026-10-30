@@ -123,13 +123,6 @@ jobs:
           sh scripts/make-standalone.sh "$ipk" dist/luci-theme-uniwrt-standalone.tar.gz
           tar -tzvf dist/luci-theme-uniwrt-standalone.tar.gz
 
-      - name: Test uniwrt-apply.sh against the standalone archive
-        if: matrix.standalone
-        shell: bash
-        run: |
-          sudo apt-get install -y busybox >/dev/null
-          bash tests/test-apply.sh dist/luci-theme-uniwrt-standalone.tar.gz
-
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
@@ -137,9 +130,46 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  test-standalone:
+    name: Test standalone install (OpenWrt BusyBox, uci, apk)
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y busybox cmake pkg-config libjson-c-dev meson ninja-build libssl-dev zlib1g-dev
+
+      - name: Build OpenWrt's BusyBox, uci and apk
+        shell: bash   # -o pipefail: a failed build must not fall through to the stubs
+        run: bash tests/setup-openwrt-tools.sh "$RUNNER_TEMP/owtools" | tail -n1 | tr ' ' '\n' >> "$GITHUB_ENV"
+
+      - name: Test with the router's tools (incl. real apk migration of the 25.12 package)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$BUSYBOX" && test -x "$UCI_BIN" && test -x "$APK_BIN"
+          PKG_APK="$(find artifacts -name 'luci-theme-uniwrt-*.apk' | head -n1)"
+          test -n "$PKG_APK"
+          PKG_APK="$PKG_APK" bash tests/test-apply.sh artifacts/luci-theme-uniwrt-standalone.tar.gz
+
+      - name: Test with stock BusyBox and the uci stub
+        run: env -u BUSYBOX -u BUSYBOX_LINKS -u UCI_BIN -u APK_BIN bash tests/test-apply.sh artifacts/luci-theme-uniwrt-standalone.tar.gz
+
   release:
     name: Publish GitHub release
-    needs: build
+    needs: [build, test-standalone]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
