@@ -87,21 +87,52 @@ Icon sidebar · live dashboard · light, dark and auto modes · one small packag
 
 ## Installation
 
-### 1. Download
+There are two ways to install UniWRT. Both install exactly the same files — the difference is whether the theme is registered with the package manager, which decides whether **Attended Sysupgrade** keeps working.
 
-Get the package for your OpenWrt release from the [latest release](https://github.com/ox1d3x3/uniwrt-luci/releases/latest):
+| | Standalone (recommended) | Package (`.apk` / `.ipk`) |
+|---|---|---|
+| Attended Sysupgrade (LuCI page and `owut`) | ✅ Works | ❌ Fails until you remove the theme from the request |
+| After a firmware upgrade with *Keep settings* | ✅ Theme is still installed | ❌ Theme is gone and must be reinstalled |
+| Update | Run the script again | `apk add` / `opkg install` the new file |
+| Uninstall | `sh uniwrt-apply.sh --uninstall` | `apk del` / `opkg remove` |
+
+### Standalone install (recommended)
+
+Run on the router (SSH). Works on OpenWrt 23.05, 24.10 and 25.12:
+
+```sh
+wget -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh
+sh /tmp/uniwrt-apply.sh
+```
+
+The script downloads the latest release, verifies it against the release's `SHA256SUMS`, installs it and activates the theme. If UniWRT is already installed as a package, it switches it over to a standalone install and keeps your settings.
+
+| Command | What it does |
+|---|---|
+| `sh uniwrt-apply.sh` | Install, or update to the latest release |
+| `sh uniwrt-apply.sh --version v2.0.39` | Install a specific release |
+| `sh uniwrt-apply.sh --file /tmp/luci-theme-uniwrt-standalone.tar.gz` | Install from a downloaded archive (no internet needed on the router) |
+| `sh uniwrt-apply.sh --status` | Show the installed version and how it is installed |
+| `sh uniwrt-apply.sh --uninstall` | Remove UniWRT and switch LuCI back to Bootstrap |
+
+<details>
+<summary><b>How it works</b></summary>
+<br>
+
+Attended Sysupgrade asks OpenWrt's build servers for a firmware image containing every installed **package**. The servers only know packages from the official feeds, so a theme installed from a downloaded package makes the request fail.
+
+The standalone install copies the theme's files into place without registering a package, so the upgrade request never mentions it. It records the files in `/lib/upgrade/keep.d/uniwrt-standalone` — OpenWrt's standard list of extra files to keep — so `sysupgrade` carries the theme and your settings into the new firmware whenever *Keep settings* is enabled. The archive is cut from the same build as the `.ipk`, so the files are byte-identical to the package.
+</details>
+
+### Package install
+
+Download the package for your OpenWrt release from the [latest release](https://github.com/ox1d3x3/uniwrt-luci/releases/latest), copy it to the router (for example to `/tmp`), then install it:
 
 | OpenWrt | Package manager | File |
 |---|---|---|
 | **25.12** and newer | apk | `luci-theme-uniwrt-<version>-r1.apk` |
 | **24.10** | opkg | `luci-theme-uniwrt_<version>-r1_all.ipk` |
 | **23.05** | opkg | `luci-theme-uniwrt_<version>_all.ipk` |
-
-Not sure which you have? Run `command -v apk` on the router — if it prints a path, use the `.apk`. Each release also includes a `SHA256SUMS` file for verifying the download.
-
-### 2. Install
-
-Copy the file to the router (for example to `/tmp`), then:
 
 ```sh
 # OpenWrt 25.12 and newer
@@ -111,29 +142,20 @@ apk add --allow-untrusted /tmp/luci-theme-uniwrt-*.apk
 opkg install /tmp/luci-theme-uniwrt_*_all.ipk
 ```
 
-`--allow-untrusted` is needed because the package comes from GitHub rather than a signed OpenWrt feed.
+Not sure which you have? Run `command -v apk` on the router — if it prints a path, use the `.apk`. `--allow-untrusted` is needed because the package comes from GitHub rather than a signed OpenWrt feed.
 
-Alternatively, put [`uniwrt-apply.sh`](./uniwrt-apply.sh) (also attached to every release) next to the package and run `sh uniwrt-apply.sh`. It detects the package manager, installs the package, activates the theme, clears the LuCI cache and restarts the web server.
+To uninstall: `apk del luci-theme-uniwrt` (25.12+) or `opkg remove luci-theme-uniwrt` (23.05 / 24.10).
 
-### 3. Activate
+### Selecting the theme
 
-A fresh install switches LuCI to UniWRT automatically. An upgrade never overrides a theme you have chosen since. To select it yourself, go to *System → System → Language and Style*, or run:
+A fresh install switches LuCI to UniWRT automatically; updates never override a theme you have chosen since. To select it yourself, go to *System → System → Language and Style*, or run:
 
 ```sh
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
 uci commit luci
 ```
 
-Then reload the page. After upgrading from an older version, do one hard refresh (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>, or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> on macOS).
-
-### Uninstall
-
-```sh
-apk del luci-theme-uniwrt      # 25.12+
-opkg remove luci-theme-uniwrt  # 23.05 / 24.10
-```
-
-If LuCI is still pointing at UniWRT afterwards, switch back to the stock theme with `uci set luci.main.mediaurlbase='/luci-static/bootstrap' && uci commit luci`.
+After installing or updating, do one hard refresh in the browser (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>, or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> on macOS).
 
 ---
 
@@ -171,9 +193,16 @@ The theme toggle in the header and the sidebar collapse button are remembered pe
 <summary><b>Attended Sysupgrade fails with “Impossible package selection: missing (luci-theme-uniwrt)”</b></summary>
 <br>
 
-Attended Sysupgrade asks the OpenWrt build servers for a firmware image that contains every package currently installed. Those servers only know packages from the official feeds, so any manually installed package — including this theme — makes the request fail.
+This happens when UniWRT is installed as a **package**. Attended Sysupgrade asks the OpenWrt build servers for an image containing every installed package, and those servers only know packages from the official feeds.
 
-Leave the theme out of the request and reinstall it afterwards:
+**Fix it for good:** switch to the [standalone install](#standalone-install-recommended). It keeps your settings, removes the package, and from then on upgrades work from both the LuCI page and `owut`, with the theme carried into the new firmware:
+
+```sh
+wget -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh
+sh /tmp/uniwrt-apply.sh
+```
+
+**Or, to keep the package,** leave it out of each upgrade and reinstall it afterwards:
 
 1. Enable advanced mode:
    ```sh
@@ -181,7 +210,7 @@ Leave the theme out of the request and reinstall it afterwards:
    uci commit attendedsysupgrade
    ```
 2. Reload the Attended Sysupgrade page, remove `luci-theme-uniwrt` from the **Packages** list, then build and flash with *Keep settings* enabled.
-3. After the reboot, reinstall the theme. Your settings are preserved.
+3. After the reboot, reinstall the package. Your settings are preserved.
 
 On the command line, `owut upgrade --remove luci-theme-uniwrt` does the same.
 </details>
@@ -190,12 +219,14 @@ On the command line, `owut upgrade --remove luci-theme-uniwrt` does the same.
 <summary><b>LuCI is unstyled after a firmware upgrade</b></summary>
 <br>
 
-A sysupgrade replaces the firmware image, which removes manually installed packages but keeps `/etc/config`. LuCI is still set to UniWRT, which is no longer there. Reinstall the package and everything returns as it was — or switch to the stock theme in the meantime:
+A firmware upgrade removes manually installed packages but keeps `/etc/config`, so LuCI is still set to a theme that is no longer there. Reinstall UniWRT — ideally with the [standalone install](#standalone-install-recommended), which survives future upgrades — or switch back to the stock theme:
 
 ```sh
 uci set luci.main.mediaurlbase='/luci-static/bootstrap'
 uci commit luci
 ```
+
+A standalone install is only carried over when *Keep settings* is enabled during the upgrade.
 </details>
 
 <details>
@@ -240,7 +271,7 @@ Third-party LuCI apps generally work without changes, since UniWRT styles the st
 
 ## Building from source
 
-Every push to `main` runs a static QA gate, builds packages for all supported releases with the OpenWrt SDK, and refreshes the rolling [`nightly`](https://github.com/ox1d3x3/uniwrt-luci/releases/tag/nightly) pre-release.
+Every push to `main` runs a static QA gate, builds packages for all supported releases with the OpenWrt SDK, cuts the standalone archive from the 24.10 `.ipk` and tests `uniwrt-apply.sh` against it, and refreshes the rolling [`nightly`](https://github.com/ox1d3x3/uniwrt-luci/releases/tag/nightly) pre-release.
 
 **Releasing** is automatic: bump the version in [`luci-theme-uniwrt/ucode/template/themes/uniwrt/version`](luci-theme-uniwrt/ucode/template/themes/uniwrt/version) and push to `main`. When CI sees a version that has no `v<version>` tag yet, it tags the commit, publishes the release with all packages, checksums and generated notes, and marks it **Latest**. Pushing a `v*` tag by hand still works too.
 
@@ -270,8 +301,10 @@ luci-theme-uniwrt/
 │   └── resources/                   menu and status-bar renderers, dashboard and settings views
 ├── ucode/template/themes/uniwrt/    header.ut, footer.ut, sysauth.ut, version
 └── root/                            default config, uci-defaults, menu and ACL entries
+scripts/make-standalone.sh           cuts the standalone archive from the built .ipk
+tests/test-apply.sh                  tests uniwrt-apply.sh in a simulated router (BusyBox)
 qa-static.sh                         static checks run in CI
-uniwrt-apply.sh                      on-router install helper
+uniwrt-apply.sh                      on-router installer (standalone / package / uninstall)
 ```
 </details>
 
@@ -290,6 +323,8 @@ Run the static checks before opening a pull request:
 ```sh
 ./qa-static.sh
 ```
+
+Changes to `uniwrt-apply.sh` are tested in CI against the real build with `tests/test-apply.sh` (needs `busybox`).
 
 ## Security
 

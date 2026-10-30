@@ -27,6 +27,8 @@ on:
       - '.github/workflows/build.yml'
       - 'qa-static.sh'
       - 'uniwrt-apply.sh'
+      - 'scripts/**'
+      - 'tests/**'
       - 'README.md'
   pull_request:
     paths:
@@ -34,6 +36,8 @@ on:
       - '.github/workflows/build.yml'
       - 'qa-static.sh'
       - 'uniwrt-apply.sh'
+      - 'scripts/**'
+      - 'tests/**'
   workflow_dispatch:
 
 concurrency:
@@ -77,6 +81,7 @@ jobs:
             arch: x86_64-24.10.6
             extension: ipk
             label: 'current .ipk for OpenWrt 24.10.x'
+            standalone: true
           - release: '25.12.4'
             arch: x86_64-25.12.4
             extension: apk
@@ -109,6 +114,22 @@ jobs:
             exit 1
           }
 
+      - name: Build standalone archive
+        if: matrix.standalone
+        shell: bash
+        run: |
+          set -euo pipefail
+          ipk="$(find dist -maxdepth 1 -name "${PACKAGE}_*.ipk" | head -n1)"
+          sh scripts/make-standalone.sh "$ipk" dist/luci-theme-uniwrt-standalone.tar.gz
+          tar -tzvf dist/luci-theme-uniwrt-standalone.tar.gz
+
+      - name: Test uniwrt-apply.sh against the standalone archive
+        if: matrix.standalone
+        shell: bash
+        run: |
+          sudo apt-get install -y busybox >/dev/null
+          bash tests/test-apply.sh dist/luci-theme-uniwrt-standalone.tar.gz
+
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
@@ -138,11 +159,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release
-          find artifacts -type f \( -name '*.ipk' -o -name '*.apk' \) -print -exec cp -v {} release/ \;
+          find artifacts -type f \( -name '*.ipk' -o -name '*.apk' -o -name '*-standalone.tar.gz' \) -print -exec cp -v {} release/ \;
+          test -f release/luci-theme-uniwrt-standalone.tar.gz || {
+            echo "::error::Standalone archive missing"; exit 1; }
           cp -v uniwrt-apply.sh release/
           test "$(find release -type f \( -name '*.ipk' -o -name '*.apk' \) | wc -l)" -ge 1 || {
             echo "::error::No package assets found"; exit 1; }
-          ( cd release && sha256sum * > SHA256SUMS )
+          ( cd release && sha256sum -- * > SHA256SUMS )
           ls -la release
 
       - name: Decide what to publish
@@ -157,9 +180,7 @@ jobs:
             # Manual tag push: publish exactly that tag.
             [ "${GITHUB_REF_NAME}" = "v${VER}" ] || \
               echo "::warning::Tag ${GITHUB_REF_NAME} does not match package version ${VER}"
-            echo "nightly=false"              >> "$GITHUB_OUTPUT"
-            echo "versioned=true"             >> "$GITHUB_OUTPUT"
-            echo "tag=${GITHUB_REF_NAME}"     >> "$GITHUB_OUTPUT"
+            printf 'nightly=false\nversioned=true\ntag=%s\n' "${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -171,8 +192,7 @@ jobs:
           if [ "${GITHUB_REF}" = "refs/heads/${{ github.event.repository.default_branch }}" ] \
              && ! git ls-remote --exit-code --tags origin "refs/tags/v${VER}" >/dev/null; then
             echo "New version ${VER} detected - publishing release v${VER}"
-            echo "versioned=true"   >> "$GITHUB_OUTPUT"
-            echo "tag=v${VER}"      >> "$GITHUB_OUTPUT"
+            printf 'versioned=true\ntag=v%s\n' "${VER}" >> "$GITHUB_OUTPUT"
           else
             echo "Version ${VER} is already released - nightly only"
             echo "versioned=false"  >> "$GITHUB_OUTPUT"
@@ -182,7 +202,22 @@ jobs:
         shell: bash
         run: |
           cat > release-notes.md <<'NOTES'
-          Pick by **OpenWrt version**, not router CPU — the theme package is architecture-independent.
+          ### Install (recommended): standalone
+
+          Run on the router — works on OpenWrt 23.05, 24.10 and 25.12:
+
+          ```sh
+          wget -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh
+          sh /tmp/uniwrt-apply.sh
+          ```
+
+          The standalone install is not registered as a package, so **Attended Sysupgrade keeps working**,
+          and the theme is carried into the new firmware when *Keep settings* is on. Run the same
+          commands again to update; `sh /tmp/uniwrt-apply.sh --uninstall` removes it.
+
+          ### Install as a package
+
+          Pick by **OpenWrt version**, not router CPU — the package is architecture-independent.
 
           | OpenWrt version | Package manager | Asset |
           |---:|:---:|:---|
@@ -191,21 +226,13 @@ jobs:
           | 23.05.x | opkg | `luci-theme-uniwrt_*_all.ipk` (no `-r1`) |
 
           ```sh
-          # OpenWrt 25.12+
-          apk add --allow-untrusted ./luci-theme-uniwrt-*.apk
-
-          # OpenWrt 23.05 / 24.10 (download only the .ipk for your release)
-          opkg install ./luci-theme-uniwrt_*_all.ipk
+          apk add --allow-untrusted ./luci-theme-uniwrt-*.apk      # 25.12+
+          opkg install ./luci-theme-uniwrt_*_all.ipk               # 23.05 / 24.10
           ```
 
-          Optional one-shot helper (detects the package manager, installs the local
-          package, activates UniWRT, clears the LuCI cache and restarts the web UI):
+          > A package install blocks Attended Sysupgrade (“Impossible package selection”) — see the README FAQ.
 
-          ```sh
-          sh ./uniwrt-apply.sh
-          ```
-
-          After upgrading, do one hard refresh in the browser (Ctrl+Shift+R).
+          After installing or upgrading, do one hard refresh in the browser (Ctrl+Shift+R).
           NOTES
 
       - name: Reset rolling nightly release

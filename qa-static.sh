@@ -82,6 +82,12 @@ for f in "$PKG_DIR"/htdocs/luci-static/uniwrt/*.css "$PKG_DIR"/htdocs/luci-stati
 done
 [ "$legacy" = 0 ] && ok "clean"
 
+echo "== Shell scripts (busybox ash syntax) =="
+SH="$(command -v busybox >/dev/null && echo 'busybox sh' || echo sh)"
+for f in uniwrt-apply.sh scripts/make-standalone.sh "$PKG_DIR"/root/etc/uci-defaults/*; do
+  if $SH -n "$f" 2>/tmp/sherr; then ok "$f"; else bad "$f"; cat /tmp/sherr; fi
+done
+
 echo "== Required files present =="
 for req in \
   "$PKG_DIR/Makefile" \
