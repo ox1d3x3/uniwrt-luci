@@ -23,6 +23,14 @@ Icon sidebar · live dashboard · light, dark and auto modes · one small packag
 
 </div>
 
+### Quick install
+
+Run on your router over SSH — installs or updates to the latest release ([standalone](#standalone-install-recommended), so firmware upgrades keep working):
+
+```sh
+wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
+```
+
 ---
 
 ## Screenshots
@@ -98,14 +106,13 @@ There are two ways to install UniWRT. Both install exactly the same files — th
 
 ### Standalone install (recommended)
 
-Run on the router (SSH). Works on OpenWrt 23.05, 24.10 and 25.12:
+Paste this one line into an SSH session on the router. Works on OpenWrt 23.05, 24.10 and 25.12:
 
 ```sh
-wget -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh
-sh /tmp/uniwrt-apply.sh
+wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
 ```
 
-The script downloads the latest release, verifies it against the release's `SHA256SUMS`, installs it and activates the theme. If UniWRT is already installed as a package, it switches it over to a standalone install and keeps your settings.
+It fetches the installer from the latest release, which then downloads the theme, verifies it against the release's `SHA256SUMS`, installs it and activates it. Run the same line again any time to update to the newest release. If UniWRT is already installed as a package, it switches it over to a standalone install and keeps your settings.
 
 | Command | What it does |
 |---|---|
@@ -198,8 +205,7 @@ This happens when UniWRT is installed as a **package**. Attended Sysupgrade asks
 **Fix it for good:** switch to the [standalone install](#standalone-install-recommended). It keeps your settings, removes the package, and from then on upgrades work from both the LuCI page and `owut`, with the theme carried into the new firmware:
 
 ```sh
-wget -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh
-sh /tmp/uniwrt-apply.sh
+wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
 ```
 
 **Or, to keep the package,** leave it out of each upgrade and reinstall it afterwards:

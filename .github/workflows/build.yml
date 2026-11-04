@@ -238,13 +238,12 @@ jobs:
           Run on the router — works on OpenWrt 23.05, 24.10 and 25.12:
 
           ```sh
-          wget -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh
-          sh /tmp/uniwrt-apply.sh
+          wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
           ```
 
           The standalone install is not registered as a package, so **Attended Sysupgrade keeps working**,
           and the theme is carried into the new firmware when *Keep settings* is on. Run the same
-          commands again to update; `sh /tmp/uniwrt-apply.sh --uninstall` removes it.
+          line again to update; `sh /tmp/uniwrt-apply.sh --uninstall` removes it.
 
           ### Install as a package
 
