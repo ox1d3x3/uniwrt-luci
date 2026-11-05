@@ -8,6 +8,6 @@ uci -q set luci.themes.UniWRT=/luci-static/uniwrt
 [ "$PKG_UPGRADE" = 1 ] || uci -q set luci.main.mediaurlbase=/luci-static/uniwrt
 
 uci -q commit luci
-rm -f /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null
+rm -rf /tmp/luci-indexcache* /tmp/luci-modulecache 2>/dev/null
 
 exit 0

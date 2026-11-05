@@ -264,6 +264,12 @@ jobs:
 
           After installing or upgrading, do one hard refresh in the browser (Ctrl+Shift+R).
           NOTES
+          # Hand-written "What's new" for this version, if one was committed.
+          WHATS_NEW=".github/release-notes/${{ steps.plan.outputs.version }}.md"
+          if [ -f "$WHATS_NEW" ]; then
+            { cat "$WHATS_NEW"; printf '\n---\n\n'; cat release-notes.md; } > release-notes.tmp
+            mv release-notes.tmp release-notes.md
+          fi
 
       - name: Reset rolling nightly release
         if: steps.plan.outputs.nightly == 'true'

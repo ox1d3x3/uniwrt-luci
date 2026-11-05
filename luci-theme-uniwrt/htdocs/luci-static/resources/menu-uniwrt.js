@@ -23,6 +23,7 @@ return baseclass.extend({
 		routing:   '<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M6 16V8a4 4 0 014-4h4"/><path d="M18 8v8a4 4 0 01-4 4h-4"/>',
 		statistics:'<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/>',
 		logout:    '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
+		'uniwrt-netmap': '<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4.5M12 12l-5.4 4.8M12 12l5.4 4.8"/>',
 		uniwrt:    '<polyline points="3 9 9 9 9 3"/><polyline points="21 15 15 15 15 21"/><line x1="9" y1="9" x2="3" y2="3"/><line x1="21" y1="21" x2="15" y2="15"/>',
 		_default:  '<circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
 	},

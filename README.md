@@ -6,7 +6,7 @@
 
 **A clean, controller-style theme for the OpenWrt LuCI web interface.**
 
-Icon sidebar · live dashboard · light, dark and auto modes · one small package, zero external requests.
+Icon sidebar · live dashboard · network map · light, dark and auto modes · one small package, zero external requests.
 
 [![Build](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml/badge.svg)](https://github.com/ox1d3x3/uniwrt-luci/actions/workflows/build.yml)
 [![Release](https://img.shields.io/github/v/release/ox1d3x3/uniwrt-luci?color=006fff)](https://github.com/ox1d3x3/uniwrt-luci/releases/latest)
@@ -45,6 +45,14 @@ wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/la
     <td align="center"><sub><b>Collapsed icon rail</b></sub></td>
   </tr>
   <tr>
+    <td width="50%"><img src="docs/screenshots/network-map.png" alt="Network Map showing Wi-Fi and LAN devices with live traffic"></td>
+    <td width="50%"><img src="docs/screenshots/network-map-device.png" alt="Device details with a choice of icons"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><b>Network Map</b></sub></td>
+    <td align="center"><sub><b>Rename any device and pick its icon</b></sub></td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/screenshots/config-page.png" alt="Firewall port forwards page with an unsaved-changes badge"></td>
     <td width="50%"><img src="docs/screenshots/settings.png" alt="UniWRT theme settings page"></td>
   </tr>
@@ -77,6 +85,13 @@ wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/la
 - Flash, RAM and swap usage
 - Live WAN throughput with peak, last-24-hour and since-boot totals
 - Quick-action tiles for the pages you use most
+
+**Network Map**
+- Live map of your network: Internet → router → each Wi-Fi network and the LAN → every connected device
+- Animated links show where traffic is flowing right now, with per-device speed, signal and connection time
+- Device types detected automatically: phones (including iPhones and Androids that hide their real address), tablets, laptops, computers, TVs, cameras, smart plugs, printers, NAS boxes, consoles and more
+- Tap any device to rename it or pick its icon (CCTV, TV, appliance, IoT, …); choices are saved on the router and kept across upgrades
+- Built for low-end routers: one small batched request per refresh, nothing polled when the page is closed or the tab is in the background, all drawing done in your browser
 
 **Appearance**
 - Light, dark, or automatic (follows your operating system), switchable from the header
@@ -179,6 +194,8 @@ Open *System → UniWRT Theme* in the web interface, or edit `/etc/config/uniwrt
 | `status_bar` | `0` · `1` | `1` | Show the live status bar in the header |
 | `overview` | `0` · `1` | `1` | Show the UniWRT dashboard in the menu |
 | `rail_collapsed` | `0` · `1` | `0` | Start with the sidebar collapsed on desktop |
+| `netmap_interval` | `3` – `60` | `5` | Seconds between Network Map refreshes while the map is open |
+| `netmap_animate` | `0` · `1` | `1` | Animate live traffic on the Network Map (browser only) |
 
 Invalid values are ignored and the default is used instead.
 
@@ -189,6 +206,8 @@ uci set uniwrt.global.mode='dark'
 uci set uniwrt.global.dark_accent='#38cc65'
 uci commit uniwrt
 ```
+
+Device names and icons chosen on the Network Map are stored as `config host` sections in the same file, so they are kept across upgrades too.
 
 The theme toggle in the header and the sidebar collapse button are remembered per browser and take precedence over the defaults above.
 
@@ -304,7 +323,7 @@ luci-theme-uniwrt/
 ├── htdocs/luci-static/
 │   ├── uniwrt/css/                  cascade.css (light + layout), dark.css (inlined at runtime)
 │   ├── uniwrt/img/                  logo
-│   └── resources/                   menu and status-bar renderers, dashboard and settings views
+│   └── resources/                   menu and status-bar renderers; dashboard, network map and settings views
 ├── ucode/template/themes/uniwrt/    header.ut, footer.ut, sysauth.ut, version
 └── root/                            default config, uci-defaults, menu and ACL entries
 scripts/make-standalone.sh           cuts the standalone archive from the built .ipk

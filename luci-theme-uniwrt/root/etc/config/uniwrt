@@ -13,3 +13,12 @@ config global 'global'
 	option font_size '14'
 	# Start with the navigation rail collapsed on desktop
 	option rail_collapsed '0'
+	# Network map: refresh interval in seconds (3-60) and live traffic animation
+	option netmap_interval '5'
+	option netmap_animate '1'
+
+# Device names / icons chosen on the Network Map are stored as:
+# config host 'h_aabbccddeeff'
+#	option mac 'AA:BB:CC:DD:EE:FF'
+#	option name 'Living room TV'
+#	option icon 'tv'

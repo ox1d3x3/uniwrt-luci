@@ -83,6 +83,23 @@ return view.extend({
 		o.default = '1';
 		o.rmempty = false;
 
+		/* ---- Network map ---- */
+		s = m.section(form.NamedSection, 'global', 'global', _('Network Map'));
+		s.anonymous = true;
+
+		o = s.option(form.ListValue, 'netmap_interval', _('Refresh interval'),
+			_('How often the map asks the router for new data while it is open. Longer intervals mean less work for low-end routers; nothing is polled while the map is closed or the browser tab is hidden.'));
+		o.value('3', _('3 seconds'));
+		o.value('5', _('5 seconds'));
+		o.value('10', _('10 seconds'));
+		o.value('30', _('30 seconds'));
+		o.default = '5';
+
+		o = s.option(form.Flag, 'netmap_animate', _('Animate live traffic'),
+			_('Show moving lines where traffic flows. Runs in your browser only; it does not affect the router.'));
+		o.default = '1';
+		o.rmempty = false;
+
 		return m.render();
 	}
 });

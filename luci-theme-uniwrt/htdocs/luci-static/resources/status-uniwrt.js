@@ -63,15 +63,17 @@ return baseclass.extend({
 		this.box.appendChild(this.ramEl);
 		this.box.appendChild(this.uptimeEl);
 		this.tick();
-		/* use LuCI's poll loop instead of setInterval: it batches with the
-		   framework's polling and automatically pauses while the browser tab
-		   is hidden, so the status bar stops hitting ubus in the background */
+		/* use LuCI's poll loop instead of setInterval so it batches with the
+		   framework's polling; tick() itself skips while the tab is hidden */
 		poll.add(L.bind(this.tick, this), 5);
 		poll.start();
 	},
 
 	tick: function() {
 		var self = this;
+		/* LuCI's poll loop keeps running in background tabs; don't make the
+		   router answer system.info for a page nobody is looking at */
+		if (document.hidden) return;
 		L.resolveDefault(callSystemInfo(), {}).then(function(info) {
 			self.updateSystem(info);
 			/* publish for same-page consumers (the overview dashboard) so the two

@@ -297,6 +297,7 @@ return view.extend({
 		this.update(info);
 
 		poll.add(function() {
+			if (document.hidden) return;   /* nothing polled from background tabs */
 			/* reuse the status bar's system.info reading when it's fresh (<4.5s)
 			   so the Overview page issues one system.info per cycle, not two */
 			var cached = (window.__uniwrtInfo && (Date.now() - window.__uniwrtInfo.t) < 4500)

@@ -107,6 +107,37 @@ if grep -nE '<script[^>]+luci\.js' "$PKG_DIR"/ucode/template/themes/uniwrt/foote
   bad "footer loads luci.js again (luci-base's header already does):"; cat /tmp/ljs
 else ok "luci.js loaded once (by luci-base)"; fi
 
+echo "== Views, ACL coverage and router load =="
+# every menu entry points at a view that ships, and every ubus call our views
+# make is granted by our ACL (a missing grant = a silently empty page on routers)
+if python3 - "$PKG_DIR" <<'PY'
+import json, re, sys, pathlib
+pkg = pathlib.Path(sys.argv[1]); res = pkg / 'htdocs/luci-static/resources'; bad = 0
+menu = json.load(open(pkg / 'root/usr/share/luci/menu.d/luci-theme-uniwrt.json'))
+for path, e in menu.items():
+    a = e.get('action', {})
+    if a.get('type') == 'view' and not (res / 'view' / (a['path'] + '.js')).is_file():
+        print('  menu %s -> missing view %s.js' % (path, a['path'])); bad = 1
+acl = json.load(open(pkg / 'root/usr/share/rpcd/acl.d/luci-theme-uniwrt.json'))['luci-theme-uniwrt']
+granted = {(o, m) for part in ('read', 'write') for o, ms in acl.get(part, {}).get('ubus', {}).items() for m in ms}
+base = {('uci', m) for m in ('get', 'changes')} | {('session', 'access')}
+for js in sorted((res / 'view/uniwrt').glob('*.js')) + [res / 'status-uniwrt.js']:
+    for o, m in re.findall(r"rpc\.declare\(\{\s*object:\s*'([^']+)',\s*method:\s*'([^']+)'", js.read_text()):
+        if (o, m) not in granted | base:
+            print('  %s calls ubus %s.%s but the ACL does not grant it' % (js.name, o, m)); bad = 1
+sys.exit(bad)
+PY
+then ok "menu views exist and every ubus call is granted by the ACL"; else bad "menu/ACL coverage (see above)"; fi
+for f in "$PKG_DIR"/htdocs/luci-static/resources/status-uniwrt.js \
+         "$PKG_DIR"/htdocs/luci-static/resources/view/uniwrt/overview.js \
+         "$PKG_DIR"/htdocs/luci-static/resources/view/uniwrt/netmap.js; do
+  if grep -q 'document\.hidden' "$f"; then ok "$(basename "$f") stops polling in background tabs"
+  else bad "$(basename "$f") polls even while the browser tab is hidden"; fi
+done
+if grep -qE 'setInterval\(' "$PKG_DIR"/htdocs/luci-static/resources/view/uniwrt/netmap.js; then
+  bad "netmap.js uses setInterval (must use LuCI's batched poll loop)"
+else ok "netmap.js polls through LuCI's batched poll loop"; fi
+
 echo "== Required files present =="
 for req in \
   "$PKG_DIR/Makefile" \

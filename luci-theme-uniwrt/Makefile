@@ -37,7 +37,7 @@ define Package/luci-theme-uniwrt/postrm
 		delete luci.themes.UniWRT
 		commit luci
 	EOF
-	rm -f /tmp/luci-indexcache /tmp/luci-modulecache 2>/dev/null
+	rm -rf /tmp/luci-indexcache* /tmp/luci-modulecache 2>/dev/null
 }
 exit 0
 endef

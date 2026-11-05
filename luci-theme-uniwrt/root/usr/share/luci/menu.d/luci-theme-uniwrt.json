@@ -20,5 +20,16 @@
 		"depends": {
 			"acl": [ "luci-theme-uniwrt" ]
 		}
+	},
+	"admin/uniwrt-netmap": {
+		"title": "Network Map",
+		"order": 6,
+		"action": {
+			"type": "view",
+			"path": "uniwrt/netmap"
+		},
+		"depends": {
+			"acl": [ "luci-theme-uniwrt" ]
+		}
 	}
 }
