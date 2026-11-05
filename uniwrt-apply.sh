@@ -10,6 +10,7 @@
 # Options for a standalone install:
 #   --version vX.Y.Z   Install that release instead of the latest
 #   --file PATH        Install from a downloaded luci-theme-uniwrt-standalone.tar.gz
+#   --keep-theme       Update UniWRT's files but leave LuCI on its current theme
 #
 # Why "standalone"?
 #   Attended Sysupgrade (the LuCI upgrade page and owut) asks OpenWrt's build
@@ -42,7 +43,7 @@ say()  { printf '\033[1;34m[uniwrt]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[uniwrt]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[uniwrt]\033[0m %s\n' "$*" >&2; exit 1; }
 
-usage() { sed -n '3,13p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,14p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; }
 
 TMP=""
 cleanup() { [ -n "$TMP" ] && rm -rf "$TMP"; return 0; }
@@ -294,20 +295,34 @@ do_install() {
 	} > "$R$KEEP.uniwrt-new"
 	mv -f "$R$KEEP.uniwrt-new" "$R$KEEP"
 
-	# Same registration as the package's uci-defaults script: always list the
-	# theme, but only make it active on a fresh install.
+	# Always list the theme. Running the installer means "use UniWRT", so make
+	# it the active theme too — also when it is already installed and another
+	# theme was picked since — unless --keep-theme asks to leave LuCI as it is.
+	# (Package upgrades, which run without anyone asking, keep the choice.)
 	uci -q set luci.themes.UniWRT=/luci-static/uniwrt
-	[ "$fresh" = 1 ] && uci -q set luci.main.mediaurlbase=/luci-static/uniwrt
+	prev_theme="$(uci -q get luci.main.mediaurlbase 2>/dev/null || true)"
+	switched=0
+	if [ "$KEEPTHEME" != 1 ] && [ "$prev_theme" != /luci-static/uniwrt ]; then
+		uci -q set luci.main.mediaurlbase=/luci-static/uniwrt
+		switched=1
+	fi
 	uci -q commit luci
 	drop_owut_remove
 	clear_caches
 
 	if [ "$fresh" = 1 ]; then
-		say "Done — UniWRT $NEWVER is installed and active."
+		if [ "$(uci -q get luci.main.mediaurlbase 2>/dev/null || true)" = /luci-static/uniwrt ]; then say "Done — UniWRT $NEWVER is installed and active."
+		else say "Done — UniWRT $NEWVER is installed."; fi
 	elif [ "$migrated" = 1 ]; then
 		say "Done — switched to the standalone install (UniWRT $NEWVER). Your settings were kept."
 	else
 		say "Done — UniWRT is now $NEWVER."
+	fi
+	if [ "$switched" = 1 ] && [ "$fresh" = 0 ] && [ -n "$prev_theme" ]; then
+		say "LuCI was using the ${prev_theme##*/} theme — UniWRT is the active theme again."
+		say "(Run with --keep-theme to update UniWRT without switching.)"
+	elif [ "$switched" = 0 ] && [ -n "$prev_theme" ] && [ "$prev_theme" != /luci-static/uniwrt ]; then
+		say "LuCI stays on the ${prev_theme##*/} theme (--keep-theme); pick UniWRT under System → System → Language and Style."
 	fi
 	say "Attended Sysupgrade will now work, and the theme stays installed across"
 	say "firmware upgrades made with \"Keep settings\" enabled."
@@ -402,7 +417,7 @@ do_status() {
 
 # ------------------------------------------------------------------ main ----
 
-MODE=install; WANT=""; FILE=""
+MODE=install; WANT=""; FILE=""; KEEPTHEME=0
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--uninstall|--remove) MODE=uninstall ;;
@@ -410,6 +425,7 @@ while [ $# -gt 0 ]; do
 		--package)            MODE=package ;;
 		--version)            shift; WANT="${1:-}"; [ -n "$WANT" ] || die "--version needs a tag, e.g. v2.0.39" ;;
 		--file)               shift; FILE="${1:-}"; [ -n "$FILE" ] || die "--file needs a path" ;;
+		--keep-theme)         KEEPTHEME=1 ;;
 		-h|--help)            usage; exit 0 ;;
 		*)                    usage; die "Unknown option: $1" ;;
 	esac

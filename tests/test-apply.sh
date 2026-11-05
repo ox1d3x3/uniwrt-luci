@@ -137,14 +137,22 @@ check "theme still registered and active" bash -c "[ '$(uciget luci.themes.UniWR
 sysupgrade_keep
 check "and survives a second upgrade" all_present
 
-SECTION="3. update: keeps settings and theme choice, removes obsolete files"; echo "== 3. update: keeps settings and theme choice, removes obsolete files =="
+SECTION="3. update: keeps settings, re-applies the theme, removes obsolete files"; echo "== 3. update: keeps settings, re-applies the theme, removes obsolete files =="
+# Another theme was picked since (e.g. trying a different theme); running the
+# installer again means "use UniWRT", unless --keep-theme says otherwise.
 uci_ set luci.main.mediaurlbase=/luci-static/bootstrap; uci_ commit luci
+check "re-run with --keep-theme succeeds" run --file "$ARCHIVE" --keep-theme
+check "--keep-theme leaves the user's theme active" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/bootstrap ]
+check "--keep-theme says which theme stays" grep -q "stays on the bootstrap theme" "$T/out"
 mkdir -p "$UNIWRT_ROOT/www/luci-static/uniwrt/old"; echo x > "$UNIWRT_ROOT/www/luci-static/uniwrt/old/legacy.css"
 echo "/www/luci-static/uniwrt/old/legacy.css" >> "$UNIWRT_ROOT/$KEEP"
 check "re-run succeeds" run --file "$ARCHIVE"
 check "reports a same-version refresh" grep -q "already installed" "$T/out"
 check "user settings untouched" grep -q "38cc65" "$UNIWRT_ROOT/etc/config/uniwrt"
-check "user's theme choice not overridden on update" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/bootstrap ]
+check "plain re-run makes UniWRT the active theme again" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/uniwrt ]
+check "…and says it switched from bootstrap" grep -q "was using the bootstrap theme" "$T/out"
+check "re-run while UniWRT is active succeeds" run --file "$ARCHIVE"
+check "…and does not claim a theme switch" bash -c "! grep -q 'was using' '$T/out'"
 check "obsolete file and its empty dir removed" bash -c "[ ! -e '$UNIWRT_ROOT/www/luci-static/uniwrt/old' ]"
 check "obsolete file dropped from manifest" bash -c "! grep -q legacy.css '$UNIWRT_ROOT/$KEEP'"
 

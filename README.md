@@ -133,7 +133,8 @@ It fetches the installer from the latest release, which then downloads the theme
 
 | Command | What it does |
 |---|---|
-| `sh uniwrt-apply.sh` | Install, or update to the latest release |
+| `sh uniwrt-apply.sh` | Install, or update to the latest release, and make UniWRT the active theme |
+| `sh uniwrt-apply.sh --keep-theme` | Update UniWRT's files but leave LuCI on whichever theme it is using |
 | `sh uniwrt-apply.sh --version v2.0.39` | Install a specific release |
 | `sh uniwrt-apply.sh --file /tmp/luci-theme-uniwrt-standalone.tar.gz` | Install from a downloaded archive (no internet needed on the router) |
 | `sh uniwrt-apply.sh --status` | Show the installed version, how it is installed, and check that every file is present |
@@ -172,7 +173,7 @@ To uninstall: `apk del luci-theme-uniwrt` (25.12+) or `opkg remove luci-theme-un
 
 ### Selecting the theme
 
-A fresh install switches LuCI to UniWRT automatically; updates never override a theme you have chosen since. To select it yourself, go to *System → System → Language and Style*, or run:
+Running the installer makes UniWRT the active theme, including when it is already installed and you switched to another theme in the meantime (add `--keep-theme` to update without switching). Package upgrades through `apk`/`opkg` keep whatever theme you have chosen. To select it yourself, go to *System → System → Language and Style*, or run:
 
 ```sh
 uci set luci.main.mediaurlbase='/luci-static/uniwrt'
