@@ -38,6 +38,11 @@ return view.extend({
 		o.default = '0';
 		o.rmempty = false;
 
+		o = s.option(form.Flag, 'menu_expanded', _('Expand all menu sections'),
+			_('Show every section of the side menu opened up, instead of only the section of the current page. Sections can still be folded by clicking them.'));
+		o.default = '0';
+		o.rmempty = false;
+
 		/* ---- Accent colours ---- */
 		s = m.section(form.NamedSection, 'global', 'global', _('Accent Colour'));
 		s.anonymous = true;

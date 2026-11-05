@@ -21,6 +21,7 @@
   let u_font_size     = '14';
   let u_rail_collapsed= '0';
   let u_overview      = '1';
+  let u_menu_expanded = '0';
 
   let cfg = cursor();
   if (access('/etc/config/uniwrt')) {
@@ -31,6 +32,7 @@
     u_font_size      = cfg.get_first('uniwrt', 'global', 'font_size')      ?? u_font_size;
     u_rail_collapsed = cfg.get_first('uniwrt', 'global', 'rail_collapsed') ?? u_rail_collapsed;
     u_overview       = cfg.get_first('uniwrt', 'global', 'overview')       ?? u_overview;
+    u_menu_expanded  = cfg.get_first('uniwrt', 'global', 'menu_expanded')  ?? u_menu_expanded;
   }
 
   /* ---- validate ----
@@ -47,6 +49,7 @@
   u_font_size      = u_one(u_font_size, [ '12', '13', '14', '15', '16', '17', '18' ], '14');
   u_rail_collapsed = u_one(u_rail_collapsed, [ '0', '1' ], '0');
   u_overview       = u_one(u_overview, [ '0', '1' ], '1');
+  u_menu_expanded  = u_one(u_menu_expanded, [ '0', '1' ], '0');
 
   /* theme version doubles as the static-asset cache token: every release gets
      fresh URLs, so browsers can never serve a stale stylesheet after upgrade */
@@ -62,7 +65,7 @@
   if (u_mode == 'light') dark_media = 'not all';
 -%}
 <!DOCTYPE html>
-<html lang="{{ dispatcher.lang }}" data-rail="{{ u_rail_collapsed == '1' ? 'collapsed' : 'expanded' }}" data-uniwrt-overview="{{ u_overview == '0' ? '0' : '1' }}">
+<html lang="{{ dispatcher.lang }}" data-rail="{{ u_rail_collapsed == '1' ? 'collapsed' : 'expanded' }}" data-uniwrt-overview="{{ u_overview == '0' ? '0' : '1' }}" data-uniwrt-menu="{{ u_menu_expanded == '1' ? 'expanded' : 'current' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

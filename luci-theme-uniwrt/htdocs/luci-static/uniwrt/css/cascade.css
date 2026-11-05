@@ -188,6 +188,8 @@ img { max-width: 100%; }
 }
 .u-nav-item:hover { background: var(--u-rail-hover); color: #fff; text-decoration: none; }
 .u-nav-item.open  { color: #fff; }
+/* with every section expanded, only the current one stays highlighted */
+.u-all-open > .u-nav-item.open:not(.current):not(:hover) { color: var(--u-rail-text); }
 .u-nav-item .nav-icon { width: 19px; height: 19px; flex: 0 0 auto; opacity: .9; }
 .u-nav-label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
 .u-nav-arrow { width: 15px; height: 15px; flex: 0 0 auto; transition: transform .2s var(--u-ease); opacity: .65; }

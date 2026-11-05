@@ -140,16 +140,21 @@ return baseclass.extend({
 		var self = this;
 
 		var hideOverview = document.documentElement.getAttribute('data-uniwrt-overview') === '0';
+		/* "Expand all menu sections" setting: every category starts open;
+		   otherwise only the one holding the current page */
+		var expandAll = document.documentElement.getAttribute('data-uniwrt-menu') === 'expanded';
+		if (expandAll) group.classList.add('u-all-open');
 		for (var i = 0; i < children.length; i++) {
 			var child = children[i];
 			if (hideOverview && child.name === 'uniwrt-overview') continue;
 			var subs = ui.menu.getChildren(child);
 			var hasSubs = subs.length > 0;
-			var open = L.env.dispatchpath[1] == child.name;
+			var current = L.env.dispatchpath[1] == child.name;
+			var open = current || (expandAll && hasSubs);
 			var linkUrl = hasSubs ? L.url(url, child.name, subs[0].name) : L.url(url, child.name);
 
 			var item = E('a', {
-				'class': 'u-nav-item' + (open ? ' open' : ''),
+				'class': 'u-nav-item' + (open ? ' open' : '') + (current ? ' current' : ''),
 				'href': linkUrl,
 				'data-name': child.name
 			}, [ E('span', { 'class': 'u-nav-label' }, [ _(child.title) ]) ]);
@@ -168,7 +173,7 @@ return baseclass.extend({
 
 				for (var j = 0; j < subs.length; j++) {
 					var s = subs[j];
-					var subActive = open && L.env.dispatchpath[2] == s.name;
+					var subActive = current && L.env.dispatchpath[2] == s.name;
 					var subItem = E('a', {
 						'class': 'u-nav-item' + (subActive ? ' active' : ''),
 						'href': L.url(url, child.name, s.name)

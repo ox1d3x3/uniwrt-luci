@@ -13,6 +13,8 @@ config global 'global'
 	option font_size '14'
 	# Start with the navigation rail collapsed on desktop
 	option rail_collapsed '0'
+	# Open every section of the side menu, not just the current one
+	option menu_expanded '0'
 	# Network map: refresh interval in seconds (3-60) and live traffic animation
 	option netmap_interval '5'
 	option netmap_animate '1'

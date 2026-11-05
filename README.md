@@ -77,6 +77,7 @@ wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/la
 **Navigation**
 - Sidebar that collapses to a slim icon rail — click any icon to jump straight to that section
 - Sticky sub-navigation for the current section, and a menu that remembers its state between pages
+- Optionally open every menu section at once instead of only the current one
 - Off-canvas menu on phones and tablets
 
 **Dashboard**
@@ -195,6 +196,7 @@ Open *System → UniWRT Theme* in the web interface, or edit `/etc/config/uniwrt
 | `status_bar` | `0` · `1` | `1` | Show the live status bar in the header |
 | `overview` | `0` · `1` | `1` | Show the UniWRT dashboard in the menu |
 | `rail_collapsed` | `0` · `1` | `0` | Start with the sidebar collapsed on desktop |
+| `menu_expanded` | `0` · `1` | `0` | Open every section of the side menu, not only the current one |
 | `netmap_interval` | `3` – `60` | `5` | Seconds between Network Map refreshes while the map is open |
 | `netmap_animate` | `0` · `1` | `1` | Animate live traffic on the Network Map (browser only) |
 
