@@ -1180,6 +1180,7 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
   background: var(--u-surface-2); color: var(--u-text-3); border: 1px solid var(--u-line);
 }
 .u-nm-port.is-up { color: var(--u-ok); border-color: rgba(56,204,101,.45); background: rgba(56,204,101,.10); }
+.u-nm-port.is-uplink { color: var(--u-accent); border-color: var(--u-accent); background: var(--u-accent-soft); }
 
 .u-nm-lane {
   grid-column: 3; position: relative; z-index: 1; align-self: stretch;

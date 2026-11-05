@@ -89,6 +89,7 @@ wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/la
 **Network Map**
 - Live map of your network: Internet → router → each Wi-Fi network and the LAN → every connected device
 - Animated links show where traffic is flowing right now, with per-device speed, signal and connection time
+- Shows which LAN port each wired device is plugged into, and works on access points too: behind another router it shows that router as the uplink
 - Device types detected automatically: phones (including iPhones and Androids that hide their real address), tablets, laptops, computers, TVs, cameras, smart plugs, printers, NAS boxes, consoles and more
 - Tap any device to rename it or pick its icon (CCTV, TV, appliance, IoT, …); choices are saved on the router and kept across upgrades
 - Built for low-end routers: one small batched request per refresh, nothing polled when the page is closed or the tab is in the background, all drawing done in your browser

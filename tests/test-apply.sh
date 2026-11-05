@@ -335,6 +335,17 @@ check "theme active" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/uniwrt 
 rm -f "$BB/apk"
 fi
 
+SECTION="12f. browsers are told to fetch the new theme scripts"; echo "== 12f. browsers are told to fetch the new theme scripts =="
+# LuCI versions script URLs with the package database mtime; a standalone
+# install/update has to bump it or browsers keep the old theme JavaScript
+for db in lib/apk/db/installed usr/lib/opkg/status; do
+	new_root 12f; mkdir -p "$UNIWRT_ROOT/${db%/*}"; printf 'P:base-files\n\n' > "$UNIWRT_ROOT/$db"
+	touch -d '2020-01-01 00:00:00' "$UNIWRT_ROOT/$db"; before=$(stat -c %Y "$UNIWRT_ROOT/$db")
+	check "install succeeds ($db)" run --file "$ARCHIVE"
+	check "$db mtime bumped (LuCI cache-buster)" test "$(stat -c %Y "$UNIWRT_ROOT/$db")" -gt "$before"
+	check "$db content untouched" grep -qx 'P:base-files' "$UNIWRT_ROOT/$db"
+done
+
 SECTION="13. rejects a wrong archive"; echo "== 13. rejects a wrong archive =="
 new_root 13; mkdir -p "$T/bogus/etc"; echo hi > "$T/bogus/etc/x"; tar czf "$T/luci-theme-uniwrt-standalone.tar.gz" -C "$T/bogus" .
 check "non-UniWRT archive refused" runfail --file "$T/luci-theme-uniwrt-standalone.tar.gz"

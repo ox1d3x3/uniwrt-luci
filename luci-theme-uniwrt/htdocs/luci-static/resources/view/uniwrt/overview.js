@@ -127,13 +127,22 @@ function resolveWanDev(ifaces, devs) {
 	var wan = ifaces.filter(function(i){ return i.interface === 'wan'  && i.up; })[0]
 	       || ifaces.filter(function(i){ return i.interface === 'wan6' && i.up; })[0]
 	       || ifaces.filter(function(i){ return /wan/i.test(i.interface) && i.up; })[0]
+	       /* access point behind a main router: the LAN holds the default route */
+	       || ifaces.filter(function(i){ return i.up && (i.route || []).some(function(r){ return r.target === '0.0.0.0' && r.mask === 0; }); })[0]
 	       || ifaces.filter(function(i){ return i.up && i.interface !== 'loopback' && (i.l3_device || i.device); })[0];
 	if (!wan) return null;
 	var dev = wan.l3_device || wan.device, name = wan.interface;
 	var d = devs && devs[dev];
 	if (d) {
 		if (d.type === 'bridge' && Array.isArray(d['bridge-members']) && d['bridge-members'].length) {
-			dev = d['bridge-members'][0];
+			/* the uplink port carries everything: take the busiest wired member */
+			var most = -1;
+			d['bridge-members'].forEach(function(m) {
+				if (/^(wl|phy|wlan|ath|ra|rai|apcli)\d/.test(m)) return;
+				var st = (devs[m] || {}).statistics || {}, b = (st.rx_bytes || 0) + (st.tx_bytes || 0);
+				if (b > most) { most = b; dev = m; }
+			});
+			if (most < 0) dev = d['bridge-members'][0];
 			d = (devs && devs[dev]) || d;
 		}
 		if (d && d.devtype === 'dsa' && d['hw-tc-offload'] && d.conduit && devs[d.conduit])

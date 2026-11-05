@@ -125,6 +125,14 @@ verify_sum() { # dir — checks $ARCHIVE against SHA256SUMS in the same dir
 clear_caches() {
 	rm -rf "$R"/tmp/luci-indexcache* "$R"/tmp/luci-modulecache 2>/dev/null || true
 	[ -x "$R/etc/init.d/rpcd" ] && "$R/etc/init.d/rpcd" reload >/dev/null 2>&1 || true
+	# LuCI versions every script URL with the package database's mtime
+	# (luci.js?v=<version>-<pkgs_update_time>), so browsers keep cached theme
+	# scripts until it changes. A package install bumps it; a standalone
+	# install must do the same or browsers keep running the old theme code.
+	for db in "$R/lib/apk/db/installed" "$R/usr/lib/opkg/status"; do
+		if [ -f "$db" ]; then touch "$db" 2>/dev/null || true; break; fi
+	done
+	return 0
 }
 
 # A permanent owut "remove" entry for the theme makes owut versions before

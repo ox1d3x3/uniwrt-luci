@@ -84,13 +84,13 @@ return baseclass.extend({
 		if (!this.netChecked) {
 			this.netChecked = true;
 			L.resolveDefault(callInterfaceDump(), []).then(function(ifaces) {
-				var wanDev = null;
-				for (var i = 0; i < ifaces.length; i++)
-					if (ifaces[i].interface === 'wan') { wanDev = ifaces[i].l3_device || ifaces[i].device; break; }
-				if (!wanDev)
-					for (var i = 0; i < ifaces.length; i++)
-						if (ifaces[i].interface === 'wan6') { wanDev = ifaces[i].l3_device || ifaces[i].device; break; }
-				self.resolveDevice(wanDev || 'wan');
+				var find = function(test) { for (var i = 0; i < ifaces.length; i++) if (test(ifaces[i])) return ifaces[i]; };
+				/* 'wan' / 'wan6' by name; otherwise whatever holds the default
+				   route (e.g. 'lan' on an access point behind a main router) */
+				var w = find(function(i) { return i.interface === 'wan'; })
+				     || find(function(i) { return i.interface === 'wan6'; })
+				     || find(function(i) { return i.up && (i.route || []).some(function(r) { return r.target === '0.0.0.0' && r.mask === 0; }); });
+				self.resolveDevice(w ? (w.l3_device || w.device) : 'wan');
 			});
 		} else if (this.netDevice) {
 			this.pollNet();
@@ -102,8 +102,21 @@ return baseclass.extend({
 		L.resolveDefault(callDeviceStatus(devName), {}).then(function(dev) {
 			if (!dev) return;
 			var members = dev['bridge-members'];
-			if (dev.type === 'bridge' && members && members.length > 0) self.netDevice = members[0];
-			else if (dev.statistics) self.netDevice = devName;
+			if (dev.type === 'bridge' && members && members.length > 0)
+				/* the uplink port carries everything, so it is the busiest wired member */
+				return L.resolveDefault(callDeviceStatus(), {}).then(function(all) {
+					var best = null, most = -1;
+					members.forEach(function(m) {
+						if (/^(wl|phy|wlan|ath|ra|rai|apcli)\d/.test(m)) return;
+						var st = (all && all[m] || {}).statistics || {}, b = (st.rx_bytes || 0) + (st.tx_bytes || 0);
+						if (b > most) { most = b; best = m; }
+					});
+					self.netDevice = best || members[0];
+					return self.netDevice;
+				});
+			if (dev.statistics) self.netDevice = devName;
+			return self.netDevice;
+		}).then(function() {
 			if (!self.netDevice) return;
 
 			L.resolveDefault(callDeviceStatus(self.netDevice), {}).then(function(phys) {

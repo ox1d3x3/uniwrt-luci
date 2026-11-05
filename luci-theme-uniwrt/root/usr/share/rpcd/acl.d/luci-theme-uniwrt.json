@@ -9,10 +9,15 @@
 				"network.interface": [ "dump" ],
 				"network.device": [ "status" ],
 				"iwinfo": [ "assoclist" ],
-				"fingerprint": [ "fingerprint" ]
+				"fingerprint": [ "fingerprint" ],
+				"file": [ "read" ]
 			},
 			"file": {
-				"/proc/cpuinfo": [ "read" ]
+				"/proc/cpuinfo": [ "read" ],
+				"/sys/class/net/*/brforward": [ "read" ],
+				"/sys/class/net/*/brport/port_no": [ "read" ],
+				"/sys/devices/*/brforward": [ "read" ],
+				"/sys/devices/*/brport/port_no": [ "read" ]
 			}
 		},
 		"write": {

@@ -9,7 +9,10 @@
  * UniWRT Network Map
  *
  * Internet -> router -> Wi-Fi networks / wired networks -> client devices,
- * with live traffic and device-type icons the user can override.
+ * with live traffic and device-type icons the user can override. When the
+ * router is an access point behind another router (its LAN bridge holds the
+ * default route), the top node becomes "Main router" and wired devices are
+ * placed from the bridge's forwarding table instead of the IP subnet.
  *
  * Router cost is kept at the level of LuCI's own Status -> Overview page:
  * one batched ubus request per refresh, only while this page is open and
@@ -26,6 +29,7 @@ var callIfDump  = rpc.declare({ object: 'network.interface', method: 'dump', exp
 var callAssoc   = rpc.declare({ object: 'iwinfo', method: 'assoclist', params: [ 'device' ], expect: { results: [] } });
 var callUfp     = rpc.declare({ object: 'fingerprint', method: 'fingerprint', expect: { '': {} } });
 var callCommit  = rpc.declare({ object: 'uci', method: 'commit', params: [ 'config' ] });
+var callRead    = rpc.declare({ object: 'file', method: 'read', params: [ 'path', 'base64' ], expect: { data: '' }, reject: true });   /* errors must not look like an empty table */
 
 /* ------------------------------------------------------------------ icons */
 var S = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">';
@@ -153,6 +157,26 @@ function inSubnet(ip, net, mask) {
 	var m = mask === 0 ? 0 : (0xffffffff << (32 - mask)) >>> 0;
 	return ((a & m) >>> 0) === ((b & m) >>> 0);
 }
+/* /sys/class/net/<bridge>/brforward: 16-byte struct __fdb_entry records
+   (mac[6], port_no, is_local, ageing u32, port_hi, pad...). Returns
+   { MAC: portName } for learned (non-local) entries on known ports. */
+function parseFdb(b64, portNames) {
+	if (!b64 || !/^[A-Za-z0-9+\/=\s]+$/.test(b64)) return null;
+	var bin;
+	try { bin = atob(b64.replace(/\s+/g, '')); } catch (e) { return null; }
+	var out = {};
+	for (var i = 0; i + 16 <= bin.length; i += 16) {
+		if (bin.charCodeAt(i + 7)) continue;   /* the bridge's own addresses */
+		var port = portNames[(bin.charCodeAt(i + 12) << 8) | bin.charCodeAt(i + 6)];
+		if (!port) continue;
+		var mac = [];
+		for (var j = 0; j < 6; j++) mac.push(('0' + bin.charCodeAt(i + j).toString(16)).slice(-2));
+		out[mac.join(':').toUpperCase()] = port;
+	}
+	return out;
+}
+var WIFI_IF = /^(wl|phy|wlan|ath|ra|rai|apcli|mon)\d/;
+
 function flowClass(bps) {
 	if (!bps || bps < 8000) return 'idle';
 	if (bps < 1e6) return 'low';
@@ -168,6 +192,13 @@ return view.extend({
 	sig: '',        /* topology signature: rebuild DOM only when it changes */
 	ufp: null,
 	tick: 0,
+	fdbBridges: [], /* bridges with wired ports whose forwarding table we read */
+	brPorts: {},    /* bridge -> its wired member ports */
+	portNo: {},     /* bridge -> { port number: port name } (read once) */
+	portSig: {},
+	fdbSeen: {},    /* MAC -> { br, port, t }: wired placements, kept a while */
+	fdbOk: {},      /* bridge -> true once a forwarding table was read */
+	fdbMiss: {},    /* bridge -> failed reads before the first success */
 
 	load: function() {
 		return Promise.all([
@@ -185,22 +216,40 @@ return view.extend({
 	},
 
 	fetch: function() {
-		var self = this, calls = [
+		var self = this, assoc = {}, fdb = {}, calls = [
 			L.resolveDefault(callHints(), {}),
 			L.resolveDefault(callWifi(), {}),
 			L.resolveDefault(callNetDevs(), {}),
 			L.resolveDefault(callIfDump(), [])
 		];
-		/* station lists for the AP interfaces we already know (same batch) */
-		self.wifiIfs.forEach(function(ifn) { calls.push(L.resolveDefault(callAssoc(ifn), [])); });
+		/* everything below joins the same batched request */
+		/* station lists for the AP interfaces we already know */
+		self.wifiIfs.forEach(function(ifn) {
+			calls.push(L.resolveDefault(callAssoc(ifn), []).then(function(r) { assoc[ifn] = r || []; }));
+		});
+		/* bridge forwarding tables (one small kernel read per bridge) tell
+		   which LAN port each wired device sits behind; port numbers are
+		   read once per bridge layout */
+		self.fdbBridges.forEach(function(br) {
+			if (!self.fdbOk[br] && self.fdbMiss[br] >= 3) return;   /* not readable here: stop asking */
+			var ports = self.brPorts[br] || [], sig = ports.join(' ');
+			if (self.portSig[br] !== sig) {
+				self.portSig[br] = sig;
+				var names = {};
+				calls.push(Promise.all(ports.map(function(p) {
+					return L.resolveDefault(callRead('/sys/class/net/' + p + '/brport/port_no'), '').then(function(v) {
+						var n = parseInt(v, 16); if (!isNaN(n)) names[n] = p;
+					});
+				})).then(function() { self.portNo[br] = names; }));
+			}
+			calls.push(L.resolveDefault(callRead('/sys/class/net/' + br + '/brforward', true), null).then(function(v) { fdb[br] = v; }));
+		});
 		/* optional fingerprinting service, if the user installed it — rarely */
 		if (L.hasSystemFeature('ufpd') && self.tick % 12 === 0)
 			calls.push(L.resolveDefault(callUfp(), {}).then(function(r) { self.ufp = r; }));
 		self.tick++;
 		return Promise.all(calls).then(function(r) {
-			var assoc = {};
-			self.wifiIfs.forEach(function(ifn, i) { assoc[ifn] = r[4 + i] || []; });
-			return { hints: r[0], wifi: r[1], devs: r[2], ifaces: r[3], assoc: assoc, t: Date.now() / 1000 };
+			return { hints: r[0], wifi: r[1], devs: r[2], ifaces: r[3], assoc: assoc, fdb: fdb, t: Date.now() / 1000 };
 		});
 	},
 
@@ -215,19 +264,56 @@ return view.extend({
 		var self = this, ov = this.overrides(), ufp = this.ufp || {};
 		var devs = d.devs || {}, t = d.t;
 
-		/* WAN = interfaces holding a default route; the rest with IPv4 are local networks */
-		var wan = null, nets = [];
+		/* WAN = the interface holding the default route; the rest with IPv4
+		   are local networks. If the default route sits on a bridge that has
+		   LAN ports or Wi-Fi in it, this router is an access point behind a
+		   main router: that bridge is the uplink AND a local network. */
+		var wan = null, nets = [], ap = false, gw = null;
 		(d.ifaces || []).forEach(function(i) {
 			if (i.interface === 'loopback' || !i.up) return;
-			var isWan = (i.route || []).some(function(r) { return r.target === '0.0.0.0' && r.mask === 0; });
-			if (isWan && !wan) wan = i;
-			else if (!isWan) (i['ipv4-address'] || []).forEach(function(a) { nets.push({ name: i.interface, addr: a.address, mask: a.mask, dev: i.l3_device || i.device }); });
+			var def = (i.route || []).filter(function(r) { return r.target === '0.0.0.0' && r.mask === 0; })[0];
+			var dev = i.l3_device || i.device, dd = devs[dev] || {}, bp = dd.ports || [];
+			var lanBridge = !!dd.bridge && (bp.length > 1 || bp.some(function(p) { return (devs[p] || {}).wireless || WIFI_IF.test(p); }));
+			if (def && !wan) { wan = i; gw = def.nexthop || null; ap = lanBridge; }
+			if (def && !lanBridge) return;
+			(i['ipv4-address'] || []).forEach(function(a) { nets.push({ name: i.interface, addr: a.address, mask: a.mask, dev: dev, uplink: !!def }); });
 		});
 
 		var ownMacs = {};
 		Object.keys(devs).forEach(function(k) { if (devs[k].mac) ownMacs[devs[k].mac.toUpperCase()] = true; });
 
-		var wanDev = wan ? devs[wan.l3_device || wan.device] : null;
+		/* bridges worth a forwarding-table read: local networks with wired ports */
+		var fdbBridges = [], brPorts = {};
+		nets.forEach(function(n) {
+			var dd = devs[n.dev] || {};
+			if (!dd.bridge || brPorts[n.dev]) return;
+			var wiredPorts = (dd.ports || []).filter(function(p) { return !(devs[p] || {}).wireless && !WIFI_IF.test(p); });
+			if (wiredPorts.length) { brPorts[n.dev] = wiredPorts; fdbBridges.push(n.dev); }
+		});
+		self.fdbBridges = fdbBridges; self.brPorts = brPorts;
+		fdbBridges.forEach(function(br) {
+			if (!d.fdb || !(br in d.fdb)) return;
+			var raw = d.fdb[br];   /* null = read refused/failed, '' = empty table */
+			var tbl = raw === '' ? {} : self.portNo[br] && Object.keys(self.portNo[br]).length ? parseFdb(raw, self.portNo[br]) : null;
+			if (!tbl) { self.fdbMiss[br] = (self.fdbMiss[br] || 0) + 1; return; }
+			self.fdbOk[br] = true;
+			Object.keys(tbl).forEach(function(mac) { self.fdbSeen[mac] = { br: br, port: tbl[mac], t: t }; });
+		});
+		/* the kernel forgets quiet devices after 5 min; keep them 5 min more */
+		Object.keys(self.fdbSeen).forEach(function(mac) { if (t - self.fdbSeen[mac].t > 600) delete self.fdbSeen[mac]; });
+
+		/* in access-point mode the uplink is the LAN port the main router sits behind */
+		var uplinkPort = null;
+		if (ap) {
+			var wb = wan.l3_device || wan.device;
+			Object.keys(d.hints || {}).some(function(m) {
+				var h = d.hints[m];
+				if (gw && (h.ipaddrs || []).indexOf(gw) >= 0) { var f = self.fdbSeen[m.toUpperCase()]; if (f && f.br === wb) uplinkPort = f.port; return true; }
+			});
+			if (!uplinkPort && (brPorts[wb] || []).indexOf('wan') >= 0) uplinkPort = 'wan';
+		}
+
+		var wanDev = ap ? (uplinkPort ? devs[uplinkPort] : null) : wan ? devs[wan.l3_device || wan.device] : null;
 		var wanRate = wanDev && wanDev.stats ? self.rate('wan', (wanDev.stats.rx_bytes || 0) + (wanDev.stats.tx_bytes || 0), t) : null;
 
 		/* Wi-Fi networks (AP interfaces) and their stations */
@@ -260,12 +346,18 @@ return view.extend({
 			if (!wired[n.name]) {
 				var dev = devs[n.dev] || {};
 				var ports = ((board.network || {})[n.name] || {}).ports || dev.ports || [];
-				var rate = 0;
-				ports.forEach(function(p) { var pd = devs[p]; if (pd && pd.stats && !pd.wireless) rate += self.rate('port:' + p, (pd.stats.rx_bytes || 0) + (pd.stats.tx_bytes || 0), t) || 0; });
+				var rate = 0, portRate = {};
+				ports.forEach(function(p) {
+					var pd = devs[p];
+					if (!pd || !pd.stats || pd.wireless) return;
+					portRate[p] = self.rate('port:' + p, (pd.stats.rx_bytes || 0) + (pd.stats.tx_bytes || 0), t) || 0;
+					if (p !== uplinkPort) rate += portRate[p];   /* uplink traffic is already the top link */
+				});
 				wired[n.name] = { id: 'net:' + n.name, kind: 'wired', title: n.name === 'lan' ? _('LAN') : n.name.toUpperCase(),
-				                  sub: n.addr + '/' + n.mask, up: true, clients: [], rate: rate,
-				                  ports: ports.filter(function(p) { var pd = devs[p]; return pd && !pd.wireless && p.indexOf('phy') !== 0 && p.indexOf('wlan') !== 0; })
-				                              .map(function(p) { var pd = devs[p]; return { name: p, up: pd.link ? !!pd.link.carrier : !!pd.up, speed: pd.link && pd.link.speed }; }) };
+				                  sub: n.addr + '/' + n.mask, up: true, clients: [], rate: rate, portRate: portRate, br: n.dev,
+				                  note: ap && n.uplink && !self.fdbOk[n.dev] && self.tick > 2 ? _('Wired devices can’t be listed here: this firmware does not let the map read the LAN bridge’s port table.') : null,
+				                  ports: ports.filter(function(p) { var pd = devs[p]; return pd && !pd.wireless && !WIFI_IF.test(p); })
+				                              .map(function(p) { var pd = devs[p]; return { name: p, uplink: p === uplinkPort, up: pd.link ? !!pd.link.carrier : !!pd.up, speed: pd.link && pd.link.speed }; }) };
 			}
 		});
 
@@ -276,9 +368,34 @@ return view.extend({
 			var ip = (h.ipaddrs || [])[0], net = null;
 			for (var i = 0; i < nets.length && ip; i++) if (inSubnet(ip, nets[i].addr, nets[i].mask)) { net = nets[i].name; break; }
 			clients[mac] = { name: h.name || null, ips: h.ipaddrs || [], ip6s: h.ip6addrs || [], net: net };
-			if (!seen[mac] && net && wired[net]) wired[net].clients.push({ mac: mac, wifi: false });
 		});
-		Object.keys(wired).forEach(function(k) { groups.push(wired[k]); });
+
+		/* wired devices: placed by the bridge's port table when we have it;
+		   otherwise (routed networks only) by IP subnet, as LuCI itself does */
+		var placed = {};
+		Object.keys(wired).forEach(function(k) {
+			var g = wired[k];
+			Object.keys(self.fdbSeen).forEach(function(mac) {
+				var f = self.fdbSeen[mac];
+				if (f.br !== g.br || f.port === uplinkPort || seen[mac] || ownMacs[mac] || placed[mac]) return;
+				placed[mac] = true;
+				g.clients.push({ mac: mac, wifi: false, port: f.port });
+			});
+		});
+		Object.keys(clients).forEach(function(mac) {
+			var net = clients[mac].net, g = net && wired[net];
+			/* hosts on the uplink network may be anywhere behind the main router */
+			if (!g || seen[mac] || placed[mac] || ownMacs[mac] || nets.some(function(n) { return n.name === net && n.uplink; })) return;
+			placed[mac] = true;
+			g.clients.push({ mac: mac, wifi: false });
+		});
+		Object.keys(wired).forEach(function(k) {
+			var g = wired[k], perPort = {};
+			g.clients.forEach(function(c) { if (c.port) perPort[c.port] = (perPort[c.port] || 0) + 1; });
+			/* a port with a single device behind it: that port's traffic is the device's */
+			g.clients.forEach(function(c) { if (c.port && perPort[c.port] === 1 && g.portRate[c.port] != null) c.rate = g.portRate[c.port]; });
+			groups.push(g);
+		});
 
 		/* fill in names, icons and labels */
 		var total = 0, nwifi = 0;
@@ -298,7 +415,7 @@ return view.extend({
 			g.clients.sort(function(a, b) { return (b.rate || 0) - (a.rate || 0) || String(a.label).localeCompare(b.label); });
 		});
 
-		return { wan: wan, wanRate: wanRate, groups: groups, total: total, nwifi: nwifi };
+		return { wan: wan, wanRate: wanRate, groups: groups, total: total, nwifi: nwifi, ap: ap, gw: gw, uplinkPort: uplinkPort };
 	},
 
 	/* --------------------------------------------------------------- render */
@@ -348,10 +465,11 @@ return view.extend({
 	update: function(m) {
 		this.last = m;
 		var sum = document.getElementById('u-nm-summary');
-		if (sum) sum.textContent = _('%d devices · %d Wi-Fi · %d wired').format(m.total, m.nwifi, m.total - m.nwifi)
-			+ (m.wanRate != null ? '  ·  ' + _('Internet %s').format(fmtRate(m.wanRate)) : '');
+		if (sum) sum.textContent = N_(m.total, '%d device', '%d devices').format(m.total) + ' · ' + _('%d Wi-Fi · %d wired').format(m.nwifi, m.total - m.nwifi)
+			+ (m.wanRate != null ? '  ·  ' + (m.ap ? _('Uplink %s') : _('Internet %s')).format(fmtRate(m.wanRate)) : '');
 
-		var sig = m.groups.map(function(g) { return g.id + ':' + g.clients.map(function(c) { return c.mac + c.type + c.label; }).join(','); }).join('|') + (m.wan ? 'w' : '');
+		var sig = m.groups.map(function(g) { return g.id + ':' + (g.note ? 'n' : '') + (g.ports || []).map(function(p) { return p.name + (p.uplink ? '^' : ''); }).join('') + ':' + g.clients.map(function(c) { return c.mac + c.type + c.label + (c.port || ''); }).join(','); }).join('|')
+			+ (m.wan ? 'w' : '') + (m.ap ? 'a' + m.gw : '');
 		if (sig !== this.sig) { this.sig = sig; this.build(m); }
 		else this.refreshValues(m);
 	},
@@ -363,35 +481,40 @@ return view.extend({
 		var kids = [ (function() { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('class', 'u-nm-links'); s.setAttribute('aria-hidden', 'true'); return s; })() ];
 
 		var wan = m.wan || {};
-		/* Internet above the router in the first column keeps the device lists wide */
+		/* Internet (or, for an access point, the main router) above this
+		   router in the first column keeps the device lists wide */
 		kids.push(E('div', { 'class': 'u-nm-core', 'style': 'grid-row:1 / span ' + rows }, [
-			E('div', { 'class': 'u-nm-node u-nm-inet' + (m.wan ? '' : ' is-down'), 'data-node': 'inet' }, [
-				icon('internet', 'u-nm-node-ico'),
-				E('div', { 'class': 'u-nm-node-title' }, [ _('Internet') ]),
-				E('div', { 'class': 'u-nm-node-sub' }, [ m.wan ? ((wan['ipv4-address'] || [])[0] || {}).address || wan.proto : _('Offline') ]),
+			E('div', { 'class': 'u-nm-node u-nm-inet' + (m.wan ? '' : ' is-down'), 'data-node': 'inet',
+			           'title': m.ap ? _('This router is working as an access point behind your main router') : '' }, [
+				icon(m.ap ? 'router' : 'internet', 'u-nm-node-ico'),
+				E('div', { 'class': 'u-nm-node-title' }, [ m.ap ? _('Main router') : _('Internet') ]),
+				E('div', { 'class': 'u-nm-node-sub' }, [ !m.wan ? _('Offline') : m.ap ? (m.gw || _('Uplink')) + (m.uplinkPort ? ' · ' + m.uplinkPort : '')
+				                                       : ((wan['ipv4-address'] || [])[0] || {}).address || wan.proto ]),
 				E('div', { 'class': 'u-nm-node-rate', 'data-rate': 'inet' }, [ fmtRate(m.wanRate) ])
 			]),
 			E('div', { 'class': 'u-nm-node u-nm-router', 'data-node': 'router' }, [
-				icon('router', 'u-nm-node-ico'),
+				icon(m.ap ? 'network' : 'router', 'u-nm-node-ico'),
 				E('div', { 'class': 'u-nm-node-title' }, [ (this.board.model || {}).name || 'OpenWrt' ]),
-				E('div', { 'class': 'u-nm-node-sub' }, [ _('Router') ])
+				E('div', { 'class': 'u-nm-node-sub' }, [ m.ap ? _('Access point') + ' · ' + (((wan['ipv4-address'] || [])[0] || {}).address || '') : _('Router') ])
 			])
 		]));
+		this.ap = m.ap;
 
 		m.groups.forEach(function(g, i) {
 			var head = [ icon(g.kind === 'wifi' ? 'wifi' : 'wired', 'u-nm-node-ico'),
 				E('div', { 'class': 'u-nm-node-title' }, [ g.title ]),
-				E('div', { 'class': 'u-nm-node-sub' }, [ g.sub + ' · ' + _('%d devices').format(g.clients.length) ]),
+				E('div', { 'class': 'u-nm-node-sub' }, [ g.sub + ' · ' + N_(g.clients.length, '%d device', '%d devices').format(g.clients.length) ]),
 				E('div', { 'class': 'u-nm-node-rate', 'data-rate': g.id }, [ fmtRate(g.rate) ]) ];
 			if (g.ports && g.ports.length)
 				head.push(E('div', { 'class': 'u-nm-ports' }, g.ports.map(function(p) {
-					return E('span', { 'class': 'u-nm-port' + (p.up ? ' is-up' : ''), 'title': p.name + (p.up && p.speed ? ' · ' + p.speed + ' Mbps' : p.up ? '' : ' · ' + _('no link')) }, [ p.name ]);
+					return E('span', { 'class': 'u-nm-port' + (p.up ? ' is-up' : '') + (p.uplink ? ' is-uplink' : ''),
+						'title': p.name + (p.uplink ? ' · ' + _('uplink to main router') : '') + (p.up && p.speed ? ' · ' + p.speed + ' Mbps' : p.up ? '' : ' · ' + _('no link')) }, [ p.name + (p.uplink ? ' ↑' : '') ]);
 				})));
 			kids.push(E('div', { 'class': 'u-nm-node u-nm-group' + (g.up ? '' : ' is-down'), 'data-node': g.id, 'style': 'grid-row:' + (i + 1) }, head));
 
 			kids.push(E('div', { 'class': 'u-nm-lane', 'data-lane': g.id, 'style': 'grid-row:' + (i + 1) },
 				g.clients.length ? g.clients.map(function(c) { return self.chip(c); })
-				                 : [ E('div', { 'class': 'u-nm-empty' }, [ _('No devices') ]) ]));
+				                 : [ E('div', { 'class': 'u-nm-empty' }, [ g.note || _('No devices') ]) ]));
 		});
 
 		tree.replaceChildren.apply(tree, kids);
@@ -405,8 +528,11 @@ return view.extend({
 
 	chip: function(c) {
 		var self = this;
-		/* second line: the IP, or the MAC when the IP is already the name */
-		var sub = c.ips[0] && c.ips[0] !== c.label ? c.ips[0] : c.mac;
+		/* second line: the IP (or MAC when the IP is already the name), plus the
+		   LAN port; a device known only by its MAC says why there is no IP */
+		var sub = c.ips[0] ? (c.ips[0] !== c.label ? c.ips[0] : c.mac)
+		        : c.label !== c.mac ? c.mac : (this.ap ? _('IP from main router') : _('No IP address'));
+		if (c.port) sub += ' · ' + c.port;
 		var b = E('button', { 'type': 'button', 'class': 'u-nm-client', 'data-mac': c.mac,
 			'title': c.label + ' — ' + (TYPE_NAME[c.type] || '') }, [
 			icon(c.type),
@@ -512,13 +638,13 @@ return view.extend({
 		tiles.appendChild(mk('', _('Auto') + ' (' + (TYPE_NAME[c.auto] || '') + ')', c.auto));
 		TYPES.forEach(function(t) { tiles.appendChild(mk(t[0], t[1], t[0])); });
 
-		var via = c.wifi ? g.title + ' · ' + g.sub : g.title + _(' (wired)');
+		var via = c.wifi ? g.title + ' · ' + g.sub : g.title + (c.port ? ' · ' + _('port %s').format(c.port) : _(' (wired)'));
 		ui.showModal(c.label, [
 			E('div', { 'class': 'u-nm-detail' }, [
 				preview,
 				E('div', { 'class': 'u-nm-detail-info' }, [
 					row(_('Connected via'), via),
-					row(_('IPv4'), c.ips.join(', ')),
+					row(_('IPv4'), c.ips.join(', ') || (this.ap ? _('Assigned by your main router (not visible to this access point)') : '')),
 					row(_('IPv6'), c.ip6s.slice(0, 2).join(', ')),
 					row(_('MAC'), c.mac + (isPrivateMac(c.mac) ? ' · ' + _('private address') : '')),
 					c.wifi ? row(_('Signal'), c.signal + ' dBm') : '',
