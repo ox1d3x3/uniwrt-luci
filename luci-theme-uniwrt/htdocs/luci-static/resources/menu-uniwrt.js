@@ -133,8 +133,17 @@ return baseclass.extend({
 		}
 	},
 
-	renderSidebar: function(container, tree, url) {
+	/* Other themes may register their own Network Map (CleanX does, and only
+	   draws it under CleanX). With both installed, list UniWRT's map once
+	   instead of two "Network Map" entries; CleanX does the same in reverse. */
+	visibleChildren: function(tree) {
 		var children = ui.menu.getChildren(tree);
+		if (!children.some(function(c) { return c.name === 'uniwrt-netmap'; })) return children;
+		return children.filter(function(c) { return c.name !== 'cleanx-netmap'; });
+	},
+
+	renderSidebar: function(container, tree, url) {
+		var children = this.visibleChildren(tree);
 		if (!children.length) return;
 		var group = E('div', { 'class': 'u-nav-group' });
 		var self = this;
