@@ -88,6 +88,25 @@ for f in uniwrt-apply.sh scripts/make-standalone.sh "$PKG_DIR"/root/etc/uci-defa
   if $SH -n "$f" 2>/tmp/sherr; then ok "$f"; else bad "$f"; cat /tmp/sherr; fi
 done
 
+echo "== LuCI widget mechanics the theme must provide =="
+CSS="$PKG_DIR/htdocs/luci-static/uniwrt/css/cascade.css"
+need() { # description, fixed string that must appear in cascade.css
+  if grep -qF -- "$2" "$CSS"; then ok "$1"; else bad "$1 — missing: $2"; fi
+}
+need "closed dropdown shows only its selection"      '.cbi-dropdown > ul > li[display] { display: flex; }'
+need "dropdown items hidden by default"              '.cbi-dropdown > ul > li {'
+need "open dropdown list floats"                     '.cbi-dropdown[open] > ul.dropdown {'
+need "multi-select checkboxes only while open"       '.cbi-dropdown[multiple][open] > ul.dropdown > li > form'
+need "dropdown preview copy handled"                 '.cbi-dropdown[open] > ul.preview'
+need "list entries have a removable × (::after)"     '.cbi-dynlist > .item::after'
+need "shared tooltip popup can become visible"       'body > .cbi-tooltip {'
+if grep -qE '\.cbi-dropdown ul\.dropdown li\.selected' "$CSS"; then
+  bad "dropdown uses .selected class (LuCI sets a [selected] attribute)"
+else ok "dropdown selection uses LuCI's [selected] attribute"; fi
+if grep -nE '<script[^>]+luci\.js' "$PKG_DIR"/ucode/template/themes/uniwrt/footer.ut >/tmp/ljs; then
+  bad "footer loads luci.js again (luci-base's header already does):"; cat /tmp/ljs
+else ok "luci.js loaded once (by luci-base)"; fi
+
 echo "== Required files present =="
 for req in \
   "$PKG_DIR/Makefile" \

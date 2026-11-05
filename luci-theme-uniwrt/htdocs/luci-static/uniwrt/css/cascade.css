@@ -488,24 +488,96 @@ select::-ms-expand { display: none; }   /* kill the legacy IE/Edge arrow box */
 }
 .cbi-value-field > div[id^="cbid."]:not([class]) > select { vertical-align: top; }
 
-/* JS dropdown (ComboButton / .cbi-dropdown) -> single clean pill */
+/* ------------------------------------------------ LuCI dropdown widget
+   ui.Dropdown / ui.Combobox / ui.ComboButton (and every zone, network and
+   device picker built on them). LuCI's JS only toggles attributes — the
+   theme must supply the mechanics:
+     closed  : only items marked [display] (the current selection) are shown
+     [open]  : the <ul> gains .dropdown and floats below/above as a panel
+               (LuCI sets its top/max-height to fit), a ul.preview copy keeps
+               the closed look in place
+     multiple: each item carries a <form> with a checkbox, shown only while
+               the list is open
+   Without these rules a closed multi-select shows every option plus raw
+   checkboxes, and an opened list pushes the form down instead of floating. */
 .cbi-dropdown {
-  display: inline-flex; align-items: center; min-height: 38px;
-  background: var(--u-surface-2); border: 1.5px solid var(--u-line);
-  border-radius: var(--u-radius-sm); padding: 0 8px 0 11px; cursor: pointer;
-  max-width: 560px; transition: border-color .15s, box-shadow .15s;
+  position: relative; display: inline-flex; align-items: center;
+  max-width: 560px; min-width: 0; cursor: pointer; transition: border-color .15s, box-shadow .15s;
 }
+/* input look for real dropdowns; split buttons keep their button styling */
+.cbi-dropdown:not(.btn):not(.cbi-button) {
+  min-height: 38px; background: var(--u-surface-2); border: 1.5px solid var(--u-line);
+  border-radius: var(--u-radius-sm); padding: 0 8px 0 11px; color: var(--u-text);
+}
+/* in forms, size like the native selects next to them (bigger, consistent target) */
+.cbi-value-field .cbi-dropdown:not(.btn):not(.cbi-button) { min-width: 200px; }
 .cbi-dropdown:focus, .cbi-dropdown[open] { outline: 0; border-color: var(--u-accent); box-shadow: 0 0 0 3px var(--u-accent-soft); }
-.cbi-dropdown > ul { margin: 0; padding: 0; list-style: none; }
-.cbi-dropdown > ul > li { padding: 7px 2px; }
-.cbi-dropdown > .open, .cbi-dropdown > .more, .cbi-dropdown > .toggle { color: var(--u-text-3); }
-.cbi-dropdown ul.dropdown {
-  background: var(--u-surface); border: 1px solid var(--u-line);
-  border-radius: var(--u-radius-sm); box-shadow: var(--u-shadow-pop); padding: 5px; margin-top: 4px;
+.cbi-dropdown[disabled] { opacity: .55; cursor: not-allowed; pointer-events: none; }
+
+/* closed state: one row showing the selection */
+.cbi-dropdown > ul {
+  display: flex; align-items: center; flex: 1 1 auto; min-width: 0; gap: 6px;
+  margin: 0; padding: 0; list-style: none; overflow: hidden;
 }
-.cbi-dropdown ul.dropdown li { padding: 8px 11px; border-radius: var(--u-radius-xs); }
-.cbi-dropdown ul.dropdown li.focus, .cbi-dropdown ul.dropdown li:hover { background: var(--u-accent-soft); }
-.cbi-dropdown ul.dropdown li.selected { background: var(--u-accent); color: #fff; }
+.cbi-dropdown > ul > li {
+  display: none; align-items: center; gap: 6px; min-width: 0;
+  padding: 7px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: inherit;
+}
+.cbi-dropdown > ul > li[display] { display: flex; }
+.cbi-dropdown > ul > li[display]:not([display="0"]) { padding-left: 8px; border-left: 1px solid var(--u-line); }
+.cbi-dropdown > ul > li > form { display: none; margin: 0; padding: 0; pointer-events: none; }
+.cbi-dropdown[multiple] > ul > li > label { display: flex; align-items: center; gap: 4px; cursor: inherit; }
+.cbi-dropdown > ul > li img { max-height: 1.4em; width: auto; vertical-align: middle; }
+.cbi-dropdown > ul > li .hide-open { display: initial; }
+.cbi-dropdown > ul > li .hide-close { display: none; }
+.cbi-dropdown > ul.preview { display: none; }
+.cbi-dropdown[open] > ul.preview { display: flex; }
+.cbi-dropdown[empty] > ul { max-width: 1px; }
+.cbi-dropdown[empty] > ul > li { display: block; }
+
+/* trailing "···" (more selected / placeholder) and "▾" toggle */
+.cbi-dropdown > .open, .cbi-dropdown > .more {
+  flex: 0 0 auto; display: flex; align-items: center; padding: 0 3px;
+  line-height: 1; color: var(--u-text-3);
+}
+.cbi-dropdown > .more,
+.cbi-dropdown:not(.btn):not(.cbi-button) > ul > li[placeholder] { display: none; }
+.cbi-dropdown[multiple][more] > .more,
+.cbi-dropdown[multiple][empty] > .more { display: flex; }
+.cbi-dropdown > .toggle { color: var(--u-text-3); }
+
+/* open state: the list floats as a panel */
+.cbi-dropdown[open] > ul.dropdown {
+  display: block; position: absolute; left: -1.5px; z-index: 1100;
+  min-width: calc(100% + 3px); width: max-content; max-width: min(92vw, 520px);
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--u-surface); border: 1px solid var(--u-line);
+  border-radius: var(--u-radius-sm); box-shadow: var(--u-shadow-pop);
+  padding: 5px; margin-top: 4px; cursor: default;
+}
+.cbi-dropdown[open] > ul.dropdown > li {
+  display: flex; padding: 8px 11px; border-radius: var(--u-radius-xs); cursor: pointer; overflow: visible;
+}
+.cbi-dropdown[open] > ul.dropdown > li[display]:not([display="0"]) { border-left: 0; padding-left: 11px; }
+.cbi-dropdown[optional][open] > ul.dropdown > li[placeholder] { display: flex; color: var(--u-text-3); }
+.cbi-dropdown[multiple][open] > ul.dropdown > li > form { display: flex; align-items: center; }
+.cbi-dropdown[open] > ul.dropdown > li .hide-open { display: none; }
+.cbi-dropdown[open] > ul.dropdown > li .hide-close { display: initial; }
+.cbi-dropdown[open] > ul.dropdown > li.focus,
+.cbi-dropdown[open] > ul.dropdown > li:hover { background: var(--u-accent-soft); }
+.cbi-dropdown[open] > ul.dropdown > li[selected] { background: var(--u-accent-soft); color: var(--u-accent); font-weight: 600; }
+.cbi-dropdown[open] > ul.dropdown > li[unselectable] { opacity: .6; cursor: default; }
+.cbi-dropdown[open] > ul.dropdown > li > input.create-item-input:first-child:last-child { width: 100%; }
+
+/* split buttons (Save & Apply ▾): one action plus a divided arrow */
+.cbi-dropdown.btn, .cbi-dropdown.cbi-button { padding: 0 10px 0 16px; }
+.cbi-dropdown.btn > ul:not(.dropdown) > li, .cbi-dropdown.cbi-button > ul:not(.dropdown) > li { padding-left: 0; border-left: 0; }
+.cbi-dropdown.btn > .more, .cbi-dropdown.cbi-button > .more { display: none; }
+.cbi-dropdown.btn > .open, .cbi-dropdown.cbi-button > .open {
+  align-self: stretch; margin-left: 10px; padding: 0 0 0 10px; color: inherit; opacity: .9;
+  border-left: 1px solid currentColor;
+}
+.cbi-dropdown.btn[open] > ul.dropdown > li, .cbi-dropdown.cbi-button[open] > ul.dropdown > li { color: var(--u-text); font-weight: 500; }
 
 /* checkboxes rendered as iOS-style slide on/off switches */
 input[type="checkbox"] {
@@ -540,13 +612,33 @@ input[type="radio"] { width: 17px; height: 17px; accent-color: var(--u-accent); 
 .cbi-checkbox > label:empty { display: none; }   /* hide the empty FlagValue label so it doesn't add a gap */
 
 /* dynamic lists */
-.cbi-dynlist { display: flex; flex-direction: column; gap: 6px; max-width: 560px; }
-.cbi-dynlist .item {
-  display: inline-flex; align-items: center; gap: 8px;
+.cbi-dynlist { display: inline-flex; flex-direction: column; gap: 6px; min-width: 210px; max-width: 560px; }
+/* LuCI 24.10+ removes an entry only when the click lands inside the item's
+   ::after box (it measures that pseudo-element's width), so the "×" below is
+   functional, not decoration. 23.05 removes on any click on the item. */
+.cbi-dynlist > .item {
+  position: relative; display: flex; align-items: center; gap: 8px; min-height: 32px;
   background: var(--u-accent-soft); color: var(--u-text);
-  border-radius: var(--u-radius-xs); padding: 5px 10px; font-size: .85rem;
+  border-radius: var(--u-radius-xs); padding: 5px 2.4em 5px 10px; font-size: .85rem;
+  overflow-wrap: anywhere;
 }
-.cbi-dynlist .item:hover { background: var(--u-accent-soft); }
+.cbi-dynlist > .item > span { pointer-events: none; }
+.cbi-dynlist > .item::after {
+  content: "×"; position: absolute; top: 0; right: 0; bottom: 0; width: 2em;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.05rem; font-weight: 600; line-height: 1; color: var(--u-text-3);
+  border-radius: 0 var(--u-radius-xs) var(--u-radius-xs) 0; cursor: pointer;
+}
+.cbi-dynlist > .item:hover::after { color: var(--u-crit); background: rgba(240,56,59,.10); }
+.cbi-dynlist > .item:focus-visible { outline: 0; box-shadow: 0 0 0 2px var(--u-accent); }
+.cbi-dynlist > .item.dragging { opacity: .5; }
+.cbi-dynlist > .item.drag-over,
+.cbi-dynlist > .add-item > .drag-over { box-shadow: inset 0 2px 0 var(--u-accent); }
+.cbi-dynlist[disabled] > .item::after { display: none; }
+.cbi-dynlist > .add-item { display: flex; gap: 6px; align-items: center; }
+.cbi-dynlist > .add-item > input, .cbi-dynlist > .add-item > .cbi-dropdown { flex: 1 1 auto; min-width: 0; }
+.cbi-dynlist > .add-item > .cbi-dropdown { width: 100%; max-width: none; }
+.cbi-dynlist > .add-item > button { flex: 0 0 auto; }
 
 /* ----------------------------------------------------------------- buttons */
 .btn, .cbi-button, button, input[type="submit"], input[type="button"], input[type="reset"] {
@@ -821,6 +913,18 @@ button:focus-visible, a.cbi-button:focus-visible {
 }
 .cbi-tooltip-container:hover > .cbi-tooltip,
 [data-tooltip]:hover > .cbi-tooltip { opacity: 1; visibility: visible; }
+/* The shared [data-tooltip] popup lives directly under <body>: LuCI positions
+   it with inline top/left and shows it with an inline opacity:1, then removes
+   the style again. It must therefore never be visibility:hidden, parks
+   off-screen while it has no inline position, and never takes the pointer —
+   it is plain text, and a validation tip must not cover the controls (on
+   phones it otherwise sits over the dialog's tab bar). */
+body > .cbi-tooltip {
+  visibility: visible; top: 0; left: -10000px; margin-top: 4px; pointer-events: none;
+  transition: opacity .15s var(--u-ease);
+}
+body > .cbi-tooltip.error   { border-color: var(--u-crit); }
+body > .cbi-tooltip.success { border-color: var(--u-ok); }
 [data-tooltip] { text-decoration: underline dotted; text-underline-offset: 2px; }
 
 /* progress bars (memory / flash on overview, attended-sysupgrade) */

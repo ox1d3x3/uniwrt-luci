@@ -17,7 +17,10 @@
   <a class="u-credit" href="https://github.com/ox1d3x3/uniwrt-luci" target="_blank" rel="noopener">OX1d3x3 X UniWRT V{{ uniwrt_version }}</a>
 </footer>
 
-<script src="{{ resource }}/luci.js"></script>
+{# luci.js and the L instance come from luci-base's header.ut on every
+   supported release (23.05 / 24.10 / 25.12); loading it again here would
+   replace window.LuCI / window.XHR with a second copy whose poller nothing
+   runs, and download ~120 KB twice per page. #}
 <script>
   L.require('menu-uniwrt');
 {% if (u_status_bar == '1'): %}

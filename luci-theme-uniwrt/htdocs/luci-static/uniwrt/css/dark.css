@@ -40,16 +40,17 @@ body { background: var(--u-bg); color: var(--u-text); }
 input[type="text"], input[type="password"], input[type="search"],
 input[type="number"], input[type="email"], input[type="url"],
 textarea, select, .cbi-input-text, .cbi-input-password, .cbi-input-select,
-.cbi-dropdown {
+.cbi-dropdown:not(.btn):not(.cbi-button) {
   background-color: var(--u-surface-2); border-color: var(--u-line); color: var(--u-text);
 }
 /* NB: use background-color, never the `background` shorthand, on selects — the
    shorthand resets background-repeat/position and tiles the caret SVG. The
    caret image (gray stroke) is defined once in cascade.css and works in both modes. */
-input:focus, textarea:focus, select:focus, .cbi-dropdown[open], .cbi-dropdown:focus {
+input:focus, textarea:focus, select:focus,
+.cbi-dropdown:not(.btn):not(.cbi-button)[open], .cbi-dropdown:not(.btn):not(.cbi-button):focus {
   background-color: #2c2f34; border-color: var(--u-accent);
 }
-.cbi-dropdown ul.dropdown { background: var(--u-surface); border-color: var(--u-line); }
+.cbi-dropdown[open] > ul.dropdown { background: var(--u-surface); border-color: var(--u-line); }
 
 /* neutral buttons */
 .btn, .cbi-button, button, input[type="submit"], input[type="button"], input[type="reset"] {
