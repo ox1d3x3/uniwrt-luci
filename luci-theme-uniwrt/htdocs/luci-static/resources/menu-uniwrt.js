@@ -47,6 +47,12 @@ return baseclass.extend({
 		return document.importNode(doc.documentElement, true);
 	},
 
+	/* let the browser handle Ctrl/Cmd/Shift/Alt and non-primary clicks
+	   (open in new tab/window) instead of animating a same-tab navigation */
+	plainClick: function(ev) {
+		return ev.button === 0 && !ev.ctrlKey && !ev.metaKey && !ev.shiftKey && !ev.altKey;
+	},
+
 	render: function(tree) {
 		var nav = document.getElementById('u-rail-nav');
 		if (!nav) return;
@@ -170,6 +176,7 @@ return baseclass.extend({
 
 					(function(el, sl) {
 						el.addEventListener('click', function(ev) {
+							if (!self.plainClick(ev)) return;
 							ev.preventDefault();
 							var prev = el.parentNode.querySelector('.u-nav-item.active');
 							if (prev) prev.classList.remove('active');
@@ -239,6 +246,7 @@ return baseclass.extend({
 		for (var k = 0; k < tabs.length; k++) {
 			(function(tab) {
 				tab.addEventListener('click', function(ev) {
+					if (!self.plainClick(ev)) return;
 					ev.preventDefault();
 					var prev = bar.querySelector('.u-subnav-tab.active');
 					if (prev) prev.classList.remove('active');

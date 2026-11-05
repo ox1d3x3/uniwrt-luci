@@ -35,8 +35,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" id="u-meta-color" content="{{ u_mode == 'light' ? '#ffffff' : '#131416' }}">
   <title>{{ _('Login') }} - {{ hostname }} - LuCI</title>
-  <link rel="icon" href="{{ media }}/img/uniwrt-logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="{{ media }}/css/cascade.css">
+  <link rel="icon" href="{{ media }}/img/uniwrt-logo.svg?v={{ uniwrt_version }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ media }}/css/cascade.css?v={{ uniwrt_version }}">
   <style id="u-dark" media="{{ dark_media }}">{{ dark_css }}</style>
   <style>
     :root{ --u-accent:{{ u_accent }}; }
@@ -65,7 +65,7 @@
 
 <div class="u-login-wrap">
   <div class="u-login-card">
-    <img class="u-login-logo" src="{{ media }}/img/uniwrt-logo.svg" alt="">
+    <img class="u-login-logo" src="{{ media }}/img/uniwrt-logo.svg?v={{ uniwrt_version }}" alt="">
     <h1 class="u-login-title">{{ hostname }}</h1>
     <p class="u-login-sub">{{ _('Sign in to continue') }}</p>
 

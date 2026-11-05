@@ -138,6 +138,19 @@ if grep -qE 'setInterval\(' "$PKG_DIR"/htdocs/luci-static/resources/view/uniwrt/
   bad "netmap.js uses setInterval (must use LuCI's batched poll loop)"
 else ok "netmap.js polls through LuCI's batched poll loop"; fi
 
+echo "== Regression guards (v2.0.44 audit) =="
+T="$PKG_DIR/ucode/template/themes/uniwrt"
+if grep -nE "<link[^>]+cascade\.css\"" "$T/sysauth.ut" "$T/header.ut" >/tmp/cb; then bad "stylesheet without ?v= cache-buster:"; cat /tmp/cb
+else ok "every page loads a versioned stylesheet"; fi
+if grep -nE "'\{\{ *_\(" "$T"/*.ut >/tmp/tq; then bad "translation inside a quoted JS string (use sprintf('%J', ...)):"; cat /tmp/tq
+else ok "translations in scripts are JSON-encoded"; fi
+grep -q 'plainClick' "$PKG_DIR/htdocs/luci-static/resources/menu-uniwrt.js" \
+  && ok "menu leaves Ctrl/Cmd/middle clicks to the browser" || bad "menu intercepts modifier clicks"
+grep -q "'pageshow'" "$T/footer.ut" && ok "Back/Forward restore clears the navigation fade" || bad "no pageshow handler for page-leaving"
+OV="$PKG_DIR/htdocs/luci-static/resources/view/uniwrt/overview.js"
+grep -q '1024 \* fs.total' "$OV" && ok "Overview scales procd KiB storage figures" || bad "Overview storage treats KiB as bytes"
+grep -q 'info.unixtime' "$OV" && ok "Overview clock uses unixtime" || bad "Overview clock uses offset localtime"
+
 echo "== Required files present =="
 for req in \
   "$PKG_DIR/Makefile" \

@@ -69,6 +69,9 @@ jobs:
     name: Build ${{ matrix.label }}
     needs: qa
     runs-on: ubuntu-latest
+    # building only reads the repo; publishing happens in the release job
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -93,7 +96,9 @@ jobs:
           fetch-depth: 0
 
       - name: Build package with OpenWrt SDK
-        uses: openwrt/gh-action-sdk@main
+        # pinned to a reviewed commit (main as of 2026-11-05): a moving branch
+        # would run whatever it points to next with this repository's token
+        uses: openwrt/gh-action-sdk@f5813d30eeef3534b58ac7e79c5d8842b6035434
         env:
           ARCH: ${{ matrix.arch }}
           FEEDNAME: ${{ env.FEEDNAME }}

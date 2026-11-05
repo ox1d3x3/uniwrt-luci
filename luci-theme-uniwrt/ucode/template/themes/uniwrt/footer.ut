@@ -29,6 +29,12 @@
 
   if (history.scrollRestoration) history.scrollRestoration = 'manual';
 
+  /* a page restored by Back/Forward comes back exactly as it was left —
+     including the fade-out started by the menu's navigation animation */
+  window.addEventListener('pageshow', function(ev) {
+    if (ev.persisted) document.body.classList.remove('page-leaving');
+  });
+
   /* ---- rail open/close (mobile) + collapse/pin (desktop) ---- */
   (function(){
     var rail   = document.getElementById('u-rail');
@@ -46,7 +52,7 @@
     if (scrim) scrim.addEventListener('click', closeRail);
 
     if (pin) {
-      var pinLabels = { collapsed: '{{ _('Expand menu') }}', expanded: '{{ _('Collapse menu') }}' };
+      var pinLabels = { collapsed: {{ sprintf('%J', _('Expand menu')) }}, expanded: {{ sprintf('%J', _('Collapse menu')) }} };
       function syncPinLabel(){
         var t = pinLabels[html.getAttribute('data-rail') === 'collapsed' ? 'collapsed' : 'expanded'];
         pin.title = t; pin.setAttribute('aria-label', t);

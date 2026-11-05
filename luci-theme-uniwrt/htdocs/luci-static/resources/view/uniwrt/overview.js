@@ -321,14 +321,14 @@ return view.extend({
 				self.update(d[0]);
 				self.updateIfaces(d[1]);
 				self.updateWifi(d[2]);
-				self.updateClients(d[3]);
+				self.updateClients(d[3], d[4], d[1]);
 				self.updateThroughput(d[4], d[1]);
 			});
 		}, 5);
 
 		/* first interface/wifi/clients/throughput paint */
 		Promise.all([ L.resolveDefault(callIfDump(), []), L.resolveDefault(callWifi(), {}), L.resolveDefault(callHints(), {}), L.resolveDefault(callNetDevs(), {}) ])
-			.then(function(d) { self.updateIfaces(d[0]); self.updateWifi(d[1]); self.updateClients(d[2]); self.updateThroughput(d[3], d[0]); });
+			.then(function(d) { self.updateIfaces(d[0]); self.updateWifi(d[1]); self.updateClients(d[2], d[3], d[0]); self.updateThroughput(d[3], d[0]); });
 
 		return root;
 	},
@@ -358,7 +358,10 @@ return view.extend({
 		if (info.uptime && $('u-ov-up')) {
 			$('u-ov-up').textContent = fmtUptime(info.uptime);
 			$('u-ov-up').style.fontSize = '1.4rem';
-			if (info.localtime) $('u-ov-up-sub').textContent = new Date(info.localtime * 1000).toLocaleString();
+			/* 'unixtime' is the real instant; 'localtime' is already shifted by the
+			   router's UTC offset, so it may only be shown as if it were UTC */
+			if (info.unixtime) $('u-ov-up-sub').textContent = new Date(info.unixtime * 1000).toLocaleString();
+			else if (info.localtime) $('u-ov-up-sub').textContent = new Date(info.localtime * 1000).toLocaleString(undefined, { timeZone: 'UTC' });
 		}
 		this.updateStorage(info);
 	},
@@ -377,9 +380,12 @@ return view.extend({
 				E('div', { 'class': 'u-meter ' + level(pct) }, [ E('i', { 'style': 'transform:scaleX(' + (pct / 100) + ')' }) ])
 			]);
 		}
-		var rows = [];
-		if (info.root && info.root.total) rows.push(bar(_('Disk (root)'), (info.root.used != null ? info.root.used : info.root.total - info.root.free), info.root.total));
-		if (info.tmp  && info.tmp.total)  rows.push(bar(_('RAM (tmp)'),  (info.tmp.used  != null ? info.tmp.used  : info.tmp.total  - info.tmp.free),  info.tmp.total));
+		/* procd reports root/tmp in KiB (like LuCI's Status page, scale to bytes);
+		   swap comes in bytes */
+		var kib = function(fs) { return { used: 1024 * (fs.used != null ? fs.used : fs.total - fs.free), total: 1024 * fs.total }; };
+		var rows = [], fs;
+		if (info.root && info.root.total) { fs = kib(info.root); rows.push(bar(_('Disk (root)'), fs.used, fs.total)); }
+		if (info.tmp  && info.tmp.total)  { fs = kib(info.tmp);  rows.push(bar(_('RAM (tmp)'),  fs.used, fs.total)); }
 		if (info.swap && info.swap.total) rows.push(bar(_('Swap'),       (info.swap.total - info.swap.free), info.swap.total));
 		rows = rows.filter(Boolean);
 		box.innerHTML = '';
@@ -490,12 +496,20 @@ return view.extend({
 		rows.length ? rows.forEach(function(r) { box.appendChild(r); }) : box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('No interfaces') ]));
 	},
 
-	updateClients: function(hints) {
+	updateClients: function(hints, devs, ifaces) {
 		var box = (this.root || document).querySelector('#u-ov-clients');
 		if (!box || !hints) return;
+		/* host hints also cover this router's own interfaces and the gateways
+		   it talks to (ISP, or the main router on an access point) */
+		var own = {}, gws = {};
+		Object.keys(devs || {}).forEach(function(n) { var d = devs[n] || {}, m = d.macaddr || d.mac; if (m) own[String(m).toUpperCase()] = true; });
+		(Array.isArray(ifaces) ? ifaces : []).forEach(function(i) {
+			(i.route || []).forEach(function(r) { if (r.nexthop && r.nexthop !== '0.0.0.0') gws[r.nexthop] = true; });
+		});
 		var list = [];
 		Object.keys(hints).forEach(function(mac) {
 			var h = hints[mac] || {};
+			if (own[mac.toUpperCase()] || (h.ipaddrs || []).some(function(a) { return gws[a]; })) return;
 			var ip = h.ipv4 || (h.ipaddrs && h.ipaddrs[0]) || (h.ipv6 || '');
 			var name = h.name || h.host || '';
 			if (!name && !ip) return;
@@ -520,11 +534,13 @@ return view.extend({
 		if (!box || !wifi) return;
 		var rows = [];
 		Object.keys(wifi).forEach(function(dev) {
-			var ifaces = (wifi[dev] && wifi[dev].interfaces) || [];
+			var radio = wifi[dev] || {}, ifaces = radio.interfaces || [];
 			ifaces.forEach(function(i) {
 				var cfg = i.config || {}, iw = i.iwinfo || {};
 				var ssid = cfg.ssid || iw.ssid || '–';
-				var up = !!i.up;
+				/* netifd reports 'up' per radio, not per network: a network is up
+				   when its radio is and it got an interface */
+				var up = ('up' in i) ? !!i.up : (!!radio.up && !!i.ifname && !radio.disabled && cfg.disabled != '1' && cfg.disabled !== true);
 				var meta = (iw.channel ? ('ch ' + iw.channel) : '') + (iw.signal ? ('  ' + iw.signal + ' dBm') : '');
 				rows.push(E('div', { 'class': 'u-kv' }, [
 					E('span', { 'class': 'k' }, [ E('span', { 'class': 'u-dot ' + (up ? 'up' : 'down') }), ssid ]),
