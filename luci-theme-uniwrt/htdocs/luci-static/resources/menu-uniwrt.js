@@ -133,13 +133,13 @@ return baseclass.extend({
 		}
 	},
 
-	/* Other themes may register their own Network Map (CleanX does, and only
-	   draws it under CleanX). With both installed, list UniWRT's map once
-	   instead of two "Network Map" entries; CleanX does the same in reverse. */
+	/* Menu entries another installed theme adds for itself (CleanX's Network
+	   Map and System -> CleanX Theme) belong to that theme and only matter
+	   while it is active. Leave them out at every level, so UniWRT shows one
+	   Network Map and its own settings page; CleanX does the same for
+	   UniWRT's entries. */
 	visibleChildren: function(tree) {
-		var children = ui.menu.getChildren(tree);
-		if (!children.some(function(c) { return c.name === 'uniwrt-netmap'; })) return children;
-		return children.filter(function(c) { return c.name !== 'cleanx-netmap'; });
+		return ui.menu.getChildren(tree).filter(function(c) { return !/^cleanx(-|$)/.test(c.name); });
 	},
 
 	renderSidebar: function(container, tree, url) {
@@ -156,7 +156,7 @@ return baseclass.extend({
 		for (var i = 0; i < children.length; i++) {
 			var child = children[i];
 			if (hideOverview && child.name === 'uniwrt-overview') continue;
-			var subs = ui.menu.getChildren(child);
+			var subs = this.visibleChildren(child);
 			var hasSubs = subs.length > 0;
 			var current = L.env.dispatchpath[1] == child.name;
 			var open = current || (expandAll && hasSubs);
@@ -235,7 +235,7 @@ return baseclass.extend({
 	renderSubnav: function(tree, url) {
 		var bar = document.getElementById('u-subnav');
 		if (!bar) return;
-		var children = ui.menu.getChildren(tree);
+		var children = this.visibleChildren(tree);
 		if (!children.length) return;
 
 		bar.innerHTML = '';

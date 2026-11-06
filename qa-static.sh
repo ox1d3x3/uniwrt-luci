@@ -146,8 +146,8 @@ if grep -nE "'\{\{ *_\(" "$T"/*.ut >/tmp/tq; then bad "translation inside a quot
 else ok "translations in scripts are JSON-encoded"; fi
 grep -q 'plainClick' "$PKG_DIR/htdocs/luci-static/resources/menu-uniwrt.js" \
   && ok "menu leaves Ctrl/Cmd/middle clicks to the browser" || bad "menu intercepts modifier clicks"
-grep -q "c.name !== 'cleanx-netmap'" "$PKG_DIR/htdocs/luci-static/resources/menu-uniwrt.js" \
-  && ok "CleanX's Network Map entry is hidden when both themes are installed" || bad "CleanX map entry would show twice under UniWRT"
+grep -qF '/^cleanx(-|$)/.test(c.name)' "$PKG_DIR/htdocs/luci-static/resources/menu-uniwrt.js" \
+  && ok "CleanX's own menu entries are hidden when both themes are installed" || bad "CleanX's Network Map / settings entries would show under UniWRT"
 grep -q "'pageshow'" "$T/footer.ut" && ok "Back/Forward restore clears the navigation fade" || bad "no pageshow handler for page-leaving"
 OV="$PKG_DIR/htdocs/luci-static/resources/view/uniwrt/overview.js"
 grep -q '1024 \* fs.total' "$OV" && ok "Overview scales procd KiB storage figures" || bad "Overview storage treats KiB as bytes"
