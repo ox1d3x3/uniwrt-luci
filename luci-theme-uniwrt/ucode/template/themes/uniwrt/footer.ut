@@ -22,6 +22,12 @@
    replace window.LuCI / window.XHR with a second copy whose poller nothing
    runs, and download ~120 KB twice per page. #}
 <script>
+  /* L.require() and the view loader add ?v=<resource_version> to every
+     JS URL, and luci-base only changes that on a luci-base upgrade. Tag it
+     with the theme version too, so the browser fetches the new
+     menu/status/view scripts after a theme update instead of serving
+     stale cached ones (a hard reload did not always help). */
+  if (L.env) L.env.resource_version = (L.env.resource_version || '') + '-u{{ uniwrt_version }}';
   L.require('menu-uniwrt');
 {% if (u_status_bar == '1'): %}
   L.require('status-uniwrt');
