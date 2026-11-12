@@ -286,9 +286,11 @@ return view.extend({
 		var root = E('div', {}, [
 			E('p', { 'class': 'cbi-map-descr' }, [ _('Live overview of this device. Figures refresh automatically.') ]),
 			grid,
-			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ ifaceCard, wifiCard, clientsCard ]),
-			E('div', { 'class': 'u-grid', 'style': 'grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start' }, [ storageCard, thruCard ]),
-			actionsCard
+			/* status cards of equal height, then the actions, then the
+			   live figures (throughput beside clients) */
+			E('div', { 'class': 'u-grid u-ov-cards' }, [ ifaceCard, wifiCard, storageCard ]),
+			actionsCard,
+			E('div', { 'class': 'u-grid u-ov-live' }, [ thruCard, clientsCard ])
 		].filter(Boolean));
 
 		/* keep a handle so updates can resolve tiles even before LuCI
