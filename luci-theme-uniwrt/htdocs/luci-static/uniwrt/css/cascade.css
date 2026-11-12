@@ -1129,7 +1129,7 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
    (GPU-composited, no JS per frame) that stops when idle, when the user
    asks for reduced motion, or when animation is turned off in settings. */
 .u-nm-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 16px; }
-.u-nm-summary { font-size: .86rem; font-weight: 600; color: var(--u-text-2); }
+.u-nm-summary { font-size: .92rem; font-weight: 600; color: var(--u-text-2); }
 .u-nm-legend { display: flex; align-items: center; gap: 6px; font-size: .76rem; color: var(--u-text-3); }
 .u-nm-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--u-line); margin-left: 8px; }
 .u-nm-dot-on { background: var(--u-ok); }
@@ -1172,13 +1172,13 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 }
 .u-nm-node .u-nm-node-ico svg { width: 21px; height: 21px; }
 .u-nm-inet.is-down .u-nm-node-ico { background: rgba(240,56,59,.12); color: var(--u-crit); }
-.u-nm-node-title { font-size: .88rem; font-weight: 700; color: var(--u-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.u-nm-node-sub { font-size: .74rem; color: var(--u-text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.u-nm-node-rate { font-size: .74rem; font-weight: 650; color: var(--u-accent); font-variant-numeric: tabular-nums; min-height: 1em; }
+.u-nm-node-title { font-size: .98rem; font-weight: 700; color: var(--u-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.u-nm-node-sub { font-size: .8rem; color: var(--u-text-2); white-space: normal; overflow-wrap: anywhere; line-height: 1.3; max-width: 100%; }
+.u-nm-node-rate { font-size: .82rem; font-weight: 650; color: var(--u-accent); font-variant-numeric: tabular-nums; min-height: 1em; }
 .u-nm-group > .u-nm-node-rate { margin-top: 6px; }
 .u-nm-ports { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
 .u-nm-port {
-  font-size: .68rem; font-weight: 600; padding: 2px 7px; border-radius: 999px;
+  font-size: .74rem; font-weight: 600; padding: 2px 7px; border-radius: 999px;
   background: var(--u-surface-2); color: var(--u-text-3); border: 1px solid var(--u-line);
 }
 .u-nm-port.is-up { color: var(--u-ok); border-color: rgba(56,204,101,.45); background: rgba(56,204,101,.10); }
@@ -1186,10 +1186,10 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 
 .u-nm-lane {
   grid-column: 3; position: relative; z-index: 1; align-self: stretch;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 8px; align-content: center;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 8px; align-content: center;
   padding: 10px; border-radius: var(--u-radius); background: var(--u-surface-2); border: 1px dashed var(--u-line);
 }
-.u-nm-empty { font-size: .8rem; color: var(--u-text-3); padding: 6px 4px; }
+.u-nm-empty { font-size: .86rem; color: var(--u-text-2); padding: 6px 4px; }
 
 /* device chips (reset the theme's generic button look) */
 .u-nm-client {
@@ -1207,10 +1207,10 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 }
 .u-nm-ico svg { width: 19px; height: 19px; display: block; }
 .u-nm-client-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.u-nm-client-name { font-size: .82rem; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.u-nm-client-sub { font-size: .72rem; color: var(--u-text-3); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.u-nm-client-name { font-size: .92rem; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere; }
+.u-nm-client-sub { font-size: .8rem; color: var(--u-text-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; margin-top: 2px; }
 .u-nm-client-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: 0 0 auto; }
-.u-nm-client-rate { font-size: .68rem; font-weight: 650; color: var(--u-accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.u-nm-client-rate { font-size: .78rem; font-weight: 650; color: var(--u-accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .u-nm-act { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--u-line); }
 .u-nm-act.is-on { background: var(--u-ok); box-shadow: 0 0 0 0 rgba(56,204,101,.5); animation: u-nm-pulse 2s ease-out infinite; }
 @keyframes u-nm-pulse { 0% { box-shadow: 0 0 0 0 rgba(56,204,101,.45); } 70%, 100% { box-shadow: 0 0 0 6px rgba(56,204,101,0); } }
@@ -1257,7 +1257,7 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
   .u-nm-core { gap: 26px; align-self: start; }
   .u-nm-inet, .u-nm-router { flex-direction: row; text-align: left; align-self: flex-start; min-width: 240px; max-width: 100%; gap: 12px; }
   .u-nm-inet > .u-nm-node-rate, .u-nm-router > .u-nm-node-sub { margin-left: auto; }
-  .u-nm-lane { margin-left: 22px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .u-nm-lane { margin-left: 22px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 }
 @media (max-width: 600px) {
   .u-nm-lane { margin-left: 12px; grid-template-columns: minmax(0, 1fr); }
