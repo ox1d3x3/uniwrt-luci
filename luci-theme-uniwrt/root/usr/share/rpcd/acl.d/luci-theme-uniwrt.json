@@ -9,6 +9,7 @@
 				"network.interface": [ "dump" ],
 				"network.device": [ "status" ],
 				"iwinfo": [ "assoclist" ],
+				"usteer": [ "get_clients" ],
 				"fingerprint": [ "fingerprint" ],
 				"file": [ "read" ]
 			},

@@ -10,6 +10,9 @@ var callInfo  = rpc.declare({ object: 'system', method: 'info' });
 var callIfDump = rpc.declare({ object: 'network.interface', method: 'dump', expect: { 'interface': [] } });
 var callWifi  = rpc.declare({ object: 'luci-rpc', method: 'getWirelessDevices', expect: { '': {} } });
 var callHints = rpc.declare({ object: 'luci-rpc', method: 'getHostHints', expect: { '': {} } });
+var callAssoc = rpc.declare({ object: 'iwinfo', method: 'assoclist', params: [ 'device' ], expect: { results: [] } });
+/* usteer (optional): stations of the other access points it peers with */
+var callUsteer = rpc.declare({ object: 'usteer', method: 'get_clients', expect: { '': {} } });
 var callNetDevs = rpc.declare({ object: 'network.device', method: 'status', expect: { '': {} } });
 
 function svgNode(markup) {
@@ -321,14 +324,14 @@ return view.extend({
 				self.update(d[0]);
 				self.updateIfaces(d[1]);
 				self.updateWifi(d[2]);
-				self.updateClients(d[3], d[4], d[1]);
+				self.updateClients(d[3], d[4], d[1], d[2]);
 				self.updateThroughput(d[4], d[1]);
 			});
 		}, 5);
 
 		/* first interface/wifi/clients/throughput paint */
 		Promise.all([ L.resolveDefault(callIfDump(), []), L.resolveDefault(callWifi(), {}), L.resolveDefault(callHints(), {}), L.resolveDefault(callNetDevs(), {}) ])
-			.then(function(d) { self.updateIfaces(d[0]); self.updateWifi(d[1]); self.updateClients(d[2], d[3], d[0]); self.updateThroughput(d[3], d[0]); });
+			.then(function(d) { self.updateIfaces(d[0]); self.updateWifi(d[1]); self.updateClients(d[2], d[3], d[0], d[1]); self.updateThroughput(d[3], d[0]); });
 
 		return root;
 	},
@@ -496,7 +499,8 @@ return view.extend({
 		rows.length ? rows.forEach(function(r) { box.appendChild(r); }) : box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('No interfaces') ]));
 	},
 
-	updateClients: function(hints, devs, ifaces) {
+	updateClients: function(hints, devs, ifaces, wifi) {
+		var self = this;
 		var box = (this.root || document).querySelector('#u-ov-clients');
 		if (!box || !hints) return;
 		/* host hints also cover this router's own interfaces and the gateways
@@ -506,28 +510,81 @@ return view.extend({
 		(Array.isArray(ifaces) ? ifaces : []).forEach(function(i) {
 			(i.route || []).forEach(function(r) { if (r.nexthop && r.nexthop !== '0.0.0.0') gws[r.nexthop] = true; });
 		});
-		var list = [];
-		Object.keys(hints).forEach(function(mac) {
-			var h = hints[mac] || {};
-			if (own[mac.toUpperCase()] || (h.ipaddrs || []).some(function(a) { return gws[a]; })) return;
-			var ip = h.ipv4 || (h.ipaddrs && h.ipaddrs[0]) || (h.ipv6 || '');
-			var name = h.name || h.host || '';
-			if (!name && !ip) return;
-			list.push({ name: name || ip, ip: name ? ip : '', mac: mac });
+		function hintOf(mac) { return hints[mac] || hints[mac.toUpperCase()] || hints[mac.toLowerCase()] || {}; }
+		function ipOf(h) { return h.ipv4 || (h.ipaddrs && h.ipaddrs[0]) || h.ipv6 || ''; }
+		/* an access point by the name its address has in the host hints */
+		function apName(ip) {
+			var found = null;
+			Object.keys(hints).forEach(function(mac) { var h = hints[mac] || {}; if (!found && h.name && (h.ipaddrs || []).indexOf(ip) >= 0) found = h.name; });
+			return found || ip;
+		}
+
+		/* this device's access point interfaces */
+		var apIfs = [];
+		Object.keys(wifi || {}).forEach(function(r) {
+			((wifi[r] || {}).interfaces || []).forEach(function(i) {
+				if (i && i.ifname && (i.config || {}).mode === 'ap') apIfs.push(i.ifname);
+			});
 		});
-		list.sort(function(a, b) { return a.name.localeCompare(b.name); });
-		box.innerHTML = '';
-		if (!list.length) { box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('No known clients') ])); return; }
-		var shown = list.slice(0, 6);
-		shown.forEach(function(c) {
-			box.appendChild(E('div', { 'class': 'u-kv' }, [
-				E('span', { 'class': 'k', 'title': c.mac }, [ E('span', { 'class': 'u-dot up' }), c.name ]),
-				E('span', { 'class': 'v' }, [ c.ip || '' ])
-			]));
+
+		var token = this._clientsToken = (this._clientsToken || 0) + 1;
+		Promise.all([
+			Promise.all(apIfs.map(function(ifn) { return L.resolveDefault(callAssoc(ifn), []); })),
+			L.resolveDefault(callUsteer(), {})
+		]).then(function(r) {
+			if (token !== self._clientsToken) return;
+			var list = [], seen = {};
+			function add(mac, kind, sub, signal) {
+				mac = String(mac).toUpperCase();
+				if (seen[mac] || own[mac]) return;
+				var h = hintOf(mac), ip = ipOf(h), name = h.name || h.host || '';
+				seen[mac] = true;
+				list.push({ name: name || ip || mac, ip: name ? ip : '', mac: mac, kind: kind, sub: sub, signal: signal });
+			}
+			/* 1. stations on this device's radios */
+			r[0].forEach(function(st) {
+				(Array.isArray(st) ? st : []).forEach(function(s) {
+					if (s && s.mac) add(s.mac, 'wifi', s.signal ? s.signal + ' dBm' : _('Wi-Fi'), s.signal || -100);
+				});
+			});
+			/* 2. stations on the other access points usteer knows ('ip#hostapd.ifname') */
+			var ust = r[1] || {};
+			Object.keys(ust).forEach(function(mac) {
+				var nodes = ust[mac] || {}, best = null;
+				Object.keys(nodes).forEach(function(k) {
+					var n = nodes[k] || {};
+					if (n.connected && k.indexOf('#') > 0 && (!best || (n.signal || -150) > (best.signal || -150))) best = { ap: k.split('#')[0], signal: n.signal };
+				});
+				if (best) add(mac, 'mesh', _('via %s').format(apName(best.ap)) + (best.signal ? ' · ' + best.signal + ' dBm' : ''), best.signal || -150);
+			});
+			/* 3. everything else the host hints know (wired or idle) */
+			Object.keys(hints).forEach(function(mac) {
+				var h = hints[mac] || {};
+				if ((h.ipaddrs || []).some(function(a) { return gws[a]; })) return;
+				if (!(h.name || h.host) && !ipOf(h)) return;
+				add(mac, 'other', '', -999);
+			});
+
+			var rank = { wifi: 0, mesh: 1, other: 2 };
+			list.sort(function(a, b) {
+				return (rank[a.kind] - rank[b.kind]) || (b.signal - a.signal) || String(a.name).localeCompare(String(b.name));
+			});
+			box.innerHTML = '';
+			if (!list.length) { box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('No known clients') ])); return; }
+			var wireless = list.filter(function(c) { return c.kind !== 'other'; });
+			/* every Wi-Fi station, then the other hosts up to six rows in all */
+			var shown = wireless.concat(list.filter(function(c) { return c.kind === 'other'; }).slice(0, Math.max(0, 6 - wireless.length)));
+			shown.forEach(function(c) {
+				box.appendChild(E('div', { 'class': 'u-kv' }, [
+					E('span', { 'class': 'k', 'title': c.mac }, [ E('span', { 'class': 'u-dot up' }), c.name ]),
+					E('span', { 'class': 'v' }, [ [ c.ip, c.sub ].filter(Boolean).join(' · ') ])
+				]));
+			});
+			if (list.length > shown.length)
+				box.appendChild(E('div', { 'class': 'u-card-sub', 'style': 'margin-top:8px' }, [ '+' + (list.length - shown.length) + ' ' + _('more') + ' · ' + list.length + ' ' + _('total') ]));
 		});
-		if (list.length > shown.length)
-			box.appendChild(E('div', { 'class': 'u-card-sub', 'style': 'margin-top:8px' }, [ '+' + (list.length - shown.length) + ' ' + _('more') + ' · ' + list.length + ' ' + _('total') ]));
 	},
+
 
 	updateWifi: function(wifi) {
 		var box = (this.root || document).querySelector('#u-ov-wifi');
