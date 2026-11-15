@@ -29,6 +29,7 @@ var callIfDump  = rpc.declare({ object: 'network.interface', method: 'dump', exp
 var callAssoc   = rpc.declare({ object: 'iwinfo', method: 'assoclist', params: [ 'device' ], expect: { results: [] } });
 var callUfp     = rpc.declare({ object: 'fingerprint', method: 'fingerprint', expect: { '': {} } });
 var callCommit  = rpc.declare({ object: 'uci', method: 'commit', params: [ 'config' ] });
+var callExec    = rpc.declare({ object: 'file', method: 'exec', params: [ 'command' ] });
 var callRead    = rpc.declare({ object: 'file', method: 'read', params: [ 'path', 'base64' ], expect: { data: '' }, reject: true });   /* errors must not look like an empty table */
 
 /* ------------------------------------------------------------------ icons */
@@ -247,6 +248,13 @@ return view.extend({
 		/* optional fingerprinting service, if the user installed it — rarely */
 		if (L.hasSystemFeature('ufpd') && self.tick % 12 === 0)
 			calls.push(L.resolveDefault(callUfp(), {}).then(function(r) { self.ufp = r; }));
+		/* access point: every 5 minutes, have the router ping-sweep its LAN in
+		   the background so devices' IPs land in the neighbour table (the
+		   helper itself also refuses to run more often) */
+		if (self.ap && self.discover && Date.now() - (self.lastDiscover || 0) > 300000) {
+			self.lastDiscover = Date.now();
+			calls.push(L.resolveDefault(callExec('/usr/libexec/uniwrt-discover'), null));
+		}
 		self.tick++;
 		return Promise.all(calls).then(function(r) {
 			return { hints: r[0], wifi: r[1], devs: r[2], ifaces: r[3], assoc: assoc, fdb: fdb, t: Date.now() / 1000 };
@@ -432,6 +440,7 @@ return view.extend({
 		var iv = parseInt(uci.get('uniwrt', 'global', 'netmap_interval'), 10);
 		this.interval = isNaN(iv) ? 5 : Math.min(60, Math.max(3, iv));   /* 3–60 s; junk → default */
 		this.animate = uci.get('uniwrt', 'global', 'netmap_animate') !== '0';
+		this.discover = uci.get('uniwrt', 'global', 'netmap_discover') !== '0';
 
 		this.root = E('div', { 'class': 'u-nm' + (this.animate ? '' : ' u-nm-still') }, [
 			E('div', { 'class': 'u-nm-bar' }, [
@@ -454,6 +463,14 @@ return view.extend({
 		};
 		refresh();
 		poll.add(refresh, this.interval);
+
+		/* traffic lines stop animating while the map is scrolled out of view */
+		if ('IntersectionObserver' in window) {
+			var root = this.root;
+			new IntersectionObserver(function(entries) {
+				root.classList.toggle('u-nm-paused', !entries[entries.length - 1].isIntersecting);
+			}).observe(root.lastChild);   /* the tree: lines and device lanes */
+		}
 
 		var t;
 		window.addEventListener('resize', function() { clearTimeout(t); t = setTimeout(function() { self.links(); }, 120); });
@@ -537,14 +554,17 @@ return view.extend({
 			'title': c.label + ' — ' + (TYPE_NAME[c.type] || '') }, [
 			icon(c.type),
 			E('span', { 'class': 'u-nm-client-text' }, [
-				E('span', { 'class': 'u-nm-client-name' }, [ c.label ]),
+				E('span', { 'class': 'u-nm-client-name' }, [
+					c.label,
+					E('span', { 'class': 'u-nm-act' + (c.rate >= 8000 ? ' is-on' : ''), 'data-act': c.mac,
+						'title': c.rate >= 8000 ? _('Active') : _('Idle') })
+				]),
 				E('span', { 'class': 'u-nm-client-sub' }, [ sub ])
 			]),
 			E('span', { 'class': 'u-nm-client-meta' }, [
 				c.wifi ? E('span', { 'class': 'u-nm-bars b' + bars(c.signal), 'title': c.signal + ' dBm' }, [ E('i'), E('i'), E('i'), E('i') ]) : '',
 				E('span', { 'class': 'u-nm-client-rate', 'data-mac-rate': c.mac }, [ c.rate >= 8000 ? fmtRate(c.rate) : '' ])
-			]),
-			E('span', { 'class': 'u-nm-act' + (c.rate >= 8000 ? ' is-on' : ''), 'data-act': c.mac })
+			])
 		]);
 		b.addEventListener('click', function() { self.details(c.mac); });
 		return b;
@@ -558,7 +578,11 @@ return view.extend({
 			set('[data-rate="' + g.id + '"]', fmtRate(g.rate));
 			g.clients.forEach(function(c) {
 				set('[data-mac-rate="' + c.mac + '"]', c.rate >= 8000 ? fmtRate(c.rate) : '');
-				var a = root.querySelector('[data-act="' + c.mac + '"]'); if (a) a.classList.toggle('is-on', c.rate >= 8000);
+				var a = root.querySelector('[data-act="' + c.mac + '"]');
+				if (a && a.classList.contains('is-on') !== (c.rate >= 8000)) {
+					a.classList.toggle('is-on', c.rate >= 8000);
+					a.title = c.rate >= 8000 ? _('Active') : _('Idle');
+				}
 			});
 		});
 		this.flows(m);

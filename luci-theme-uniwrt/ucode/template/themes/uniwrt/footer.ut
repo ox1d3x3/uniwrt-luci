@@ -32,6 +32,9 @@
 {% if (u_status_bar == '1'): %}
   L.require('status-uniwrt');
 {% endif %}
+{% if (join('/', ctx.request_path) == 'admin/system/package-manager'): %}
+  L.require('pkgall-uniwrt');   /* "Upgrade all" on System -> Software */
+{% endif %}
 
   if (history.scrollRestoration) history.scrollRestoration = 'manual';
 

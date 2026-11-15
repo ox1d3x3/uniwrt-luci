@@ -153,6 +153,11 @@ OV="$PKG_DIR/htdocs/luci-static/resources/view/uniwrt/overview.js"
 grep -q '1024 \* fs.total' "$OV" && ok "Overview scales procd KiB storage figures" || bad "Overview storage treats KiB as bytes"
 grep -q 'info.unixtime' "$OV" && ok "Overview clock uses unixtime" || bad "Overview clock uses offset localtime"
 
+[ -x "$PKG_DIR/root/usr/libexec/uniwrt-discover" ] && sh -n "$PKG_DIR/root/usr/libexec/uniwrt-discover" \
+  && ok "IP-discovery helper is executable and parses" || bad "uniwrt-discover missing, not executable or broken"
+grep -q "request_path) == 'admin/system/package-manager'" "$PKG_DIR/ucode/template/themes/uniwrt/footer.ut" \
+  && ok "Upgrade-all script loads only on System -> Software" || bad "pkgall-uniwrt loaded outside the Software page"
+
 echo "== Required files present =="
 for req in \
   "$PKG_DIR/Makefile" \

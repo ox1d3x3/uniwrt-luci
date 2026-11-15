@@ -100,6 +100,11 @@ return view.extend({
 		o.value('30', _('30 seconds'));
 		o.default = '5';
 
+		o = s.option(form.Flag, 'netmap_discover', _('Find device IP addresses on access points'),
+			_('When this router is an access point behind a main router, it does not hand out IP addresses and so does not know them. While the map is open, the router briefly pings each address of its LAN every 5 minutes (at most 16 at a time) to learn them. Has no effect on a main router.'));
+		o.default = '1';
+		o.rmempty = false;
+
 		o = s.option(form.Flag, 'netmap_animate', _('Animate live traffic'),
 			_('Show moving lines where traffic flows. Runs in your browser only; it does not affect the router.'));
 		o.default = '1';

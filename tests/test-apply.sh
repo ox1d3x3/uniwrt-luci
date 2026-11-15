@@ -127,6 +127,7 @@ check "install succeeds" run --file "$ARCHIVE"
 check "all theme files installed" all_present
 check "files are byte-identical to the archive" bash -c "mkdir -p '$T/x' && tar xzf '$ARCHIVE' -C '$T/x' && for f in $(echo $FILES | tr '\n' ' '); do cmp -s \"$T/x\$f\" \"$UNIWRT_ROOT\$f\" || exit 1; done"
 check "uci-defaults hook NOT installed" [ ! -e "$UNIWRT_ROOT/etc/uci-defaults/30_luci-theme-uniwrt" ]
+check "Network Map IP-discovery helper installed executable" [ -x "$UNIWRT_ROOT/usr/libexec/uniwrt-discover" ]
 check "theme registered" [ "$(uciget luci.themes.UniWRT)" = /luci-static/uniwrt ]
 check "theme activated on fresh install" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/uniwrt ]
 check "keep.d manifest written" [ -f "$UNIWRT_ROOT/$KEEP" ]

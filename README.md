@@ -90,7 +90,7 @@ wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releas
 **Network Map**
 - Live map of your network: Internet → router → each Wi-Fi network and the LAN → every connected device
 - Animated links show where traffic is flowing right now, with per-device speed, signal and connection time
-- Shows which LAN port each wired device is plugged into, and works on access points too: behind another router it shows that router as the uplink
+- Shows which LAN port each wired device is plugged into, and works on access points too: behind another router it shows that router as the uplink and looks up device IP addresses itself
 - Device types detected automatically: phones (including iPhones and Androids that hide their real address), tablets, laptops, computers, TVs, cameras, smart plugs, printers, NAS boxes, consoles and more
 - Tap any device to rename it or pick its icon (CCTV, TV, appliance, IoT, …); choices are saved on the router and kept across upgrades
 - Built for low-end routers: one small batched request per refresh, nothing polled when the page is closed or the tab is in the background, all drawing done in your browser
@@ -100,6 +100,9 @@ wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releas
 - Separate accent colours for light and dark mode
 - Adjustable base font size
 - No flash of the wrong theme while a page loads
+
+**Software page**
+- **Upgrade all** button on *System → Software → Updates* (OpenWrt 25.12+, apk): upgrades every package with an update in one go, with the package count and a confirmation first. It runs the page's own `apk upgrade` helper. With opkg (23.05 / 24.10) it is not offered, because OpenWrt warns that upgrading every package there can break a router.
 
 **Under the hood**
 - Live status bar in the header: CPU, memory, throughput and uptime
@@ -200,6 +203,7 @@ Open *System → UniWRT Theme* in the web interface, or edit `/etc/config/uniwrt
 | `menu_expanded` | `0` · `1` | `0` | Open every section of the side menu, not only the current one |
 | `netmap_interval` | `3` – `60` | `5` | Seconds between Network Map refreshes while the map is open |
 | `netmap_animate` | `0` · `1` | `1` | Animate live traffic on the Network Map (browser only) |
+| `netmap_discover` | `0` · `1` | `1` | On an access point, ping-sweep the LAN every 5 min while the map is open to learn device IPs |
 
 Invalid values are ignored and the default is used instead.
 
