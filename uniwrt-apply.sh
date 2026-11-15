@@ -106,16 +106,46 @@ prune_dirs() { # file — remove the theme's now-empty parent directories
 	return 0
 }
 
-fetch() { # url out
+# Pick the downloader once, before any output is redirected, so a router
+# without one gets a visible message. uclient-fetch is OpenWrt's own (its
+# "wget"); -T only where this build supports it.
+FETCHER=""
+pick_fetcher() {
 	if command -v uclient-fetch >/dev/null 2>&1; then
-		uclient-fetch -q -O "$2" "$1"
-	elif command -v wget >/dev/null 2>&1; then
-		wget -q -O "$2" "$1"
-	elif command -v curl >/dev/null 2>&1; then
-		curl -fsSL -o "$2" "$1"
-	else
-		die "No downloader found (uclient-fetch, wget or curl)."
+		FETCHER=uclient-fetch
+		if uclient-fetch --help 2>&1 | grep -q -- '--timeout'; then FETCHER="uclient-fetch -T 20"; fi
+	elif command -v wget >/dev/null 2>&1; then FETCHER=wget
+	elif command -v curl >/dev/null 2>&1; then FETCHER=curl
+	else die "No downloader found (uclient-fetch, wget or curl)."
 	fi
+}
+
+# One attempt. Status and error lines go to stderr, which the caller keeps
+# in a log, so a failure can say why (-q would hide "Connection error").
+fetch_once() { # url out
+	case "$FETCHER" in
+		curl) curl -fsSL --connect-timeout 20 -o "$2" "$1" ;;
+		wget) wget -q -O "$2" "$1" ;;
+		*)    $FETCHER -O "$2" "$1" ;;
+	esac
+}
+
+# Up to three attempts: a stalled connection to GitHub usually works on the
+# next try, and DNS may hand out a different GitHub address.
+fetch() { # url out
+	[ -n "$FETCHER" ] || pick_fetcher
+	_try=1
+	while ! fetch_once "$1" "$2"; do
+		[ "$_try" -ge 3 ] && return 1
+		_try=$((_try + 1))
+		say "Download did not complete — retrying ($_try/3)"
+		sleep 2
+	done
+}
+
+# The downloader's own explanation of the last failure, if it gave one.
+fetch_reason() {
+	grep -iE 'error|timed out|failed|refused|unreachable|resolve|not found|denied|certificate' "$TMP/fetch.err" 2>/dev/null | tail -n 1
 }
 
 verify_sum() { # dir — checks $ARCHIVE against SHA256SUMS in the same dir
@@ -183,12 +213,17 @@ locate_archive() {
 	else
 		base="https://github.com/$REPO/releases/latest/download"
 	fi
+	pick_fetcher
 	say "Downloading ${WANT:-the latest release} from GitHub"
 	if ! fetch "$base/$ARCHIVE" "$TMP/$ARCHIVE" 2>"$TMP/fetch.err"; then
-		[ -n "$WANT" ] && die "Could not download $ARCHIVE for $WANT. Standalone archives exist from v2.0.39 onward."
-		die "Download failed ($base/$ARCHIVE). Check the router's internet access and clock, or use --file."
+		why="$(fetch_reason)"
+		[ -n "$WANT" ] && case "$why" in *404*|*"not found"*|*"Not Found"*)
+			die "Could not download $ARCHIVE for $WANT. Standalone archives exist from v2.0.39 onward." ;; esac
+		die "Download failed${why:+ ($why)}. Check that the router can reach github.com (internet, DNS, clock, VPN/exit node), or download the files on a PC and use --file."
 	fi
-	fetch "$base/SHA256SUMS" "$TMP/SHA256SUMS" 2>>"$TMP/fetch.err" || die "Download failed: $base/SHA256SUMS"
+	if ! fetch "$base/SHA256SUMS" "$TMP/SHA256SUMS" 2>>"$TMP/fetch.err"; then
+		why="$(fetch_reason)"; die "Download failed: SHA256SUMS${why:+ ($why)}"
+	fi
 	verify_sum "$TMP" || die "Checksum mismatch — the download is incomplete or corrupt. Nothing was changed."
 	say "Checksum OK"
 }

@@ -243,7 +243,7 @@ jobs:
           Run on the router — works on OpenWrt 23.05, 24.10 and 25.12:
 
           ```sh
-          wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
+          wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
           ```
 
           The standalone install is not registered as a package, so **Attended Sysupgrade keeps working**,

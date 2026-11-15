@@ -28,7 +28,7 @@ Icon sidebar · live dashboard · network map · light, dark and auto modes · o
 Run on your router over SSH — installs or updates to the latest release ([standalone](#standalone-install-recommended), so firmware upgrades keep working):
 
 ```sh
-wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
+wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
 ```
 
 ---
@@ -126,7 +126,7 @@ There are two ways to install UniWRT. Both install exactly the same files — th
 Paste this one line into an SSH session on the router. Works on OpenWrt 23.05, 24.10 and 25.12:
 
 ```sh
-wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
+wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
 ```
 
 It fetches the installer from the latest release, which then downloads the theme, verifies it against the release's `SHA256SUMS`, installs it and activates it. Run the same line again any time to update to the newest release. If UniWRT is already installed as a package, it switches it over to a standalone install and keeps your settings.
@@ -228,7 +228,7 @@ This happens when UniWRT is installed as a **package**. Attended Sysupgrade asks
 **Fix it for good:** switch to the [standalone install](#standalone-install-recommended). It keeps your settings, removes the package, and from then on upgrades work from both the LuCI page and `owut`, with the theme carried into the new firmware:
 
 ```sh
-wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
+wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/latest/download/uniwrt-apply.sh && sh /tmp/uniwrt-apply.sh
 ```
 
 **Or, to keep the package,** leave it out of each upgrade and reinstall it afterwards:
@@ -256,6 +256,19 @@ uci commit luci
 ```
 
 A standalone install is only carried over when *Keep settings* is enabled during the upgrade.
+</details>
+
+<details>
+<summary><b>The install line prints “Connection timed out” or does nothing</b></summary>
+<br>
+
+The router can't reach GitHub. The installer retries three times, then tells you the reason it got. Check that the router itself has working internet and DNS (`ping -c 3 github.com`), that its clock is right (`date`), and, if it runs a VPN such as Tailscale or WireGuard, that it isn't sending traffic through an exit node or tunnel that's down. A brief GitHub hiccup usually clears if you try again a minute later.
+
+To install without the router downloading anything, download `uniwrt-apply.sh` and `luci-theme-uniwrt-standalone.tar.gz` from the [latest release](https://github.com/ox1d3x3/uniwrt-luci/releases/latest) on a PC, copy both to the router's `/tmp`, and run:
+
+```sh
+sh /tmp/uniwrt-apply.sh --file /tmp/luci-theme-uniwrt-standalone.tar.gz
+```
 </details>
 
 <details>

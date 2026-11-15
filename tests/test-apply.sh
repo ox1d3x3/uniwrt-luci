@@ -64,8 +64,15 @@ fi
 cat > "$BB/uclient-fetch" <<'EOF'
 #!/bin/sh
 # serves https://github.com/.../releases/<latest/download|download/TAG>/<file> from $FAKE_GH/<tag>/
+# $FAKE_TIMEOUTS: file holding how many upcoming requests time out (like a stalled GitHub edge)
+[ "${1:-}" = --help ] && { echo "	--timeout=N | -T N		Set connect/request timeout to N seconds" >&2; exit 1; }
+echo "args: $*" >> "$UNIWRT_ROOT/fetch.args"
 out=""; while [ $# -gt 1 ]; do case "$1" in -O) out="$2"; shift ;; esac; shift; done
 url="$1"; echo "$url" >> "$UNIWRT_ROOT/fetch.log"
+if [ -n "${FAKE_TIMEOUTS:-}" ] && [ -s "$FAKE_TIMEOUTS" ] && [ "$(cat "$FAKE_TIMEOUTS")" -gt 0 ]; then
+	echo $(( $(cat "$FAKE_TIMEOUTS") - 1 )) > "$FAKE_TIMEOUTS"
+	echo "Connecting to 4.237.22.38:443" >&2; echo "Connection error: Connection timed out" >&2; exit 4
+fi
 case "$url" in
   */releases/latest/download/*) tag=latest ;;
   */releases/download/*) tag=$(echo "$url" | sed 's,.*/releases/download/\([^/]*\)/.*,\1,') ;;
@@ -192,6 +199,20 @@ check "corrupt download is rejected" runfail
 check "…with a checksum error" grep -qi "checksum mismatch" "$T/out"
 check "…and the installed theme is left intact" all_present
 fake_release latest
+
+SECTION="7b. a stalled connection is retried, and a failure says why"; echo "== 7b. a stalled connection is retried, and a failure says why =="
+new_root 7b; fake_release latest; export FAKE_TIMEOUTS="$T/timeouts"
+echo 1 > "$FAKE_TIMEOUTS"
+check "one timed-out request is retried and the install succeeds" run
+check "…the retry is reported" grep -q "retrying (2/3)" "$T/out"
+check "…downloads use a connect timeout (-T)" grep -q -- "-T 20" "$UNIWRT_ROOT/fetch.args"
+new_root 7c; fake_release latest; echo 99 > "$FAKE_TIMEOUTS"
+check "a connection that never works fails" runfail
+check "…after three attempts" [ "$(grep -c 'releases/latest/download/luci-theme-uniwrt-standalone.tar.gz' "$UNIWRT_ROOT/fetch.log")" = 3 ]
+check "…and the error names the cause" grep -q "Download failed (Connection error: Connection timed out)" "$T/out"
+check "…and suggests what to check" grep -q "reach github.com" "$T/out"
+check "…and nothing was installed" [ ! -e "$UNIWRT_ROOT/www/luci-static/uniwrt/css/cascade.css" ]
+rm -f "$FAKE_TIMEOUTS"; unset FAKE_TIMEOUTS
 
 SECTION="8. a stale archive in /tmp is never used instead of the latest release"; echo "== 8. a stale archive in /tmp is never used instead of the latest release =="
 new_root 8; fake_release latest
