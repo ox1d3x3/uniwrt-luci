@@ -27,7 +27,7 @@
      with the theme version too, so the browser fetches the new
      menu/status/view scripts after a theme update instead of serving
      stale cached ones (a hard reload did not always help). */
-  if (L.env) L.env.resource_version = (L.env.resource_version || '') + '-u{{ uniwrt_version }}';
+  if (L.env) L.env.resource_version = (L.env.resource_version || '') + {{ sprintf('%J', '-u' + uniwrt_version) }};
   L.require('menu-uniwrt');
 {% if (u_status_bar == '1'): %}
   L.require('status-uniwrt');

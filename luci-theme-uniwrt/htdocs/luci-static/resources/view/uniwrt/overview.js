@@ -316,17 +316,22 @@ return view.extend({
 			   so the Overview page issues one system.info per cycle, not two */
 			var cached = (window.__uniwrtInfo && (Date.now() - window.__uniwrtInfo.t) < 4500)
 				? Promise.resolve(window.__uniwrtInfo.info) : null;
+			/* station lists for the AP interfaces seen last time, and usteer,
+			   go in the same batched request as everything else */
+			var apIfs = (self._apIfs || []).slice();
 			return Promise.all([
 				cached || L.resolveDefault(callInfo(), {}),
 				L.resolveDefault(callIfDump(), []),
 				L.resolveDefault(callWifi(), {}),
 				L.resolveDefault(callHints(), {}),
-				L.resolveDefault(callNetDevs(), {})
+				L.resolveDefault(callNetDevs(), {}),
+				Promise.all(apIfs.map(function(ifn) { return L.resolveDefault(callAssoc(ifn), []); })),
+				L.resolveDefault(callUsteer(), {})
 			]).then(function(d) {
 				self.update(d[0]);
 				self.updateIfaces(d[1]);
 				self.updateWifi(d[2]);
-				self.updateClients(d[3], d[4], d[1], d[2]);
+				self.updateClients(d[3], d[4], d[1], d[2], { ifs: apIfs, r: [ d[5], d[6] ] });
 				self.updateThroughput(d[4], d[1]);
 			});
 		}, 5);
@@ -501,7 +506,7 @@ return view.extend({
 		rows.length ? rows.forEach(function(r) { box.appendChild(r); }) : box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('No interfaces') ]));
 	},
 
-	updateClients: function(hints, devs, ifaces, wifi) {
+	updateClients: function(hints, devs, ifaces, wifi, pre) {
 		var self = this;
 		var box = (this.root || document).querySelector('#u-ov-clients');
 		if (!box || !hints) return;
@@ -529,11 +534,15 @@ return view.extend({
 			});
 		});
 
+		this._apIfs = apIfs;
+
+		/* the poll fetched these with everything else; only the first paint
+		   (or a change of AP interfaces) needs a request of its own */
 		var token = this._clientsToken = (this._clientsToken || 0) + 1;
-		Promise.all([
+		(pre && pre.ifs.join(' ') === apIfs.join(' ') ? Promise.resolve(pre.r) : Promise.all([
 			Promise.all(apIfs.map(function(ifn) { return L.resolveDefault(callAssoc(ifn), []); })),
 			L.resolveDefault(callUsteer(), {})
-		]).then(function(r) {
+		])).then(function(r) {
 			if (token !== self._clientsToken) return;
 			var list = [], seen = {};
 			function add(mac, kind, sub, signal) {
@@ -574,8 +583,9 @@ return view.extend({
 			box.innerHTML = '';
 			if (!list.length) { box.appendChild(E('div', { 'class': 'u-card-sub' }, [ _('No known clients') ])); return; }
 			var wireless = list.filter(function(c) { return c.kind !== 'other'; });
-			/* every Wi-Fi station, then the other hosts up to six rows in all */
-			var shown = wireless.concat(list.filter(function(c) { return c.kind === 'other'; }).slice(0, Math.max(0, 6 - wireless.length)));
+			/* Wi-Fi stations first (strongest first), then other hosts: six rows,
+			   or up to ten when more stations are connected; the rest are counted */
+			var shown = list.slice(0, Math.max(6, Math.min(wireless.length, 10)));
 			shown.forEach(function(c) {
 				box.appendChild(E('div', { 'class': 'u-kv' }, [
 					E('span', { 'class': 'k', 'title': c.mac }, [ E('span', { 'class': 'u-dot up' }), c.name ]),

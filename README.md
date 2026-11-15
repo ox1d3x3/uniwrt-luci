@@ -82,7 +82,7 @@ wget -qO /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releases/la
 
 **Dashboard**
 - System, CPU load, memory and uptime at a glance
-- Network interfaces, wireless radios and connected clients
+- Network interfaces, wireless radios and connected clients: Wi-Fi stations first with their signal, including stations on other access points when usteer is installed
 - Flash, RAM and swap usage
 - Live WAN throughput with peak, last-24-hour and since-boot totals
 - Quick-action tiles for the pages you use most
