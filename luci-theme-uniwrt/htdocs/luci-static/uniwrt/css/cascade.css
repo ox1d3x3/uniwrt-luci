@@ -1021,6 +1021,17 @@ hr { border: 0; border-top: 1px solid var(--u-line); margin: 18px 0; }
 
 /* ============================================================ OVERVIEW grid */
 .u-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin-bottom: 18px; }
+
+/* Overview: three status cards of equal height in one row, then
+   Live Throughput beside Clients; both collapse on narrow screens */
+.u-ov-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+.u-ov-cards > .u-card { display: flex; flex-direction: column; margin: 0; min-width: 0; }
+.u-ov-cards > .u-card > :not(.u-card-head) { flex: 1 1 auto; }
+.u-ov-live { grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); align-items: start; }
+.u-ov-live > .u-card { margin: 0; min-width: 0; }
+@media (max-width: 1150px) { .u-ov-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .u-ov-live { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 720px)  { .u-ov-cards { grid-template-columns: minmax(0, 1fr); } }
 .u-card {
   background: var(--u-surface); border: 1px solid var(--u-line);
   border-radius: var(--u-radius); box-shadow: var(--u-shadow-1); padding: 18px 20px;
