@@ -88,6 +88,8 @@ for f in uniwrt-apply.sh scripts/make-standalone.sh "$PKG_DIR"/root/etc/uci-defa
   if $SH -n "$f" 2>/tmp/sherr; then ok "$f"; else bad "$f"; cat /tmp/sherr; fi
 done
 
+if bash -n scripts/build-sdk.sh; then ok "scripts/build-sdk.sh"; else bad "scripts/build-sdk.sh"; fi
+
 echo "== LuCI widget mechanics the theme must provide =="
 CSS="$PKG_DIR/htdocs/luci-static/uniwrt/css/cascade.css"
 need() { # description, fixed string that must appear in cascade.css
