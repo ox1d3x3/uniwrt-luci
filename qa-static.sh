@@ -22,6 +22,13 @@ else
   bad "node/nodejs not found"
 fi
 
+echo "== Sidebar behaviour =="
+if [ -n "$NODE" ] && "$NODE" tests/test-sidebar.js; then
+  ok "sidebar accordion and modifier clicks"
+else
+  bad "sidebar behaviour (see above)"
+fi
+
 echo "== JSON validity =="
 while IFS= read -r f; do
   if python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" 2>/tmp/jsonerr; then ok "$f"; else bad "$f"; cat /tmp/jsonerr; fi
