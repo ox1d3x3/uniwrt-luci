@@ -1,0 +1,6 @@
+{%
+	if (theme == 'uniwrt')
+		include('view', { view: 'uniwrt/settings' });
+	else
+		dispatcher.error404();
+-%}

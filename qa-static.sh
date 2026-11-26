@@ -118,6 +118,8 @@ for path, e in menu.items():
     a = e.get('action', {})
     if a.get('type') == 'view' and not (res / 'view' / (a['path'] + '.js')).is_file():
         print('  menu %s -> missing view %s.js' % (path, a['path'])); bad = 1
+    if a.get('type') == 'template' and not (pkg / 'ucode/template' / (a['path'] + '.ut')).is_file():
+        print('  menu %s -> missing template %s.ut' % (path, a['path'])); bad = 1
 acl = json.load(open(pkg / 'root/usr/share/rpcd/acl.d/luci-theme-uniwrt.json'))['luci-theme-uniwrt']
 granted = {(o, m) for part in ('read', 'write') for o, ms in acl.get(part, {}).get('ubus', {}).items() for m in ms}
 base = {('uci', m) for m in ('get', 'changes')} | {('session', 'access')}
@@ -157,6 +159,13 @@ grep -q 'info.unixtime' "$OV" && ok "Overview clock uses unixtime" || bad "Overv
   && ok "IP-discovery helper is executable and parses" || bad "uniwrt-discover missing, not executable or broken"
 grep -q "request_path) == 'admin/system/package-manager'" "$PKG_DIR/ucode/template/themes/uniwrt/footer.ut" \
   && ok "Upgrade-all script loads only on System -> Software" || bad "pkgall-uniwrt loaded outside the Software page"
+
+echo "== Theme menu isolation =="
+if [ -n "$NODE" ] && "$NODE" tests/test-theme-menu.js; then
+  ok "theme menu isolation, ACL state and titles"
+else
+  bad "theme menu isolation (see above)"
+fi
 
 echo "== Required files present =="
 for req in \

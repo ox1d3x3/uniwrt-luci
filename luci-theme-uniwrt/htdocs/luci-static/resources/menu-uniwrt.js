@@ -53,6 +53,25 @@ return baseclass.extend({
 		return ev.button === 0 && !ev.ctrlKey && !ev.metaKey && !ev.shiftKey && !ev.altKey;
 	},
 
+	/* Leave theme-only pages untitled in LuCI's shared navigation tree. Give
+	   existing routes labels on our local copy, retaining their ACL state. */
+	withPageTitles: function(root) {
+		var children = Object.assign({}, root.children);
+		var titles = { 'uniwrt-overview': 'Overview', 'uniwrt-netmap': 'Network Map' };
+		Object.keys(titles).forEach(function(name) {
+			if (children[name])
+				children[name] = Object.assign({}, children[name], { title: titles[name] });
+		});
+		var system = children.system;
+		if (system && system.children && system.children.uniwrt) {
+			var settings = Object.assign({}, system.children.uniwrt, { title: 'UniWRT Theme' });
+			children.system = Object.assign({}, system, {
+				children: Object.assign({}, system.children, { uniwrt: settings })
+			});
+		}
+		return Object.assign({}, root, { children: children });
+	},
+
 	render: function(tree) {
 		var nav = document.getElementById('u-rail-nav');
 		if (!nav) return;
@@ -64,7 +83,7 @@ return baseclass.extend({
 		   into 'admin' so the actual categories (Status/System/Network/...)
 		   become the modes; keep the base for links and active-path checks. */
 		var base = (tree && tree.children && tree.children.admin) ? 'admin' : '';
-		var root = base ? tree.children.admin : tree;
+		var root = this.withPageTitles(base ? tree.children.admin : tree);
 		var idx  = base ? 1 : 0;   /* category position within requestpath */
 		var top  = ui.menu.getChildren(root);
 
@@ -85,7 +104,7 @@ return baseclass.extend({
 		if (top.length > 1) this.renderModes(top, base, idx);
 
 		/* page title in the topbar */
-		this.renderTitle(tree);
+		this.renderTitle(root, idx);
 
 		/* third-level tab menu into the sticky sub-nav */
 		if (L.env.dispatchpath.length >= 3) {
@@ -98,11 +117,11 @@ return baseclass.extend({
 		}
 	},
 
-	renderTitle: function(tree) {
+	renderTitle: function(tree, start) {
 		var el = document.getElementById('u-top-title');
 		if (!el) return;
 		var node = tree, title = '';
-		for (var i = 0; i < L.env.dispatchpath.length && node; i++) {
+		for (var i = start; i < L.env.dispatchpath.length && node; i++) {
 			node = node.children[L.env.dispatchpath[i]];
 			if (node && node.title) title = node.title;
 		}
