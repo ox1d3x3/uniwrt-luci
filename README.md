@@ -99,6 +99,7 @@ wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releas
 - Light, dark, or automatic (follows your operating system), switchable from the header
 - Separate accent colours for light and dark mode
 - Adjustable base font size
+- Simplified Chinese translations for the theme's settings, dashboard, network map and sign-in screens
 - No flash of the wrong theme while a page loads
 
 **Software page**
@@ -149,7 +150,7 @@ It fetches the installer from the latest release, which then downloads the theme
 
 Attended Sysupgrade asks OpenWrt's build servers for a firmware image containing every installed **package**. The servers only know packages from the official feeds, so a theme installed from a downloaded package makes the request fail.
 
-The standalone install copies the theme's files into place without registering a package, so the upgrade request never mentions it. When switching from the package, the script removes it and then checks the package database — the same files the upgrade tools read — to confirm it is really gone. It records the files in `/lib/upgrade/keep.d/uniwrt-standalone` — OpenWrt's standard list of extra files to keep — so `sysupgrade` carries the theme and your settings into the new firmware whenever *Keep settings* is enabled. The archive is cut from the same build as the `.ipk`, so the files are byte-identical to the package.
+The standalone install copies the theme's files into place without registering a package, so the upgrade request never mentions it. When switching from the package, the script removes it and then checks the package database — the same files the upgrade tools read — to confirm it is really gone. It records the files in `/lib/upgrade/keep.d/uniwrt-standalone` — OpenWrt's standard list of extra files to keep — so `sysupgrade` carries the theme and your settings into the new firmware whenever *Keep settings* is enabled. The archive uses the same built theme files as the `.ipk` and also bundles UniWRT's Simplified Chinese catalog for standalone installs.
 </details>
 
 ### Package install
@@ -164,15 +165,17 @@ Download the package for your OpenWrt release from the [latest release](https://
 
 ```sh
 # OpenWrt 25.12 and newer
-apk add --allow-untrusted /tmp/luci-theme-uniwrt-*.apk
+apk add --allow-untrusted /tmp/luci-theme-uniwrt-*.apk /tmp/luci-i18n-uniwrt-zh-cn-*.apk
 
 # OpenWrt 23.05 / 24.10
-opkg install /tmp/luci-theme-uniwrt_*_all.ipk
+opkg install /tmp/luci-theme-uniwrt_*_all.ipk /tmp/luci-i18n-uniwrt-zh-cn_*.ipk
 ```
 
 Not sure which you have? Run `command -v apk` on the router — if it prints a path, use the `.apk`. `--allow-untrusted` is needed because the package comes from GitHub rather than a signed OpenWrt feed.
 
-To uninstall: `apk del luci-theme-uniwrt` (25.12+) or `opkg remove luci-theme-uniwrt` (23.05 / 24.10).
+UniWRT follows LuCI's selected language. The recommended standalone archive includes the Simplified Chinese translation. When installing the theme as a package, install the matching `luci-i18n-uniwrt-zh-cn` package from the same release as well. For an IPK, choose the language package whose filename includes your OpenWrt release. Then choose **简体中文** under *System → System → Language and Style*.
+
+To uninstall both packages, run `apk del luci-i18n-uniwrt-zh-cn luci-theme-uniwrt` (25.12+) or `opkg remove luci-i18n-uniwrt-zh-cn luci-theme-uniwrt` (23.05 / 24.10). If only the theme is installed, omit the language package name.
 
 ### Selecting the theme
 

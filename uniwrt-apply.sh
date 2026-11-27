@@ -32,6 +32,7 @@ set -eu
 REPO="ox1d3x3/uniwrt-luci"
 ARCHIVE="luci-theme-uniwrt-standalone.tar.gz"
 PKG="luci-theme-uniwrt"
+LANG_PKG="luci-i18n-uniwrt-zh-cn"
 
 # UNIWRT_ROOT lets the test suite run against a fake root; empty on a router.
 R="${UNIWRT_ROOT:-}"
@@ -64,10 +65,10 @@ installed_version() {
 # rpcd's packagelist reads — the list Attended Sysupgrade sends to the build
 # server — so "not registered" here means "not in the upgrade request".
 pkg_in_db() {
-	if [ -f "$R/lib/apk/db/installed" ] && grep -q -x "P:$PKG" "$R/lib/apk/db/installed"; then
+	if [ -f "$R/lib/apk/db/installed" ] && grep -q -x "P:${1:-$PKG}" "$R/lib/apk/db/installed"; then
 		return 0
 	fi
-	if [ -f "$R/usr/lib/opkg/status" ] && awk -v p="$PKG" '
+	if [ -f "$R/usr/lib/opkg/status" ] && awk -v p="${1:-$PKG}" '
 		/^Package: / { cur = $2 }
 		/^Status: / && cur == p && / installed/ { found = 1 }
 		END { exit !found }' "$R/usr/lib/opkg/status"; then
@@ -79,11 +80,11 @@ pkg_in_db() {
 # Either the database files or the package manager saying so is enough: a
 # false "not installed" would leave the package in the upgrade request.
 pkg_installed() {
-	pkg_in_db && return 0
+	pkg_in_db "${1:-$PKG}" && return 0
 	if command -v apk >/dev/null 2>&1; then
-		apk info -e "$PKG" >/dev/null 2>&1
+		apk info -e "${1:-$PKG}" >/dev/null 2>&1
 	elif command -v opkg >/dev/null 2>&1; then
-		opkg status "$PKG" 2>/dev/null | grep -q '^Status:.* installed'
+		opkg status "${1:-$PKG}" 2>/dev/null | grep -q '^Status:.* installed'
 	else
 		return 1
 	fi
@@ -276,16 +277,18 @@ do_install() {
 	# registered in the package database (that is what breaks sysupgrade).
 	migrated=0
 	if pkg_installed; then
+		set -- "$PKG"
+		if pkg_installed "$LANG_PKG"; then set -- "$LANG_PKG" "$PKG"; fi
 		fresh=0
 		say "Removing the $PKG package (replaced by the standalone install)"
 		[ -f "$R$CONFIG" ] && cp -p "$R$CONFIG" "$TMP/uniwrt.config"
 		if command -v apk >/dev/null 2>&1; then
-			apk del "$PKG" > "$TMP/pm.log" 2>&1 || {
+			apk del "$@" > "$TMP/pm.log" 2>&1 || {
 				cat "$TMP/pm.log" >&2
 				die "apk could not remove $PKG — nothing else was changed. If apk mentions packages that are no longer available, 'cat /etc/apk/world' and 'apk del' those names first."
 			}
 		else
-			opkg remove "$PKG" > "$TMP/pm.log" 2>&1 || {
+			opkg remove "$@" > "$TMP/pm.log" 2>&1 || {
 				cat "$TMP/pm.log" >&2
 				die "opkg could not remove $PKG — nothing else was changed."
 			}
@@ -293,9 +296,9 @@ do_install() {
 		migrated=1
 		[ -f "$TMP/uniwrt.config" ] && cp -p "$TMP/uniwrt.config" "$R$CONFIG"
 		# The whole point: the package must be gone from what sysupgrade reports.
-		if pkg_installed; then
+		if pkg_installed || pkg_installed "$LANG_PKG"; then
 			leave_uniwrt_theme; uci -q commit luci || true
-			die "$PKG is still registered after removal — please report this. LuCI has been switched to a working theme."
+			die "A UniWRT package is still registered after removal — please report this. LuCI has been switched to a working theme."
 		fi
 	fi
 
@@ -335,6 +338,12 @@ do_install() {
 	# theme was picked since — unless --keep-theme asks to leave LuCI as it is.
 	# (Package upgrades, which run without anyone asking, keep the choice.)
 	uci -q set luci.themes.UniWRT=/luci-static/uniwrt
+	# The standalone archive includes UniWRT's zh-cn catalog; expose the locale
+	# in LuCI's language selector just as the packaged translation does.
+	if [ -f "$R/usr/lib/lua/luci/i18n/uniwrt.zh-cn.lmo" ]; then
+		uci -q get luci.languages >/dev/null || uci -q set luci.languages=internal
+		uci -q set luci.languages.zh_cn='简体中文 (Simplified Chinese)'
+	fi
 	prev_theme="$(uci -q get luci.main.mediaurlbase 2>/dev/null || true)"
 	switched=0
 	if [ "$KEEPTHEME" != 1 ] && [ "$prev_theme" != /luci-static/uniwrt ]; then
