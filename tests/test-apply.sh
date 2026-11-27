@@ -130,7 +130,11 @@ check "uci-defaults hook NOT installed" [ ! -e "$UNIWRT_ROOT/etc/uci-defaults/30
 check "Network Map IP-discovery helper installed executable" [ -x "$UNIWRT_ROOT/usr/libexec/uniwrt-discover" ]
 check "theme registered" [ "$(uciget luci.themes.UniWRT)" = /luci-static/uniwrt ]
 if printf '%s\n' "$FILES" | grep '/uniwrt.zh-cn.lmo$' >/dev/null; then
+	check "Chinese not offered while LuCI itself is untranslated" [ -z "$(uciget luci.languages.zh_cn)" ]
+	mkdir -p "$UNIWRT_ROOT/usr/lib/lua/luci/i18n"; : > "$UNIWRT_ROOT/usr/lib/lua/luci/i18n/base.zh-cn.lmo"
+	check "re-run with LuCI's Chinese installed" run --file "$ARCHIVE"
 	check "Chinese locale registered" [ "$(uciget luci.languages.zh_cn)" = '简体中文 (Simplified Chinese)' ]
+	rm -f "$UNIWRT_ROOT/usr/lib/lua/luci/i18n/base.zh-cn.lmo"
 fi
 check "theme activated on fresh install" [ "$(uciget luci.main.mediaurlbase)" = /luci-static/uniwrt ]
 check "keep.d manifest written" [ -f "$UNIWRT_ROOT/$KEEP" ]
