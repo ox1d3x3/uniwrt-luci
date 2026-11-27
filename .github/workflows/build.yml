@@ -1,12 +1,5 @@
 name: Build UniWRT Packages
 
-# Why this works where the previous version failed:
-#   The earlier workflow pinned openwrt/gh-action-sdk@v6, whose entrypoint
-#   mishandled the directory layout of the current SDK images and aborted with
-#   "sed: can't read feeds.conf.default" before it could register the repo as a
-#   feed. Using @main (current entrypoint) plus SDK image tags that are actually
-#   published for each release fixes it.
-#
 # Package format follows the SDK branch:
 #   23.05 / 24.10  -> opkg -> .ipk
 #   25.12+         -> apk  -> .apk
@@ -96,36 +89,28 @@ jobs:
           fetch-depth: 0
 
       - name: Build package with OpenWrt SDK
-        # pinned to a reviewed commit (main as of 2026-11-05): a moving branch
-        # would run whatever it points to next with this repository's token
-        uses: openwrt/gh-action-sdk@f5813d30eeef3534b58ac7e79c5d8842b6035434
+        # Select the locale explicitly before compiling; the generic SDK action
+        # does not expose a way to enable CONFIG_LUCI_LANG_zh_Hans.
         env:
-          ARCH: ${{ matrix.arch }}
-          FEEDNAME: ${{ env.FEEDNAME }}
-          PACKAGES: ${{ env.PACKAGE }}
-          THEME_RELEASE: ${{ env.THEME_RELEASE }}
-          V: s
-
-      - name: Collect package
-        shell: bash
+          SDK_RELEASE: ${{ matrix.release }}
+          SDK_IMAGE: ghcr.io/openwrt/sdk:${{ matrix.arch }}
+          EXT: ${{ matrix.extension }}
         run: |
           set -euo pipefail
-          mkdir -p dist
-          find "$GITHUB_WORKSPACE/bin" -type f -name "${PACKAGE}*.${{ matrix.extension }}" -print -exec cp -v {} dist/ \;
-          echo "Built package list:"
-          find dist -maxdepth 1 -type f -printf '%f\n' | sort
-          test "$(find dist -maxdepth 1 -type f -name "*.${{ matrix.extension }}" | wc -l)" -ge 1 || {
-            echo "::error::No ${PACKAGE} .${{ matrix.extension }} package was produced for OpenWrt ${{ matrix.release }}"
-            exit 1
-          }
+          mkdir dist
+          sudo chown 1000:1000 dist
+          docker run --rm --entrypoint bash -e PACKAGE -e FEEDNAME -e SDK_RELEASE -e THEME_RELEASE -e EXT \
+            -v "$PWD:/feed:ro" -v "$PWD/dist:/out" "$SDK_IMAGE" /feed/scripts/build-sdk.sh
 
       - name: Build standalone archive
         if: matrix.standalone
         shell: bash
         run: |
           set -euo pipefail
-          ipk="$(find dist -maxdepth 1 -name "${PACKAGE}_*.ipk" | head -n1)"
-          sh scripts/make-standalone.sh "$ipk" dist/luci-theme-uniwrt-standalone.tar.gz
+          sudo chown "$(id -u):$(id -g)" dist
+          theme_ipk="$(find dist -maxdepth 1 -name "${PACKAGE}_*.ipk" | head -n1)"
+          i18n_ipk="$(find dist -maxdepth 1 -name "luci-i18n-uniwrt-zh-cn_*.ipk" | head -n1)"
+          sh scripts/make-standalone.sh "$theme_ipk" dist/luci-theme-uniwrt-standalone.tar.gz "$i18n_ipk"
           tar -tzvf dist/luci-theme-uniwrt-standalone.tar.gz
 
       - name: Upload package artifact
@@ -167,7 +152,8 @@ jobs:
           for v in BUSYBOX UCI_BIN APK_BIN; do test -x "${!v:-}" || { echo "::error::$v not built"; exit 1; }; done
           "$BUSYBOX" 2>&1 | head -n1 || true
           PKG_APK="$(find artifacts -name 'luci-theme-uniwrt-*.apk' | head -n1)"
-          test -n "$PKG_APK"
+          export LANG_APK="$(find artifacts -name 'luci-i18n-uniwrt-zh-cn-*.apk' | head -n1)"
+          test -n "$LANG_APK" && test -n "$PKG_APK"
           PKG_APK="$PKG_APK" bash tests/test-apply.sh artifacts/luci-theme-uniwrt-standalone.tar.gz
 
       - name: Test with stock BusyBox and the uci stub
@@ -261,8 +247,8 @@ jobs:
           | 23.05.x | opkg | `luci-theme-uniwrt_*_all.ipk` (no `-r1`) |
 
           ```sh
-          apk add --allow-untrusted ./luci-theme-uniwrt-*.apk      # 25.12+
-          opkg install ./luci-theme-uniwrt_*_all.ipk               # 23.05 / 24.10
+          apk add --allow-untrusted ./luci-theme-uniwrt-*.apk ./luci-i18n-uniwrt-zh-cn-*.apk  # 25.12+
+          opkg install ./luci-theme-uniwrt_*_all.ipk ./luci-i18n-uniwrt-zh-cn_*.ipk  # 23.05 / 24.10
           ```
 
           > A package install blocks Attended Sysupgrade (“Impossible package selection”) — see the README FAQ.
