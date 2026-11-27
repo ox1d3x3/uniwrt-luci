@@ -80,6 +80,7 @@ wget -T 20 -O /tmp/uniwrt-apply.sh https://github.com/ox1d3x3/uniwrt-luci/releas
 - Optionally open every menu section at once instead of only the current one
 - In single-section mode, opening a section closes its siblings; expanded mode lets sections toggle independently
 - Off-canvas menu on phones and tablets
+- UniWRT's overview, network map and settings links appear only in UniWRT's navigation; its settings page is available only while UniWRT is active
 
 **Dashboard**
 - System, CPU load, memory and uptime at a glance

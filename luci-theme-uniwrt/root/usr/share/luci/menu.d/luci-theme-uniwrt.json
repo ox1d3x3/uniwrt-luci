@@ -1,17 +1,15 @@
 {
 	"admin/system/uniwrt": {
-		"title": "UniWRT Theme",
 		"order": 90,
 		"action": {
-			"type": "view",
-			"path": "uniwrt/settings"
+			"type": "template",
+			"path": "themes/uniwrt/settings"
 		},
 		"depends": {
 			"acl": [ "luci-theme-uniwrt" ]
 		}
 	},
 	"admin/uniwrt-overview": {
-		"title": "Overview",
 		"order": 5,
 		"action": {
 			"type": "view",
@@ -22,7 +20,6 @@
 		}
 	},
 	"admin/uniwrt-netmap": {
-		"title": "Network Map",
 		"order": 6,
 		"action": {
 			"type": "view",
