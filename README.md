@@ -174,7 +174,7 @@ opkg install /tmp/luci-theme-uniwrt_*_all.ipk /tmp/luci-i18n-uniwrt-zh-cn_*.ipk
 
 Not sure which you have? Run `command -v apk` on the router — if it prints a path, use the `.apk`. `--allow-untrusted` is needed because the package comes from GitHub rather than a signed OpenWrt feed.
 
-UniWRT follows LuCI's selected language. The recommended standalone archive includes the Simplified Chinese translation. When installing the theme as a package, install the matching `luci-i18n-uniwrt-zh-cn` package from the same release as well. For an IPK, choose the language package whose filename includes your OpenWrt release. Then choose **简体中文** under *System → System → Language and Style*.
+UniWRT follows LuCI's selected language. The recommended standalone archive includes the Simplified Chinese translation. When installing the theme as a package, install the matching `luci-i18n-uniwrt-zh-cn` package from the same release as well. For an IPK, choose the language package whose filename includes your OpenWrt release. LuCI's own Chinese translation (`luci-i18n-base-zh-cn`) needs to be installed too, so the rest of LuCI switches with the theme. Then choose **简体中文** under *System → System → Language and Style*.
 
 To uninstall both packages, run `apk del luci-i18n-uniwrt-zh-cn luci-theme-uniwrt` (25.12+) or `opkg remove luci-i18n-uniwrt-zh-cn luci-theme-uniwrt` (23.05 / 24.10). If only the theme is installed, omit the language package name.
 
